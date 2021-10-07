@@ -26,11 +26,6 @@ var interfaceConfig = {
 
     CLOSE_PAGE_GUEST_HINT: false, // A html text to be shown to guests on the close page, false disables it
 
-    // Connection indicators (
-    // CONNECTION_INDICATOR_AUTO_HIDE_ENABLED,
-    // CONNECTION_INDICATOR_AUTO_HIDE_TIMEOUT,
-    // CONNECTION_INDICATOR_DISABLED) got moved to config.js.
-
     DEFAULT_BACKGROUND: '#474747',
     DEFAULT_LOCAL_DISPLAY_NAME: 'me',
     DEFAULT_LOGO_URL: 'images/watermark.svg',
@@ -38,9 +33,6 @@ var interfaceConfig = {
     DEFAULT_WELCOME_PAGE_LOGO_URL: 'images/watermark.svg',
 
     DISABLE_DOMINANT_SPEAKER_INDICATOR: false,
-
-    // Deprecated. Please use disableModeratorIndicator from config.js
-    // DISABLE_FOCUS_INDICATOR: false,
 
     /**
      * If true, notifications regarding joining/leaving are no longer displayed.
@@ -97,7 +89,6 @@ var interfaceConfig = {
      */
     HIDE_INVITE_MORE_HEADER: false,
 
-    INITIAL_TOOLBAR_TIMEOUT: 20000,
     JITSI_WATERMARK_LINK: 'https://jitsi.org',
 
     LANG_DETECTION: true, // Allow i18n to detect the system language
@@ -183,16 +174,6 @@ var interfaceConfig = {
      */
     SUPPORT_URL: 'https://community.jitsi.org/',
 
-    TOOLBAR_ALWAYS_VISIBLE: false,
-
-    /**
-     * DEPRECATED!
-     * This config was moved to config.js as `toolbarButtons`.
-     */
-    // TOOLBAR_BUTTONS: [],
-
-    TOOLBAR_TIMEOUT: 4000,
-
     // Browsers, in addition to those which do not fully support WebRTC, that
     // are not supported and should show the unsupported browser page.
     UNSUPPORTED_BROWSERS: [],
@@ -256,6 +237,28 @@ var interfaceConfig = {
      INDICATOR_FONT_SIZES
      PHONE_NUMBER_REGEX
     */
+
+    // -----------------DEPRECATED CONFIGS BELOW THIS LINE-----------------------------
+
+    // Connection indicators (
+    // CONNECTION_INDICATOR_AUTO_HIDE_ENABLED,
+    // CONNECTION_INDICATOR_AUTO_HIDE_TIMEOUT,
+    // CONNECTION_INDICATOR_DISABLED) got moved to config.js.
+
+    // Please use disableModeratorIndicator from config.js
+    // DISABLE_FOCUS_INDICATOR: false,
+
+    // Moved to config.js as `toolbarConfig.initialTimeout`.
+    // INITIAL_TOOLBAR_TIMEOUT: 20000,
+
+    // Moved to config.js as `toolbarConfig.alwaysVisible`.
+    // TOOLBAR_ALWAYS_VISIBLE: false,
+
+    // This config was moved to config.js as `toolbarButtons`.
+    // TOOLBAR_BUTTONS: [],
+
+    // Moved to config.js as `toolbarConfig.timeout`.
+    // TOOLBAR_TIMEOUT: 4000,
 
     // Allow all above example options to include a trailing comma and
     // prevent fear when commenting out the last value.
