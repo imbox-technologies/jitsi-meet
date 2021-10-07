@@ -42,10 +42,9 @@ type Props = {
     _audioTrack: ?Object,
 
     /**
-     * Media state for video.
+     * Whether or not to disable the moderator indicator.
      */
-    _videoMediaState: MediaState,
-
+    _disableModeratorIndicator: boolean,
 
     /**
      * The display name of the participant.
@@ -53,9 +52,19 @@ type Props = {
     _displayName: string,
 
     /**
+     * Whether or not moderation is supported.
+     */
+    _isModerationSupported: boolean,
+
+    /**
      * True if the participant is the local participant.
      */
     _local: Boolean,
+
+    /**
+     * Whether or not the local participant is moderator.
+     */
+    _localModerator: boolean,
 
     /**
      * Shared video local participant owner.
@@ -84,6 +93,11 @@ type Props = {
      * True if the participant have raised hand.
      */
     _raisedHand: boolean,
+
+    /**
+     * Media state for video.
+     */
+    _videoMediaState: MediaState,
 
     /**
      * The translated ask unmute text for the qiuck action buttons.
@@ -156,7 +170,7 @@ type Props = {
 function MeetingParticipantItem({
     _audioMediaState,
     _audioTrack,
-    _videoMediaState,
+    _disableModeratorIndicator,
     _displayName,
     _local,
     _localVideoOwner,
@@ -164,6 +178,7 @@ function MeetingParticipantItem({
     _participantID,
     _quickActionButtonType,
     _raisedHand,
+    _videoMediaState,
     askUnmuteText,
     isHighlighted,
     muteAudio,
@@ -219,6 +234,7 @@ function MeetingParticipantItem({
         <ParticipantItem
             actionsTrigger = { ACTION_TRIGGER.HOVER }
             audioMediaState = { audioMediaState }
+            disableModeratorIndicator = { _disableModeratorIndicator }
             displayName = { _displayName }
             isHighlighted = { isHighlighted }
             isModerator = { isParticipantModerator(_participant) }
@@ -279,17 +295,20 @@ function _mapStateToProps(state, ownProps): Object {
     const _audioTrack = participantID === localParticipantId
         ? getLocalAudioTrack(tracks) : getTrackByMediaTypeAndParticipant(tracks, MEDIA_TYPE.AUDIO, participantID);
 
+    const { disableModeratorIndicator } = state['features/base/config'];
+
     return {
         _audioMediaState,
         _audioTrack,
-        _videoMediaState,
+        _disableModeratorIndicator: disableModeratorIndicator,
         _displayName: getParticipantDisplayName(state, participant?.id),
         _local: Boolean(participant?.local),
         _localVideoOwner: Boolean(ownerId === localParticipantId),
         _participant: participant,
         _participantID: participant?.id,
         _quickActionButtonType,
-        _raisedHand: Boolean(participant?.raisedHand)
+        _raisedHand: Boolean(participant?.raisedHand),
+        _videoMediaState
     };
 }
 
