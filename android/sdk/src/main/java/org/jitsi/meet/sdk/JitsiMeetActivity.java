@@ -139,7 +139,7 @@ public class JitsiMeetActivity extends FragmentActivity
     public void join(JitsiMeetConferenceOptions options) {
         JitsiMeetView view = getJitsiView();
 
-        if (view != null) {
+        if (view != null && options != null) {
             view.join(options);
         } else {
             JitsiMeetLogger.w("Cannot join, view is null");
