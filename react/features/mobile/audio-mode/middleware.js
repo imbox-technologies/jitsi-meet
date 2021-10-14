@@ -9,7 +9,7 @@ import {
     CONFERENCE_JOINED,
     getCurrentConference
 } from '../../base/conference';
-import { getFeatureFlag, AUDIO_FOCUS_DISABLED, CALL_INTEGRATION_ENABLED } from '../../base/flags';
+import { getFeatureFlag, AUDIO_FOCUS_DISABLED, CALL_INTEGRATION_ENABLED, AUDIO_DEFAULT_TO_SPEAKER } from '../../base/flags';
 import { MiddlewareRegistry } from '../../base/redux';
 
 import { _SET_AUDIOMODE_DEVICES, _SET_AUDIOMODE_SUBSCRIPTIONS } from './actionTypes';
@@ -138,13 +138,13 @@ function _updateAudioMode({ getState }, next, action) {
     const state = getState();
     const conference = getCurrentConference(state);
     const { enabled: audioOnly } = state['features/base/audio-only'];
-    const callIntegration = getFeatureFlag(state, CALL_INTEGRATION_ENABLED, false);
+    const defaultToSpeaker = getFeatureFlag(state, AUDIO_DEFAULT_TO_SPEAKER, false);
     let mode;
 
     if (getFeatureFlag(state, AUDIO_FOCUS_DISABLED, false)) {
         return result;
     } else if (conference) {
-        mode = audioOnly || callIntegration ? AudioMode.AUDIO_CALL : AudioMode.VIDEO_CALL;
+        mode = defaultToSpeaker ? AudioMode.VIDEO_CALL : AudioMode.AUDIO_CALL;
     } else {
         mode = AudioMode.DEFAULT;
     }
