@@ -27,7 +27,8 @@
 typedef enum {
     kAudioModeDefault,
     kAudioModeAudioCall,
-    kAudioModeVideoCall
+    kAudioModeVideoCall,
+    kAudioModeEarpieceCall
 } JitsiMeetAudioMode;
 
 // Events
@@ -74,7 +75,8 @@ RCT_EXPORT_MODULE();
         @"DEVICE_CHANGE_EVENT": kDevicesChanged,
         @"AUDIO_CALL" : [NSNumber numberWithInt: kAudioModeAudioCall],
         @"DEFAULT"    : [NSNumber numberWithInt: kAudioModeDefault],
-        @"VIDEO_CALL" : [NSNumber numberWithInt: kAudioModeVideoCall]
+        @"VIDEO_CALL" : [NSNumber numberWithInt: kAudioModeVideoCall],
+        @"EARPIECE_CALL" : [NSNumber numberWithInt: kAudioModeEarpieceCall]
     };
 };
 
