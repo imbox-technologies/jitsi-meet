@@ -139,7 +139,7 @@ function _updateAudioMode({ getState }, next, action) {
     const conference = getCurrentConference(state);
     const { enabled: audioOnly } = state['features/base/audio-only'];
     const callIntegration = getFeatureFlag(state, CALL_INTEGRATION_ENABLED, false);
-    const defaultToSpeaker = getFeatureFlag(state, AUDIO_DEFAULT_TO_SPEAKER, false);
+    const defaultToSpeaker = getFeatureFlag(state, AUDIO_DEFAULT_TO_SPEAKER, true);
     let mode;
 
     if (getFeatureFlag(state, AUDIO_FOCUS_DISABLED, false)) {

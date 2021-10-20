@@ -16,12 +16,14 @@
 
 package org.jitsi.meet.sdk;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.FrameLayout;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
@@ -32,7 +34,6 @@ import com.facebook.react.modules.core.PermissionListener;
 import org.jitsi.meet.sdk.log.JitsiMeetLogger;
 
 import java.util.HashMap;
-import android.app.Activity;
 
 /**
  * A base activity for SDK users to embed. It uses {@link JitsiMeetFragment} to do the heavy
@@ -123,6 +124,10 @@ public class JitsiMeetActivity extends FragmentActivity
         return fragment != null ? fragment.getJitsiView() : null;
     }
 
+    protected FrameLayout getRootView() {
+        return (FrameLayout) findViewById(R.id.jitsiActivityRootFrameLayout);
+    }
+
     public void join(@Nullable String url) {
         JitsiMeetConferenceOptions options
             = new JitsiMeetConferenceOptions.Builder()
@@ -134,7 +139,7 @@ public class JitsiMeetActivity extends FragmentActivity
     public void join(JitsiMeetConferenceOptions options) {
         JitsiMeetView view = getJitsiView();
 
-        if (view != null) {
+        if (view != null && options != null) {
             view.join(options);
         } else {
             JitsiMeetLogger.w("Cannot join, view is null");
