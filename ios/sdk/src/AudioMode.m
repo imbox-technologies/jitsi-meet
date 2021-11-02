@@ -150,6 +150,7 @@ RCT_EXPORT_MODULE();
 RCT_EXPORT_METHOD(setMode:(int)mode
                   resolve:(RCTPromiseResolveBlock)resolve
                    reject:(RCTPromiseRejectBlock)reject) {
+    DDLogInfo(@"[AudioMode] Set mode: %d", mode);
     RTCAudioSessionConfiguration *config = [self configForMode:mode];
     NSError *error;
 
@@ -248,6 +249,7 @@ RCT_EXPORT_METHOD(updateDeviceList) {
 - (void)audioSessionDidChangeRoute:(RTCAudioSession *)session
                             reason:(AVAudioSessionRouteChangeReason)reason
                      previousRoute:(AVAudioSessionRouteDescription *)previousRoute {
+    DDLogInfo(@"[AudioMode] Route changed, reason %d, previousRoute: %@", reason, previousRoute);
     // Update JS about the changes.
     [self notifyDevicesChanged];
 
@@ -271,7 +273,7 @@ RCT_EXPORT_METHOD(updateDeviceList) {
         // This is to play well with other components which could be integrated
         // into the final application.
         if (self->activeMode != kAudioModeDefault) {
-            DDLogInfo(@"[AudioMode] Route changed, reapplying RTCAudioSession config");
+            DDLogInfo(@"[AudioMode] Route changed, reapplying RTCAudioSession config for activeMode %d", activeMode);
             RTCAudioSessionConfiguration *config = [self configForMode:self->activeMode];
             [self setConfig:config error:nil];
             if (self->forceSpeaker && !self->isSpeakerOn) {
