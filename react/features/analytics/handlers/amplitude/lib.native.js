@@ -1,3 +1,3 @@
-import { Amplitude } from '@amplitude/react-native';
+//import { Amplitude } from '@amplitude/react-native';
 
-export default Amplitude;
+//export default Amplitude;

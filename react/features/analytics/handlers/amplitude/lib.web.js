@@ -1,3 +1,3 @@
-import amplitude from 'amplitude-js';
+//import amplitude from 'amplitude-js';
 
-export default amplitude;
+//export default amplitude;

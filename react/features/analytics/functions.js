@@ -13,7 +13,7 @@ import JitsiMeetJS, {
 } from '../base/lib-jitsi-meet';
 import { getJitsiMeetGlobalNS, loadScript, parseURIString } from '../base/util';
 
-import { AmplitudeHandler, MatomoHandler } from './handlers';
+import { /*AmplitudeHandler, */MatomoHandler } from './handlers';
 import logger from './logger';
 
 /**
