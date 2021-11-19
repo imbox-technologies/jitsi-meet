@@ -2,7 +2,7 @@
 
 import { getConferenceState } from '../base/conference';
 import { MEDIA_TYPE, type MediaType } from '../base/media/constants';
-import { getParticipantById } from '../base/participants';
+import { getParticipantById, isParticipantModerator } from '../base/participants';
 import { isForceMuted } from '../participants-pane/functions';
 
 import {
@@ -16,9 +16,48 @@ import {
     REQUEST_DISABLE_AUDIO_MODERATION,
     REQUEST_ENABLE_AUDIO_MODERATION,
     REQUEST_DISABLE_VIDEO_MODERATION,
-    REQUEST_ENABLE_VIDEO_MODERATION
+    REQUEST_ENABLE_VIDEO_MODERATION,
+    LOCAL_PARTICIPANT_REJECTED,
+    PARTICIPANT_REJECTED
 } from './actionTypes';
 import { isEnabledFromState } from './functions';
+
+/**
+ * Action used by moderator to approve audio for a participant.
+ *
+ * @param {staring} id - The id of the participant to be approved.
+ * @returns {void}
+ */
+export const approveParticipantAudio = (id: string) => (dispatch: Function, getState: Function) => {
+    const state = getState();
+    const { conference } = getConferenceState(state);
+
+    const isAudioModerationOn = isEnabledFromState(MEDIA_TYPE.AUDIO, state);
+    const isVideoModerationOn = isEnabledFromState(MEDIA_TYPE.VIDEO, state);
+
+    if (isAudioModerationOn || !isVideoModerationOn) {
+        conference.avModerationApprove(MEDIA_TYPE.AUDIO, id);
+    }
+};
+
+/**
+ * Action used by moderator to approve video for a participant.
+ *
+ * @param {staring} id - The id of the participant to be approved.
+ * @returns {void}
+ */
+export const approveParticipantVideo = (id: string) => (dispatch: Function, getState: Function) => {
+    const state = getState();
+    const { conference } = getConferenceState(state);
+    const participant = getParticipantById(state, id);
+
+    const isVideoForceMuted = isForceMuted(participant, MEDIA_TYPE.VIDEO, state);
+    const isVideoModerationOn = isEnabledFromState(MEDIA_TYPE.VIDEO, state);
+
+    if (isVideoModerationOn && isVideoForceMuted) {
+        conference.avModerationApprove(MEDIA_TYPE.VIDEO, id);
+    }
+};
 
 /**
  * Action used by moderator to approve audio and video for a participant.
@@ -26,19 +65,48 @@ import { isEnabledFromState } from './functions';
  * @param {staring} id - The id of the participant to be approved.
  * @returns {void}
  */
-export const approveParticipant = (id: string) => (dispatch: Function, getState: Function) => {
+export const approveParticipant = (id: string) => (dispatch: Function) => {
+    dispatch(approveParticipantAudio(id));
+    dispatch(approveParticipantVideo(id));
+};
+
+/**
+ * Action used by moderator to reject audio for a participant.
+ *
+ * @param {staring} id - The id of the participant to be rejected.
+ * @returns {void}
+ */
+export const rejectParticipantAudio = (id: string) => (dispatch: Function, getState: Function) => {
     const state = getState();
     const { conference } = getConferenceState(state);
+    const audioModeration = isEnabledFromState(MEDIA_TYPE.AUDIO, state);
+
     const participant = getParticipantById(state, id);
-
     const isAudioForceMuted = isForceMuted(participant, MEDIA_TYPE.AUDIO, state);
-    const isVideoForceMuted = isForceMuted(participant, MEDIA_TYPE.VIDEO, state);
+    const isModerator = isParticipantModerator(participant);
 
-    if (isEnabledFromState(MEDIA_TYPE.AUDIO, state) && isAudioForceMuted) {
-        conference.avModerationApprove(MEDIA_TYPE.AUDIO, id);
+    if (audioModeration && !isAudioForceMuted && !isModerator) {
+        conference.avModerationReject(MEDIA_TYPE.AUDIO, id);
     }
-    if (isEnabledFromState(MEDIA_TYPE.VIDEO, state) && isVideoForceMuted) {
-        conference.avModerationApprove(MEDIA_TYPE.VIDEO, id);
+};
+
+/**
+ * Action used by moderator to reject video for a participant.
+ *
+ * @param {staring} id - The id of the participant to be rejected.
+ * @returns {void}
+ */
+export const rejectParticipantVideo = (id: string) => (dispatch: Function, getState: Function) => {
+    const state = getState();
+    const { conference } = getConferenceState(state);
+    const videoModeration = isEnabledFromState(MEDIA_TYPE.VIDEO, state);
+
+    const participant = getParticipantById(state, id);
+    const isVideoForceMuted = isForceMuted(participant, MEDIA_TYPE.VIDEO, state);
+    const isModerator = isParticipantModerator(participant);
+
+    if (videoModeration && !isVideoForceMuted && !isModerator) {
+        conference.avModerationReject(MEDIA_TYPE.VIDEO, id);
     }
 };
 
@@ -170,6 +238,21 @@ export const localParticipantApproved = (mediaType: MediaType) => {
 };
 
 /**
+ * Local participant was blocked to be able to unmute audio and video.
+ *
+ * @param {MediaType} mediaType - The media type to disable.
+ * @returns {{
+ *     type: LOCAL_PARTICIPANT_REJECTED
+ * }}
+ */
+export const localParticipantRejected = (mediaType: MediaType) => {
+    return {
+        type: LOCAL_PARTICIPANT_REJECTED,
+        mediaType
+    };
+};
+
+/**
  * Shows notification when A/V moderation is enabled and local participant is still not approved.
  *
  * @param {MediaType} mediaType - Audio or video media type.
@@ -211,3 +294,21 @@ export function participantApproved(id: string, mediaType: MediaType) {
         mediaType
     };
 }
+
+/**
+ * A participant was blocked to unmute for a mediaType.
+ *
+ * @param {string} id - The id of the approved participant.
+ * @param {MediaType} mediaType - The media type which was approved.
+ * @returns {{
+ *     type: PARTICIPANT_REJECTED,
+ * }}
+ */
+export function participantRejected(id: string, mediaType: MediaType) {
+    return {
+        type: PARTICIPANT_REJECTED,
+        id,
+        mediaType
+    };
+}
+

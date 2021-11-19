@@ -18,7 +18,7 @@ import {
 const INITIAL_STATE = {
     stats: {},
     pendingReorder: true,
-    criteria: ''
+    criteria: null
 };
 
 ReducerRegistry.register('features/speaker-stats', (state = _getInitialState(), action) => {
@@ -96,7 +96,7 @@ function _updateStats(state, { stats }) {
         {},
         state,
         {
-            stats: finalStats,
+            stats: { ...finalStats },
             pendingReorder: false
         },
     );

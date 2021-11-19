@@ -4,16 +4,16 @@ import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 
+import { rejectParticipantAudio } from '../../../av-moderation/actions';
 import { isToolbarButtonEnabled } from '../../../base/config/functions.web';
 import { MEDIA_TYPE } from '../../../base/media';
 import {
-    getParticipantCountWithFake,
-    getSortedParticipantIds
+    getParticipantCountWithFake
 } from '../../../base/participants';
 import { connect } from '../../../base/redux';
 import { showOverflowDrawer } from '../../../toolbox/functions';
 import { muteRemote } from '../../../video-menu/actions.any';
-import { findStyledAncestor, shouldRenderInviteButton } from '../../functions';
+import { findStyledAncestor, getSortedParticipantIds, shouldRenderInviteButton } from '../../functions';
 import { useParticipantDrawer } from '../../hooks';
 
 import { InviteButton } from './InviteButton';
@@ -104,6 +104,7 @@ function MeetingParticipants({ participantsCount, showInviteButton, overflowDraw
 
     const muteAudio = useCallback(id => () => {
         dispatch(muteRemote(id, MEDIA_TYPE.AUDIO));
+        dispatch(rejectParticipantAudio(id));
     }, [ dispatch ]);
     const [ drawerParticipant, closeDrawer, openDrawerForParticipant ] = useParticipantDrawer();
 

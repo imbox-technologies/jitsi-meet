@@ -476,6 +476,10 @@ var config = {
     // When 'true', it shows an intermediate page before joining, where the user can configure their devices.
     // prejoinPageEnabled: false,
 
+    // When 'true', the user cannot edit the display name.
+    // (Mainly useful when used in conjuction with the JWT so the JWT name becomes read only.)
+    // readOnlyName: false,
+
     // If etherpad integration is enabled, setting this to true will
     // automatically open the etherpad when a participant joins.  This
     // does not affect the mobile app since opening an etherpad
@@ -544,6 +548,19 @@ var config = {
     //    'videoquality',
     //    '__end'
     // ],
+
+    // Holds values related to toolbar visibility control.
+    // toolbarConfig: {
+    //     // Moved from interfaceConfig.INITIAL_TOOLBAR_TIMEOUT
+    //     // The initial numer of miliseconds for the toolbar buttons to be visible on screen.
+    //     initialTimeout: 20000,
+    //     // Moved from interfaceConfig.TOOLBAR_TIMEOUT
+    //     // Number of miliseconds for the toolbar buttons to be visible on screen.
+    //     timeout: 4000,
+    //     // Moved from interfaceConfig.TOOLBAR_ALWAYS_VISIBLE
+    //     // Whether toolbar should be always visible or should hide after x miliseconds.
+    //     alwaysVisible: false
+    // },
 
     // Toolbar buttons which have their click event exposed through the API on
     // `toolbarButtonClicked` event instead of executing the normal click routine.
@@ -759,6 +776,7 @@ var config = {
     // - 'PARTICIPANT_JOINED_SOUND'
     // - 'PARTICIPANT_LEFT_SOUND'
     // - 'RAISE_HAND_SOUND'
+    // - 'REACTION_SOUND'
     // - 'RECORDING_OFF_SOUND'
     // - 'RECORDING_ON_SOUND'
     // - 'TALK_WHILE_MUTED_SOUND'
@@ -896,6 +914,10 @@ var config = {
     */
     // dynamicBrandingUrl: '',
 
+    // When true the user cannot add more images to be used as virtual background.
+    // Only the default ones from will be available.
+    // disableAddingBackgroundImages: false,
+
     // Sets the background transparency level. '0' is fully transparent, '1' is opaque.
     // backgroundAlpha: 1,
 
@@ -950,11 +972,6 @@ var config = {
     // If set, add a "Open shared document" link to the bottom right menu that
     // will open an etherpad document.
     // etherpad_base: 'https://your-etherpad-installati.on/p/',
-
-    // If etherpad_base is set, and useRoomAsSharedDocumentName is set to true,
-    // open a pad with the name of the room (lowercased) instead of a pad with a
-    // random UUID.
-    // useRoomAsSharedDocumentName: true,
 
     // List of undocumented settings used in jitsi-meet
     /**

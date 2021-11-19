@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 
-import { getLocalParticipant, getParticipantById, PARTICIPANT_ROLE } from '../base/participants';
+import { getParticipantById, PARTICIPANT_ROLE } from '../base/participants';
 import { objectSort } from '../base/util';
 
 /**
@@ -43,10 +43,10 @@ export function getSpeakerStats(state: Object) {
  * Gets speaker stats search criteria.
  *
  * @param {*} state - The redux state.
- * @returns {string} - The search criteria.
+ * @returns {string | null} - The search criteria.
  */
 export function getSearchCriteria(state: Object) {
-    return state['features/speaker-stats']?.criteria ?? '';
+    return state['features/speaker-stats']?.criteria;
 }
 
 /**
@@ -129,14 +129,6 @@ function getEnhancedStatsForOrdering(state, stats, orderConfig) {
 
     for (const id in stats) {
         if (stats[id].hasOwnProperty('_hasLeft') && !stats[id].hasLeft()) {
-            if (orderConfig.includes('name')) {
-                const localParticipant = getLocalParticipant(state);
-
-                if (stats[id].isLocalStats()) {
-                    stats[id].setDisplayName(localParticipant.name);
-                }
-            }
-
             if (orderConfig.includes('role')) {
                 const participant = getParticipantById(state, stats[id].getUserId());
 
@@ -161,16 +153,14 @@ export function filterBySearchCriteria(state: Object, stats: ?Object) {
     const filteredStats = _.cloneDeep(stats ?? getSpeakerStats(state));
     const criteria = getSearchCriteria(state);
 
-    if (criteria) {
+    if (criteria !== null) {
         const searchRegex = new RegExp(criteria, 'gi');
 
         for (const id in filteredStats) {
             if (filteredStats[id].hasOwnProperty('_isLocalStats')) {
                 const name = filteredStats[id].getDisplayName();
 
-                if (!name || !name.match(searchRegex)) {
-                    filteredStats[id].hidden = true;
-                }
+                filteredStats[id].hidden = !name || !name.match(searchRegex);
             }
         }
     }

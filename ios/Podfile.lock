@@ -295,7 +295,7 @@ PODS:
     - react-native-video/Video (= 5.1.1)
   - react-native-video/Video (5.1.1):
     - React-Core
-  - react-native-webrtc (1.92.1):
+  - react-native-webrtc (1.92.2):
     - React-Core
   - react-native-webview (11.0.2):
     - React-Core
@@ -573,9 +573,9 @@ SPEC CHECKSUMS:
   react-native-performance: 6bd6cfac80594775fb782405fceaaf206becf53b
   react-native-slider: e99fc201cefe81270fc9d81714a7a0f5e566b168
   react-native-splash-screen: 200d11d188e2e78cea3ad319964f6142b6384865
-  react-native-video: 0bb76b6d6b77da3009611586c7dbf817b947f30e
-  react-native-webrtc: 77b969fe6bc5b7c93b455f93a13698812fb8bb4e
-  react-native-webview: dfd7202ff115c44d3ea401c2f36122fb3ac79f07
+  react-native-video: 1574074179ecaf6a9dd067116c8f31bf9fec15c8
+  react-native-webrtc: 41526e4060dac373c18676f866962d4180ee47b9
+  react-native-webview: b2542d6fd424bcc3e3b2ec5f854f0abb4ec86c87
   React-RCTActionSheet: bcbc311dc3b47bc8efb2737ff0940239a45789a9
   React-RCTAnimation: 65f61080ce632f6dea23d52e354ffac9948396c6
   React-RCTBlob: 70d88f7b68b5c44953cdb286ac2e36a7a509a97e
@@ -595,6 +595,6 @@ SPEC CHECKSUMS:
   RNWatch: a5320c959c75e72845c07985f3e935e58998f1d3
   Yoga: 96b469c5e81ff51b917b92e8c3390642d4ded30c
 
-PODFILE CHECKSUM: e45521030179007d0a116fdc5fed55c4fdc49f20
+PODFILE CHECKSUM: 3cc305fd6ee83fff506c10c4805471fa72b61c9a
 
 COCOAPODS: 1.11.2

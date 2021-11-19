@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { requestDisableAudioModeration, requestEnableAudioModeration } from '../../av-moderation/actions';
-import { isEnabledFromState } from '../../av-moderation/functions';
+import { isEnabledFromState, isSupported } from '../../av-moderation/functions';
 import { Dialog } from '../../base/dialog';
 import { MEDIA_TYPE } from '../../base/media';
 import { getLocalParticipant, getParticipantDisplayName } from '../../base/participants';
@@ -23,7 +23,8 @@ export type Props = AbstractProps & {
     exclude: Array<string>,
     title: string,
     showAdvancedModerationToggle: boolean,
-    isAudioModerationEnabled: boolean
+    isAudioModerationEnabled: boolean,
+    isModerationSupported: boolean
 };
 
 type State = {
@@ -105,7 +106,7 @@ export default class AbstractMuteEveryoneDialog<P: Props> extends AbstractMuteRe
         dispatch(muteAllParticipants(exclude, MEDIA_TYPE.AUDIO));
         if (this.state.audioModerationEnabled) {
             dispatch(requestEnableAudioModeration());
-        } else {
+        } else if (this.state.audioModerationEnabled !== undefined) {
             dispatch(requestDisableAudioModeration());
         }
 
@@ -135,6 +136,7 @@ export function abstractMapStateToProps(state: Object, ownProps: Props) {
         title: t('dialog.muteEveryoneElseTitle', { whom })
     } : {
         title: t('dialog.muteEveryoneTitle'),
-        isAudioModerationEnabled: isEnabledFromState(MEDIA_TYPE.AUDIO, state)
+        isAudioModerationEnabled: isEnabledFromState(MEDIA_TYPE.AUDIO, state),
+        isModerationSupported: isSupported()(state)
     };
 }
