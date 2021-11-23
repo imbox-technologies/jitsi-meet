@@ -1,5 +1,7 @@
 // @flow
 
+/* eslint-disable react/jsx-no-bind */
+
 import React, { Component } from 'react';
 import { bindActionCreators } from 'redux';
 
@@ -10,7 +12,7 @@ import {
 } from '../../../analytics';
 import { isMobileBrowser } from '../../../base/environment/utils';
 import { translate } from '../../../base/i18n';
-import { getLocalParticipant, participantUpdated } from '../../../base/participants';
+import { getLocalParticipant, hasRaisedHand, raiseHand } from '../../../base/participants';
 import { connect } from '../../../base/redux';
 import { dockToolbox } from '../../../toolbox/actions.web';
 import { addReactionToBuffer } from '../../actions.any';
@@ -22,7 +24,7 @@ import ReactionButton from './ReactionButton';
 type Props = {
 
     /**
-     * Docks the toolbox
+     * Docks the toolbox.
      */
     _dockToolbox: Function,
 
@@ -123,22 +125,9 @@ class ReactionsMenu extends Component<Props> {
      * @returns {void}
      */
     _doToggleRaiseHand() {
-        const { _localParticipantID, _raisedHand } = this.props;
-        const newRaisedStatus = !_raisedHand;
+        const { _raisedHand } = this.props;
 
-        this.props.dispatch(participantUpdated({
-            // XXX Only the local participant is allowed to update without
-            // stating the JitsiConference instance (i.e. participant property
-            // `conference` for a remote participant) because the local
-            // participant is uniquely identified by the very fact that there is
-            // only one local participant.
-
-            id: _localParticipantID,
-            local: true,
-            raisedHand: newRaisedStatus
-        }));
-
-        APP.API.notifyRaiseHandUpdated(_localParticipantID, newRaisedStatus);
+        this.props.dispatch(raiseHand(!_raisedHand));
     }
 
     /**
@@ -221,7 +210,7 @@ function mapStateToProps(state) {
     return {
         _localParticipantID: localParticipant.id,
         _isMobile: isMobileBrowser(),
-        _raisedHand: localParticipant.raisedHand
+        _raisedHand: hasRaisedHand(localParticipant)
     };
 }
 
@@ -243,5 +232,5 @@ function mapDispatchToProps(dispatch) {
 
 export default translate(connect(
     mapStateToProps,
-    mapDispatchToProps,
+    mapDispatchToProps
 )(ReactionsMenu));

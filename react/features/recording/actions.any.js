@@ -9,7 +9,8 @@ import {
     NOTIFICATION_TIMEOUT,
     hideNotification,
     showErrorNotification,
-    showNotification
+    showNotification,
+    showWarningNotification
 } from '../notifications';
 
 import {
@@ -21,6 +22,8 @@ import {
 } from './actionTypes';
 import { getRecordingLink, getResourceId, isSavingRecordingOnDropbox } from './functions';
 import logger from './logger';
+
+declare var APP: Object;
 
 /**
  * Clears the data of every recording sessions.
@@ -114,6 +117,16 @@ export function showRecordingError(props: Object) {
 }
 
 /**
+ * Signals that the recording warning notification should be shown.
+ *
+ * @param {Object} props - The Props needed to render the notification.
+ * @returns {showWarningNotification}
+ */
+export function showRecordingWarning(props: Object) {
+    return showWarningNotification(props);
+}
+
+/**
  * Signals that the stopped recording notification should be shown on the
  * screen for a given period.
  *
@@ -187,6 +200,10 @@ export function showStartedRecordingNotification(
 
                 try {
                     const link = await getRecordingLink(recordingSharingUrl, sessionId, region, tenant);
+
+                    if (typeof APP === 'object') {
+                        APP.API.notifyRecordingLinkAvailable(link);
+                    }
 
                     // add the option to copy recording link
                     dialogProps.customActionNameKey = 'recording.copyLink';

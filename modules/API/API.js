@@ -1,6 +1,6 @@
 // @flow
 
-import Logger from 'jitsi-meet-logger';
+import Logger from '@jitsi/logger';
 
 import {
     createApiEvent,
@@ -37,7 +37,8 @@ import {
     kickParticipant,
     raiseHand,
     isParticipantModerator,
-    isLocalParticipantModerator
+    isLocalParticipantModerator,
+    hasRaisedHand
 } from '../../react/features/base/participants';
 import { updateSettings } from '../../react/features/base/settings';
 import { isToggleCameraEnabled, toggleCamera } from '../../react/features/base/tracks';
@@ -51,7 +52,7 @@ import {
     processExternalDeviceRequest
 } from '../../react/features/device-selection/functions';
 import { isEnabled as isDropboxEnabled } from '../../react/features/dropbox';
-import { toggleE2EE } from '../../react/features/e2ee/actions';
+import { setMediaEncryptionKey, toggleE2EE } from '../../react/features/e2ee/actions';
 import { setVolume } from '../../react/features/filmstrip';
 import { invite } from '../../react/features/invite';
 import {
@@ -61,7 +62,7 @@ import {
     captureLargeVideoScreenshot,
     resizeLargeVideo
 } from '../../react/features/large-video/actions.web';
-import { toggleLobbyMode } from '../../react/features/lobby/actions';
+import { toggleLobbyMode, setKnockingParticipantApproval } from '../../react/features/lobby/actions';
 import { isForceMuted } from '../../react/features/participants-pane/functions';
 import { RECORDING_TYPES } from '../../react/features/recording/constants';
 import { getActiveSession } from '../../react/features/recording/functions';
@@ -113,6 +114,9 @@ let videoAvailable = true;
  */
 function initCommands() {
     commands = {
+        'answer-knocking-participant': (id, approved) => {
+            APP.store.dispatch(setKnockingParticipantApproval(id, approved));
+        },
         'approve-video': participantId => {
             if (!isLocalParticipantModerator(APP.store.getState())) {
                 return;
@@ -278,7 +282,7 @@ function initCommands() {
             if (!localParticipant) {
                 return;
             }
-            const { raisedHand } = localParticipant;
+            const raisedHand = hasRaisedHand(localParticipant);
 
             sendAnalytics(createApiEvent('raise-hand.toggled'));
             APP.store.dispatch(raiseHand(!raisedHand));
@@ -359,6 +363,9 @@ function initCommands() {
         'toggle-e2ee': enabled => {
             logger.debug('Toggle E2EE key command received');
             APP.store.dispatch(toggleE2EE(enabled));
+        },
+        'set-media-encryption-key': keyInfo => {
+            APP.store.dispatch(setMediaEncryptionKey(JSON.parse(keyInfo)));
         },
         'set-video-quality': frameHeight => {
             logger.debug('Set video quality command received');
@@ -559,6 +566,9 @@ function initCommands() {
                         dataURL
                     });
                 });
+            break;
+        case 'deployment-info':
+            callback(APP.store.getState()['features/base/config'].deploymentInfo);
             break;
         case 'invite': {
             const { invitees } = request;
@@ -1452,6 +1462,33 @@ class API {
             on,
             mode,
             error
+        });
+    }
+
+    /**
+     * Notify external application (if API is enabled) that the current recording link is
+     * available.
+     *
+     * @param {string} link - The recording download link.
+     * @returns {void}
+     */
+    notifyRecordingLinkAvailable(link: string) {
+        this._sendEvent({
+            name: 'recording-link-available',
+            link
+        });
+    }
+
+    /**
+     * Notify external application (if API is enabled) that a participant is knocking in the lobby.
+     *
+     * @param {Object} participant - Participant data such as id and name.
+     * @returns {void}
+     */
+    notifyKnockingParticipant(participant: Object) {
+        this._sendEvent({
+            name: 'knocking-participant',
+            participant
         });
     }
 

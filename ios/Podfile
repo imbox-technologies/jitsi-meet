@@ -56,6 +56,7 @@ target 'JitsiMeetSDK' do
 
   pod 'react-native-background-timer', :path => '../node_modules/react-native-background-timer'
   pod 'react-native-calendar-events', :path => '../node_modules/react-native-calendar-events'
+  pod 'react-native-get-random-values', :path => '../node_modules/react-native-get-random-values'
   pod 'react-native-keep-awake', :path => '../node_modules/react-native-keep-awake'
   pod 'react-native-netinfo', :path => '../node_modules/@react-native-community/netinfo'
   pod 'react-native-performance', :path => '../node_modules/react-native-performance/ios'
@@ -71,6 +72,11 @@ target 'JitsiMeetSDK' do
   pod 'RNSVG', :path => '../node_modules/react-native-svg'
   pod 'RNWatch', :path => '../node_modules/react-native-watch-connectivity'
   pod 'RNDefaultPreference', :path => '../node_modules/react-native-default-preference'
+  pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
+  pod 'RNReanimated', :path => '../node_modules/react-native-reanimated'
+  pod 'RNScreens', :path => '../node_modules/react-native-screens'
+  pod 'react-native-safe-area-context', :path => '../node_modules/react-native-safe-area-context'
+  pod 'RNCMaskedView', :path => '../node_modules/@react-native-masked-view/masked-view'
 
   # Native pod dependencies
   #

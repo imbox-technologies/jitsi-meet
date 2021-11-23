@@ -12,7 +12,7 @@ import { type ReactionEmojiProps } from '../../../reactions/constants';
 import { getReactionsQueue } from '../../../reactions/functions.any';
 
 import Drawer from './Drawer';
-import DrawerPortal from './DrawerPortal';
+import JitsiPortal from './JitsiPortal';
 import ToolbarButton from './ToolbarButton';
 
 /**
@@ -64,7 +64,7 @@ type Props = {
 /**
  * A React {@code Component} for opening or closing the {@code OverflowMenu}.
  *
- * @extends Component
+ * @augments Component
  */
 class OverflowMenuButton extends Component<Props> {
     /**
@@ -114,7 +114,7 @@ class OverflowMenuButton extends Component<Props> {
                     overflowDrawer ? (
                         <>
                             {this._renderToolbarButton()}
-                            <DrawerPortal>
+                            <JitsiPortal>
                                 <Drawer
                                     isOpen = { isOpen }
                                     onClose = { this._onCloseDialog }>
@@ -128,7 +128,7 @@ class OverflowMenuButton extends Component<Props> {
                                         reaction = { reaction }
                                         uid = { uid } />))}
                                 </div>}
-                            </DrawerPortal>
+                            </JitsiPortal>
                         </>
                     ) : (
                         <InlineDialog

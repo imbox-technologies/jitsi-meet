@@ -1,11 +1,11 @@
 // @flow
 
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { isMobileBrowser } from '../../../base/environment/utils';
 import { translate } from '../../../base/i18n';
 import { IconArrowUp, IconRaisedHand } from '../../../base/icons';
-import { getLocalParticipant } from '../../../base/participants';
+import { getLocalParticipant, hasRaisedHand } from '../../../base/participants';
 import { connect } from '../../../base/redux';
 import { ToolboxButtonWithIcon } from '../../../base/toolbox/components';
 import ToolbarButton from '../../../toolbox/components/web/ToolbarButton';
@@ -78,15 +78,9 @@ function ReactionsMenuButton({
     reactionsQueue,
     t
 }: Props) {
-
-    /**
-     * Toggles the reactions menu visibility.
-     *
-     * @returns {void}
-     */
-    function toggleReactionsMenu() {
+    const toggleReactionsMenu = useCallback(() => {
         dispatch(toggleReactionsMenuVisibility());
-    }
+    }, [ dispatch ]);
 
     const raiseHandButton = (<ToolbarButton
         accessibilityLabel = { t('toolbar.accessibilityLabel.raiseHand') }
@@ -138,7 +132,7 @@ function mapStateToProps(state) {
         isOpen: getReactionsMenuVisibility(state),
         isMobile: isMobileBrowser(),
         reactionsQueue: getReactionsQueue(state),
-        raisedHand: localParticipant?.raisedHand
+        raisedHand: hasRaisedHand(localParticipant)
     };
 }
 

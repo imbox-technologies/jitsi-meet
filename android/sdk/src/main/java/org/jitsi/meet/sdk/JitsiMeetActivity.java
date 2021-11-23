@@ -26,7 +26,7 @@ import android.os.Bundle;
 import android.widget.FrameLayout;
 
 import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.facebook.react.modules.core.PermissionListener;
@@ -39,7 +39,7 @@ import java.util.HashMap;
  * A base activity for SDK users to embed. It uses {@link JitsiMeetFragment} to do the heavy
  * lifting and wires the remaining Activity lifecycle methods so it works out of the box.
  */
-public class JitsiMeetActivity extends FragmentActivity
+public class JitsiMeetActivity extends AppCompatActivity
     implements JitsiMeetActivityInterface {
 
     protected static final String TAG = JitsiMeetActivity.class.getSimpleName();
