@@ -4,6 +4,7 @@ import Spinner from '@atlaskit/spinner';
 import Bourne from '@hapi/bourne';
 import { jitsiLocalStorage } from '@jitsi/js-utils/jitsi-local-storage';
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 
 import { Dialog, hideDialog, openDialog } from '../../base/dialog';
 import { translate } from '../../base/i18n';
@@ -16,7 +17,7 @@ import { updateSettings } from '../../base/settings';
 import { Tooltip } from '../../base/tooltip';
 import { getLocalVideoTrack } from '../../base/tracks';
 import { showErrorNotification } from '../../notifications';
-import { toggleBackgroundEffect } from '../actions';
+import { toggleBackgroundEffect, virtualBackgroundTrackChanged } from '../actions';
 import { IMAGES, BACKGROUNDS_LIMIT, VIRTUAL_BACKGROUND_TYPE, type Image } from '../constants';
 import { toDataURL } from '../functions';
 import logger from '../logger';
@@ -126,6 +127,7 @@ function VirtualBackground({
     const localImages = jitsiLocalStorage.getItem('virtualBackgrounds');
     const [ storedImages, setStoredImages ] = useState<Array<Image>>((localImages && Bourne.parse(localImages)) || []);
     const [ loading, setLoading ] = useState(false);
+    const { disableScreensharingVirtualBackground } = useSelector(state => state['features/base/config']);
 
     const [ activeDesktopVideo ] = useState(_virtualBackground?.virtualSource?.videoType === VIDEO_TYPE.DESKTOP
         ? _virtualBackground.virtualSource
@@ -197,6 +199,10 @@ function VirtualBackground({
 
 
     const shareDesktop = useCallback(async () => {
+        if (disableScreensharingVirtualBackground) {
+            return;
+        }
+
         let isCancelled = false, url;
 
         try {
@@ -345,6 +351,7 @@ function VirtualBackground({
         dispatch(hideDialog());
         logger.info(`Virtual background type: '${typeof options.backgroundType === 'undefined'
             ? 'none' : options.backgroundType}' applied!`);
+        dispatch(virtualBackgroundTrackChanged());
     }, [ dispatch, options, _localFlipX ]);
 
     // Prevent the selection of a new virtual background if it has not been applied by default
@@ -438,25 +445,27 @@ function VirtualBackground({
                                 {t('virtualBackground.blur')}
                             </div>
                         </Tooltip>
-                        <Tooltip
-                            content = { t('virtualBackground.desktopShare') }
-                            position = { 'top' }>
-                            <div
-                                aria-checked = { _selectedThumbnail === 'desktop-share' }
-                                aria-label = { t('virtualBackground.desktopShare') }
-                                className = { _selectedThumbnail === 'desktop-share'
-                                    ? 'background-option desktop-share-selected'
-                                    : 'background-option desktop-share' }
-                                onClick = { shareDesktop }
-                                onKeyPress = { shareDesktopKeyPress }
-                                role = 'radio'
-                                tabIndex = { 0 }>
-                                <Icon
-                                    className = 'share-desktop-icon'
-                                    size = { 30 }
-                                    src = { IconShareDesktop } />
-                            </div>
-                        </Tooltip>
+                        {!disableScreensharingVirtualBackground && (
+                            <Tooltip
+                                content = { t('virtualBackground.desktopShare') }
+                                position = { 'top' }>
+                                <div
+                                    aria-checked = { _selectedThumbnail === 'desktop-share' }
+                                    aria-label = { t('virtualBackground.desktopShare') }
+                                    className = { _selectedThumbnail === 'desktop-share'
+                                        ? 'background-option desktop-share-selected'
+                                        : 'background-option desktop-share' }
+                                    onClick = { shareDesktop }
+                                    onKeyPress = { shareDesktopKeyPress }
+                                    role = 'radio'
+                                    tabIndex = { 0 }>
+                                    <Icon
+                                        className = 'share-desktop-icon'
+                                        size = { 30 }
+                                        src = { IconShareDesktop } />
+                                </div>
+                            </Tooltip>
+                        )}
                         {_images.map(image => (
                             <Tooltip
                                 content = { image.tooltip && t(`virtualBackground.${image.tooltip}`) }

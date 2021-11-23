@@ -2,8 +2,9 @@ import extraConfigWhitelist from './extraConfigWhitelist';
 
 /**
  * The config keys to whitelist, the keys that can be overridden.
- * Currently we can only whitelist the first part of the properties, like
- * 'p2p.enabled' we whitelist all p2p options.
+ * Whitelisting a key allows all properties under that key to be overridden.
+ * For example whitelisting 'p2p' allows 'p2p.enabled' to be overridden, and
+ * overriding 'p2p.enabled' does not modify any other keys under 'p2p'.
  * The whitelist is used only for config.js.
  *
  * @type Array
@@ -14,8 +15,10 @@ export default [
     '_peerConnStatusRtcMuteTimeout',
     'abTesting',
     'analytics.disabled',
+    'analytics.rtcstatsEnabled',
     'audioLevelsInterval',
     'audioQuality',
+    'autoKnockLobby',
     'apiLogLevels',
     'avgRtpStatsN',
     'backgroundAlpha',
@@ -107,6 +110,7 @@ export default [
     'disableRemoteMute',
     'disableResponsiveTiles',
     'disableRtx',
+    'disableScreensharingVirtualBackground',
     'disableShortcuts',
     'disableShowMoreStats',
     'disableRemoveRaisedHandOnFocus',
@@ -120,10 +124,12 @@ export default [
     'doNotFlipLocalVideo',
     'dropbox',
     'e2eeLabels',
+    'e2ee',
     'e2eping',
     'enableDisplayNameInStats',
     'enableEmailInStats',
     'enableEncodedTransformSupport',
+    'enableFacialRecognition',
     'enableIceRestart',
     'enableInsecureRoomNameWarning',
     'enableLayerSuspension',
@@ -153,6 +159,7 @@ export default [
     'hideParticipantsStats',
     'hideConferenceTimer',
     'hiddenDomain',
+    'hideAddRoomButton',
     'hideLobbyButton',
     'hosts',
     'iAmRecorder',
@@ -193,7 +200,7 @@ export default [
     'toolbarConfig',
     'useHostPageLocalStorage',
     'useTurnUdp',
-    'videoQuality.persist',
+    'videoQuality',
     'webrtcIceTcpDisable',
     'webrtcIceUdpDisable'
 ].concat(extraConfigWhitelist);
