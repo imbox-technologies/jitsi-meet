@@ -74,14 +74,29 @@ var config = {
         // callStatsThreshold: 5 // enable callstats for 5% of the users.
     },
 
+    // Feature Flags.
+    flags: {
+        // Enables source names in the signaling.
+        // sourceNameSignaling: false,
+    },
+
     // Disables moderator indicators.
     // disableModeratorIndicator: false,
 
     // Disables the reactions feature.
     // disableReactions: true,
 
+    // Disables the reactions moderation feature.
+    // disableReactionsModeration: false,
+
     // Disables polls feature.
     // disablePolls: false,
+
+    // Disables self-view tile. (hides it from tile view and from filmstrip)
+    // disableSelfView: false,
+
+    // Disables self-view settings in UI
+    // disableSelfViewSettings: false,
 
     // Disables ICE/UDP by filtering out local and remote UDP candidates in
     // signalling.
@@ -375,6 +390,13 @@ var config = {
     //    resizeDesktopForPresenter: false
     // },
 
+    // Notification timeouts
+    // notificationTimeouts: {
+    //     short: 2500,
+    //     medium: 5000,
+    //     long: 10000
+    // },
+
     // // Options for the recording limit notification.
     // recordingLimit: {
     //
@@ -392,6 +414,9 @@ var config = {
 
     // Disables or enables RTX (RFC 4588) (defaults to false).
     // disableRtx: false,
+
+    // Moves all Jitsi Meet 'beforeunload' logic (cleanup, leaving, disconnecting, etc) to the 'unload' event.
+    // disableBeforeUnloadHandlers: true,
 
     // Disables or enables TCC support in this client (default: enabled).
     // enableTcc: true,
@@ -459,11 +484,23 @@ var config = {
     // when the toolbar is shown on mouse movements
     // disable1On1Mode: null | false | true,
 
+    // Default local name to be displayed
+    // defaultLocalDisplayName: 'me',
+
+    // Default remote name to be displayed
+    // defaultRemoteDisplayName: 'Fellow Jitster',
+
+    // Hides the display name from the participant thumbnail
+    // hideDisplayName: false
+
     // Default language for the user interface.
     // defaultLanguage: 'en',
 
     // Disables profile and the edit of all fields from the profile settings (display name and email)
     // disableProfile: false,
+
+    // Hides the email section under profile settings.
+    // hideEmailInSettings: false,
 
     // Whether or not some features are checked based on token.
     // enableFeaturesBasedOnToken: false,
@@ -480,8 +517,14 @@ var config = {
     // and microsoftApiApplicationClientID
     // enableCalendarIntegration: false,
 
-    // When 'true', it shows an intermediate page before joining, where the user can configure their devices.
-    // prejoinPageEnabled: false,
+    // Configs for prejoin page.
+    // prejoinConfig: {
+    //     // When 'true', it shows an intermediate page before joining, where the user can configure their devices.
+    //     // This replaces `prejoinPageEnabled`.
+    //     enabled: true,
+    //     // List of buttons to hide from the extra join options dropdown.
+    //     hideExtraJoinButtons: ['no-audio', 'by-phone']
+    // },
 
     // When 'true', the user cannot edit the display name.
     // (Mainly useful when used in conjuction with the JWT so the JWT name becomes read only.)
@@ -502,6 +545,9 @@ var config = {
     // Whether to automatically copy invitation URL after creating a room.
     // Document should be focused for this option to work
     // enableAutomaticUrlCopy: false,
+
+    // Array with avatar URL prefixes that need to use CORS.
+    // corsAvatarURLs: [ 'https://www.gravatar.com/avatar/' ],
 
     // Base URL for a Gravatar-compatible service. Defaults to libravatar.
     // gravatarBaseURL: 'https://seccdn.libravatar.org/avatar/',
@@ -569,41 +615,61 @@ var config = {
     //     alwaysVisible: false
     // },
 
-    // Toolbar buttons which have their click event exposed through the API on
-    // `toolbarButtonClicked` event instead of executing the normal click routine.
+    // Toolbar buttons which have their click/tap event exposed through the API on
+    // `toolbarButtonClicked`. Passing a string for the button key will
+    // prevent execution of the click/tap routine; passing an object with `key` and
+    // `preventExecution` flag on false will not prevent execution of the click/tap
+    // routine. Below array with mixed mode for passing the buttons.
     // buttonsWithNotifyClick: [
-    //    'camera',
-    //    'chat',
-    //    'closedcaptions',
-    //    'desktop',
-    //    'download',
-    //    'embedmeeting',
-    //    'etherpad',
-    //    'feedback',
-    //    'filmstrip',
-    //    'fullscreen',
-    //    'hangup',
-    //    'help',
-    //    'invite',
-    //    'livestreaming',
-    //    'microphone',
-    //    'mute-everyone',
-    //    'mute-video-everyone',
-    //    'participants-pane',
-    //    'profile',
-    //    'raisehand',
-    //    'recording',
-    //    'security',
-    //    'select-background',
-    //    'settings',
-    //    'shareaudio',
-    //    'sharedvideo',
-    //    'shortcuts',
-    //    'stats',
-    //    'tileview',
-    //    'toggle-camera',
-    //    'videoquality',
-    //    '__end'
+    //     'camera',
+    //     {
+    //         key: 'chat',
+    //         preventExecution: false
+    //     },
+    //     {
+    //         key: 'closedcaptions',
+    //         preventExecution: true
+    //     },
+    //     'desktop',
+    //     'download',
+    //     'embedmeeting',
+    //     'etherpad',
+    //     'feedback',
+    //     'filmstrip',
+    //     'fullscreen',
+    //     'hangup',
+    //     'help',
+    //     {
+    //         key: 'invite',
+    //         preventExecution: false
+    //     },
+    //     'livestreaming',
+    //     'microphone',
+    //     'mute-everyone',
+    //     'mute-video-everyone',
+    //     'participants-pane',
+    //     'profile',
+    //     {
+    //         key: 'raisehand',
+    //         preventExecution: true
+    //     },
+    //     'recording',
+    //     'security',
+    //     'select-background',
+    //     'settings',
+    //     'shareaudio',
+    //     'sharedvideo',
+    //     'shortcuts',
+    //     'stats',
+    //     'tileview',
+    //     'toggle-camera',
+    //     'videoquality',
+    //     // The add passcode button from the security dialog.
+    //     {
+    //         key: 'add-passcode',
+    //         preventExecution: false
+    //     }
+    //     '__end'
     // ],
 
     // List of pre meeting screens buttons to hide. The values must be one or more of the 5 allowed buttons:
@@ -740,7 +806,7 @@ var config = {
         // module connects to the provided rtcstatsEndpoint and sends statistics regarding
         // PeerConnection states along with getStats metrics polled at the specified
         // interval.
-        // rtcstatsEnabled: true,
+        // rtcstatsEnabled: false,
 
         // In order to enable rtcstats one needs to provide a endpoint url.
         // rtcstatsEndpoint: wss://rtcstats-server-pilot.jitsi.net/,
@@ -979,11 +1045,14 @@ var config = {
     // If true, tile view will not be enabled automatically when the participants count threshold is reached.
     // disableTileView: true,
 
+    // If true, the tiles will be displayed contained within the available space rather than enlarged to cover it.
+    // disableTileEnlargement: true,
+
     // Controls the visibility and behavior of the top header conference info labels.
     // If a label's id is not in any of the 2 arrays, it will not be visible at all on the header.
     // conferenceInfo: {
     //     // those labels will not be hidden in tandem with the toolbox.
-    //     alwaysVisible: ['recording', 'local-recording'],
+    //     alwaysVisible: ['recording', 'local-recording', 'raised-hands-count'],
     //     // those labels will be auto-hidden in tandem with the toolbox buttons.
     //     autoHide: [
     //         'subject',
@@ -997,10 +1066,10 @@ var config = {
     // },
 
     // Hides the conference subject
-    // hideConferenceSubject: true,
+    // hideConferenceSubject: false,
 
     // Hides the conference timer.
-    // hideConferenceTimer: true,
+    // hideConferenceTimer: false,
 
     // Hides the recording label
     // hideRecordingLabel: false,
@@ -1010,6 +1079,9 @@ var config = {
 
     // Sets the conference subject
     // subject: 'Conference Subject',
+
+    // Sets the conference local subject
+    // localSubject: 'Conference Local Subject',
 
     // This property is related to the use case when jitsi-meet is used via the IFrame API. When the property is true
     // jitsi-meet will use the local storage of the host page instead of its own. This option is useful if the browser
@@ -1115,10 +1187,14 @@ var config = {
     //     'lobby.joinRejectedMessage', // shown when while in a lobby, user's request to join is rejected
     //     'lobby.notificationTitle', // shown when lobby is toggled and when join requests are allowed / denied
     //     'localRecording.localRecording', // shown when a local recording is started
+    //     'notify.chatMessages', // shown when receiving chat messages while the chat window is closed
     //     'notify.disconnected', // shown when a participant has left
     //     'notify.connectedOneMember', // show when a participant joined
     //     'notify.connectedTwoMembers', // show when two participants joined simultaneously
     //     'notify.connectedThreePlusMembers', // show when more than 2 participants joined simultaneously
+    //     'notify.leftOneMember', // show when a participant left
+    //     'notify.leftTwoMembers', // show when two participants left simultaneously
+    //     'notify.leftThreePlusMembers', // show when more than 2 participants left simultaneously
     //     'notify.grantedTo', // shown when moderator rights were granted to a participant
     //     'notify.invitedOneMember', // shown when 1 participant has been invited
     //     'notify.invitedThreePlusMembers', // shown when 3+ participants have been invited

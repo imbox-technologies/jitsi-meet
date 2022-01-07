@@ -13,6 +13,10 @@ import AddPeopleDialog
     from '../../../invite/components/add-people-dialog/native/AddPeopleDialog';
 import LobbyScreen from '../../../lobby/components/native/LobbyScreen';
 import { ParticipantsPane } from '../../../participants-pane/components/native';
+import SecurityDialog
+    from '../../../security/components/security-dialog/native/SecurityDialog';
+import SpeakerStats
+    from '../../../speaker-stats/components/native/SpeakerStats';
 import { getDisablePolls } from '../../functions';
 
 import Conference from './Conference';
@@ -26,7 +30,9 @@ import {
     lobbyScreenOptions,
     navigationContainerTheme,
     participantsScreenOptions,
-    sharedDocumentScreenOptions
+    securityScreenOptions,
+    sharedDocumentScreenOptions,
+    speakerStatsScreenOptions
 } from './ConferenceNavigatorScreenOptions';
 import { screen } from './routes';
 
@@ -35,14 +41,19 @@ const ConferenceStack = createStackNavigator();
 
 const ConferenceNavigationContainer = () => {
     const isPollsDisabled = useSelector(getDisablePolls);
-    const ChatScreen
-        = isPollsDisabled
-            ? Chat
-            : ChatAndPolls;
-    const chatScreenName
-        = isPollsDisabled
-            ? screen.conference.chat
-            : screen.conference.chatandpolls.main;
+    let ChatScreen;
+    let chatScreenName;
+    let chatTitleString;
+
+    if (isPollsDisabled) {
+        ChatScreen = Chat;
+        chatScreenName = screen.conference.chat;
+        chatTitleString = 'chat.title';
+    } else {
+        ChatScreen = ChatAndPolls;
+        chatScreenName = screen.conference.chatandpolls.main;
+        chatTitleString = 'chat.titleWithPolls';
+    }
     const { t } = useTranslation();
 
     return (
@@ -63,7 +74,7 @@ const ConferenceNavigationContainer = () => {
                         name = { chatScreenName }
                         options = {{
                             ...chatScreenOptions,
-                            title: t('chat.title')
+                            title: t(chatTitleString)
                         }} />
                     <ConferenceStack.Screen
                         component = { ParticipantsPane }
@@ -71,6 +82,20 @@ const ConferenceNavigationContainer = () => {
                         options = {{
                             ...participantsScreenOptions,
                             title: t('participantsPane.header')
+                        }} />
+                    <ConferenceStack.Screen
+                        component = { SecurityDialog }
+                        name = { screen.conference.security }
+                        options = {{
+                            ...securityScreenOptions,
+                            title: t('security.header')
+                        }} />
+                    <ConferenceStack.Screen
+                        component = { SpeakerStats }
+                        name = { screen.conference.speakerStats }
+                        options = {{
+                            ...speakerStatsScreenOptions,
+                            title: t('speakerStats.speakerStats')
                         }} />
                     <ConferenceStack.Screen
                         component = { LobbyScreen }

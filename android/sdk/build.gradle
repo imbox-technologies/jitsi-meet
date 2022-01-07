@@ -68,6 +68,7 @@ dependencies {
     implementation project(':react-native-async-storage')
     implementation project(':react-native-background-timer')
     implementation project(':react-native-calendar-events')
+    implementation project(':react-native-community_clipboard')
     implementation project(':react-native-community_netinfo')
     implementation project(':react-native-default-preference')
     implementation project(':react-native-gesture-handler')
@@ -217,7 +218,7 @@ publishing {
                     def groupId = it.moduleGroup
                     def artifactId = it.moduleName
 
-                    if (artifactId.startsWith('react-native-') && groupId.equals('jitsi-meet')) {
+                    if (artifactId.startsWith('react-native-')) {
                         groupId = rootProject.ext.moduleGroupId
                     }
 

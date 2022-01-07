@@ -19,6 +19,7 @@ export const colors = {
     primary09: '#CCDDF9',
     primary10: '#17A0DB',
     primary11: '#1081B2',
+    primary12: '#B8C7E0',
 
     surface00: '#111111',
     surface01: '#040404',
@@ -34,13 +35,13 @@ export const colors = {
     surface11: '#FFF',
     surface12: '#AAAAAA',
     surface13: '#495258',
+    surface14: '#555555',
 
     success04: '#189B55',
     success05: '#1EC26A',
 
     warning05: '#F8AE1A',
-    warning06: '#ED9E1B',
-    warning07: '#D77976',
+    warning06: '#FFD600',
 
     disabled01: '#00000040',
 
@@ -67,6 +68,7 @@ export const colorMap = {
     ui04: 'surface05',
     ui05: 'surface06',
     ui12: 'surface11',
+    ui13: 'surface14',
 
     // Primary buttons
     action01: 'primary05',
@@ -156,6 +158,9 @@ export const colorMap = {
     // Text for drawer menu displayed name
     text05: 'surface06',
 
+    // Text for saved input values
+    text06: 'surface03',
+
     // error messages
     textError: 'error06',
 
@@ -167,6 +172,12 @@ export const colorMap = {
 
     // Tertiary color for disabled actions
     icon03: 'surface07',
+
+    // Quaternary color for disabled actions
+    icon04: 'surface14',
+
+    // Quinary color for disabled actions
+    icon05: 'surface04',
 
     // Error message
     iconError: 'error06',
@@ -218,6 +229,8 @@ export const colorMap = {
     // Line separators
     border03: 'surface04',
 
+    border04: 'primary12',
+
     // Color for error border & message
     borderError: 'error06',
 
@@ -243,9 +256,6 @@ export const colorMap = {
 
     // Color for indicating a raised hand
     warning02: 'warning06',
-
-    // Color for insecure room
-    warning03: 'warning07',
 
     // Color for disabled tab
     tab01Disabled: 'disabled01',

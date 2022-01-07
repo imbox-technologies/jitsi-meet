@@ -37,26 +37,6 @@ export function isDisplayNameRequired(state: Object): boolean {
 }
 
 /**
- * Selector for determining if the display name from prejoin page is read only.
- *
- * @param {Object} state - The state of the app.
- * @returns {boolean}
- */
-export function isPrejoinNameReadOnly(state: Object): boolean {
-    return Boolean(state['features/base/jwt']?.user?.name);
-}
-
-/**
- * Selector for determining if the user has chosen to skip prejoin page.
- *
- * @param {Object} state - The state of the app.
- * @returns {boolean}
- */
-export function isPrejoinSkipped(state: Object) {
-    return state['features/prejoin'].userSelectedSkipPrejoin;
-}
-
-/**
  * Returns the text for the prejoin status bar.
  *
  * @param {Object} state - The state of the app.
@@ -156,21 +136,11 @@ export function isJoinByPhoneDialogVisible(state: Object): boolean {
  * @param {Object} state - The state of the app.
  * @returns {boolean}
  */
-export function isPrejoinPageEnabled(state: Object): boolean {
-    return navigator.product !== 'ReactNative'
-        && state['features/base/config'].prejoinPageEnabled
-        && !state['features/base/settings'].userSelectedSkipPrejoin
-        && !(state['features/base/config'].enableForcedReload && state['features/prejoin'].skipPrejoinOnReload);
-}
-
-/**
- * Returns true if the prejoin page is visible & active.
- *
- * @param {Object} state - The state of the app.
- * @returns {boolean}
- */
 export function isPrejoinPageVisible(state: Object): boolean {
-    return isPrejoinPageEnabled(state) && state['features/prejoin']?.showPrejoin;
+    return navigator.product !== 'ReactNative'
+        && state['features/base/config'].prejoinConfig?.enabled
+        && state['features/prejoin']?.showPrejoin
+        && !(state['features/base/config'].enableForcedReload && state['features/prejoin'].skipPrejoinOnReload);
 }
 
 /**
@@ -182,6 +152,6 @@ export function isPrejoinPageVisible(state: Object): boolean {
 export function shouldAutoKnock(state: Object): boolean {
     const { iAmRecorder, iAmSipGateway, autoKnockLobby } = state['features/base/config'];
 
-    return (isPrejoinPageEnabled(state) || autoKnockLobby || (iAmRecorder && iAmSipGateway))
+    return (isPrejoinPageVisible(state) || autoKnockLobby || (iAmRecorder && iAmSipGateway))
         && !state['features/lobby'].knocking;
 }

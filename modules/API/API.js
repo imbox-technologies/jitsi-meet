@@ -21,6 +21,7 @@ import {
     getCurrentConference,
     sendTones,
     setFollowMe,
+    setLocalSubject,
     setPassword,
     setSubject
 } from '../../react/features/base/conference';
@@ -66,8 +67,9 @@ import { toggleLobbyMode, setKnockingParticipantApproval } from '../../react/fea
 import { isForceMuted } from '../../react/features/participants-pane/functions';
 import { RECORDING_TYPES } from '../../react/features/recording/constants';
 import { getActiveSession } from '../../react/features/recording/functions';
-import { isScreenAudioSupported } from '../../react/features/screen-share';
+import { isScreenAudioSupported, isScreenVideoShared } from '../../react/features/screen-share';
 import { startScreenShareFlow, startAudioScreenShareFlow } from '../../react/features/screen-share/actions';
+import { toggleScreenshotCaptureSummary } from '../../react/features/screenshot-capture';
 import { playSharedVideo, stopSharedVideo } from '../../react/features/shared-video/actions.any';
 import { toggleTileView, setTileView } from '../../react/features/video-layout';
 import { muteAllParticipants } from '../../react/features/video-menu/actions';
@@ -134,6 +136,10 @@ function initCommands() {
         'display-name': displayName => {
             sendAnalytics(createApiEvent('display.name.changed'));
             APP.conference.changeLocalDisplayName(displayName);
+        },
+        'local-subject': localSubject => {
+            sendAnalytics(createApiEvent('local.subject.changed'));
+            APP.store.dispatch(setLocalSubject(localSubject));
         },
         'mute-everyone': mediaType => {
             const muteMediaType = mediaType ? mediaType : MEDIA_TYPE.AUDIO;
@@ -470,6 +476,9 @@ function initCommands() {
                 return;
             }
 
+            if (isScreenVideoShared(APP.store.getState())) {
+                APP.store.dispatch(toggleScreenshotCaptureSummary(true));
+            }
             conference.startRecording(recordingConfig);
         },
 
@@ -498,6 +507,7 @@ function initCommands() {
             const activeSession = getActiveSession(state, mode);
 
             if (activeSession && activeSession.id) {
+                APP.store.dispatch(toggleScreenshotCaptureSummary(false));
                 conference.stopRecording(activeSession.id);
             } else {
                 logger.error('No recording or streaming session found');
@@ -1470,12 +1480,14 @@ class API {
      * available.
      *
      * @param {string} link - The recording download link.
+     * @param {number} ttl - The recording download link time to live.
      * @returns {void}
      */
-    notifyRecordingLinkAvailable(link: string) {
+    notifyRecordingLinkAvailable(link: string, ttl: number) {
         this._sendEvent({
             name: 'recording-link-available',
-            link
+            link,
+            ttl
         });
     }
 
@@ -1509,12 +1521,14 @@ class API {
      * Notify external application ( if API is enabled) that a toolbar button was clicked.
      *
      * @param {string} key - The key of the toolbar button.
+     * @param {boolean} preventExecution - Whether execution of the button click was prevented or not.
      * @returns {void}
      */
-    notifyToolbarButtonClicked(key: string) {
+    notifyToolbarButtonClicked(key: string, preventExecution: boolean) {
         this._sendEvent({
             name: 'toolbar-button-clicked',
-            key
+            key,
+            preventExecution
         });
     }
 

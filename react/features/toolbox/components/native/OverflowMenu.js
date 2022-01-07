@@ -13,8 +13,10 @@ import { ParticipantsPaneButton } from '../../../participants-pane/components/na
 import { ReactionMenu } from '../../../reactions/components';
 import { isReactionsEnabled } from '../../../reactions/functions.any';
 import { LiveStreamButton, RecordButton } from '../../../recording';
-import SecurityDialogButton from '../../../security/components/security-dialog/SecurityDialogButton';
+import SecurityDialogButton
+    from '../../../security/components/security-dialog/native/SecurityDialogButton';
 import { SharedVideoButton } from '../../../shared-video/components';
+import SpeakerStatsButton from '../../../speaker-stats/components/native/SpeakerStatsButton';
 import { ClosedCaptionButton } from '../../../subtitles';
 import { TileViewButton } from '../../../video-layout';
 import styles from '../../../video-menu/components/native/styles';
@@ -151,6 +153,7 @@ class OverflowMenu extends PureComponent<Props, State> {
                 <Divider style = { styles.divider } />
                 <SharedVideoButton { ...buttonProps } />
                 <ScreenSharingButton { ...buttonProps } />
+                <SpeakerStatsButton { ...buttonProps } />
                 {!toolbarButtons.has('togglecamera') && <ToggleCameraButton { ...buttonProps } />}
                 {!toolbarButtons.has('tileview') && <TileViewButton { ...buttonProps } />}
                 <Divider style = { styles.divider } />

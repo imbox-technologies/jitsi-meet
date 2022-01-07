@@ -12,6 +12,7 @@ import { VIRTUAL_BACKGROUND_TRACK_CHANGED } from '../virtual-background/actionTy
 
 import { ADD_FACIAL_EXPRESSION } from './actionTypes';
 import {
+    addToFacialExpressionsBuffer,
     changeTrack,
     loadWorker,
     resetTrack,
@@ -29,7 +30,6 @@ MiddlewareRegistry.register(({ dispatch, getState }) => next => action => {
     }
     if (action.type === CONFERENCE_JOINED) {
         dispatch(loadWorker());
-        dispatch(startFacialRecognition());
 
         return next(action);
     }
@@ -97,6 +97,10 @@ MiddlewareRegistry.register(({ dispatch, getState }) => next => action => {
             sendFacialExpressionToParticipants(conference, action.facialExpression, action.duration);
         }
         sendFacialExpressionToServer(conference, action.facialExpression, action.duration);
+        dispatch(addToFacialExpressionsBuffer({
+            emotion: action.facialExpression,
+            timestamp: action.timestamp
+        }));
 
         return next(action);
     }

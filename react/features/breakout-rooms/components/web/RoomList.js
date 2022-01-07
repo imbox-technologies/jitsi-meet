@@ -16,7 +16,15 @@ import { LeaveButton } from './LeaveButton';
 import RoomActionEllipsis from './RoomActionEllipsis';
 import { RoomContextMenu } from './RoomContextMenu';
 
-export const RoomList = () => {
+type Props = {
+
+    /**
+     * Participants search string.
+     */
+    searchString: string
+}
+
+export const RoomList = ({ searchString }: Props) => {
     const currentRoomId = useSelector(getCurrentRoomId);
     const rooms = Object.values(useSelector(getBreakoutRooms, equals))
                     .filter((room: Object) => room.id !== currentRoomId)
@@ -44,10 +52,12 @@ export const RoomList = () => {
                             isHighlighted = { raiseContext.entity === room }
                             onLeave = { lowerMenu }
                             onRaiseMenu = { onRaiseMenu(room) }
-                            room = { room }>
+                            room = { room }
+                            searchString = { searchString }>
                             {!_overflowDrawer && <>
                                 <JoinActionButton room = { room } />
-                                {isLocalModerator && <RoomActionEllipsis onClick = { toggleMenu(room) } />}
+                                {isLocalModerator && !room.isMainRoom
+                                    && <RoomActionEllipsis onClick = { toggleMenu(room) } />}
                             </>}
                         </CollapsibleRoom>
                     </React.Fragment>

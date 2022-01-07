@@ -20,12 +20,12 @@ export type Props = {
     /**
      * Callback invoked when the custom button is clicked.
      */
-    customActionHandler: Function,
+    customActionHandler: Function[],
 
     /**
      * The text to display as button in the notification for the custom action.
      */
-    customActionNameKey: string,
+    customActionNameKey: string[],
 
     /**
      * The text to display in the body of the notification. If not passed
@@ -54,6 +54,12 @@ export type Props = {
      * message.
      */
     hideErrorSupportLink: boolean,
+
+    /**
+     * The type of icon to be displayed. If not passed in, the appearance
+     * type will be used.
+     */
+    icon?: String,
 
     /**
      * Whether or not the dismiss button should be displayed.

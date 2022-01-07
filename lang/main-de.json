@@ -39,6 +39,9 @@
     "audioOnly": {
         "audioOnly": "Geringe Bandbreite"
     },
+    "blankPage": {
+        "meetingEnded": "Konferenz beendet."
+    },
     "breakoutRooms": {
         "defaultName": "Breakout-Raum #{{index}}",
         "mainRoom": "Hauptraum",
@@ -51,6 +54,11 @@
             "more": "Mehr",
             "remove": "Entfernen",
             "sendToBreakoutRoom": "Anwesende in Breakout-Raum verschieben:"
+        },
+        "notifications": {
+            "joinedTitle": "Breakout-Räume",
+            "joined": "Breakout-Raum \"{{name}}\" betreten",
+            "joinedMainRoom": "Hauptraum betreten"
         }
     },
     "calendarSync": {
@@ -172,7 +180,8 @@
         "joinInApp": "Mit der App am Meeting teilnehmen",
         "launchWebButton": "Im Web öffnen",
         "title": "Die Konferenz wird in {{app}} geöffnet …",
-        "tryAgainButton": "Erneut mit der nativen Applikation versuchen"
+        "tryAgainButton": "Erneut mit der nativen Applikation versuchen",
+        "unsupportedBrowser": "Sie verwenden einen Browser, der noch nicht unterstützt wird."
     },
     "defaultLink": "Bsp.: {{url}}",
     "defaultNickname": "Z. B. Jane Pink",
@@ -410,7 +419,8 @@
         "desktopShareError": "Desktop konnte nicht freigegeben werden",
         "desktopShare": "Desktopfreigabe",
         "webAssemblyWarning": "WebAssembly wird nicht unterstützt",
-        "backgroundEffectError": "Failed to apply background effect."
+        "webAssemblyWarningDescription": "WebAssembly ist deaktiviert oder wird in diesem Browser nicht unterstützt",
+        "backgroundEffectError": "Hintergrund konnte nicht aktiviert werden."
     },
     "feedback": {
         "average": "Durchschnittlich",
@@ -569,10 +579,14 @@
     "notify": {
         "allowAction": "Erlauben",
         "allowedUnmute": "Sie können die Stummschaltung aufheben, Ihre Kamera einschalten oder Ihren Bildschirm teilen.",
+        "audioUnmuteBlockedTitle": "Stummschaltung kann nicht aufgehoben werden!",
+        "audioUnmuteBlockedDescription": "Díe Stummschaltung kann aus Überlastungsschutzgründen temporär nicht aufgehoben werden.",
+        "chatMessages": "Chatnachrichten",
         "connectedOneMember": "{{name}} nimmt am Meeting teil",
         "connectedThreePlusMembers": "{{name}} und {{count}} andere Personen nehmen am Meeting teil",
         "connectedTwoMembers": "{{first}} und {{second}} nehmen am Meeting teil",
         "disconnected": "getrennt",
+        "displayNotifications": "Benachrichtigungen anzeigen für",
         "focus": "Konferenzleitung",
         "focusFail": "{{component}} ist im Moment nicht verfügbar – wiederholen in {{ms}} Sekunden",
         "hostAskedUnmute": "Die Moderation bittet Sie, das Mikrofon zu aktivieren",
@@ -580,6 +594,9 @@
         "invitedThreePlusMembers": "{{name}} und {{count}} andere wurden eingeladen",
         "invitedTwoMembers": "{{first}} und {{second}} wurden eingeladen",
         "kickParticipant": "{{kicked}} wurde von {{kicker}} ausgewiesen",
+        "leftOneMember": "{{name}} hat die Konferenz verlassen",
+        "leftThreePlusMembers": "{{name}} und Weitere haben die Konferenz verlassen",
+        "leftTwoMembers": "{{first}} und {{second}} haben die Konferenz verlassen",
         "me": "Ich",
         "moderator": "Moderationsrechte vergeben!",
         "muted": "Der Konferenz wurde stumm beigetreten.",
@@ -591,8 +608,10 @@
         "passwordRemovedRemotely": "$t(lockRoomPasswordUppercase) von einer anderen Person entfernt",
         "passwordSetRemotely": "$t(lockRoomPasswordUppercase) von einer anderen Person gesetzt",
         "raisedHand": "{{name}} möchte sprechen.",
+        "raisedHands": "{{participantName}} und {{raisedHands}} weitere möchten sprechen",
         "screenShareNoAudio": "Die Option \"Audio freigeben\" wurde bei der Auswahl des Fensters nicht ausgewählt.",
         "screenShareNoAudioTitle": "Share audio was not checked",
+        "selfViewTitle": "Sie können die eigene Ansicht immer in den Einstellungen reaktivieren",
         "somebody": "Jemand",
         "startSilentTitle": "Sie sind ohne Audioausgabe beigetreten!",
         "startSilentDescription": "Treten Sie dem Meeting noch einmal bei, um Ihr Audio zu aktivieren",
@@ -619,7 +638,10 @@
         "moderationToggleDescription": "von {{participantDisplayName}}",
         "raiseHandAction": "Melden",
         "reactionSounds": "Interaktionstöne deaktivieren",
-        "groupTitle": "Benachrichtigungen"
+        "reactionSoundsForAll": "Interaktionstöne für alle deaktivieren",
+        "groupTitle": "Benachrichtigungen",
+        "videoUnmuteBlockedTitle": "Kamera und Bildschirmfreigabe kann nicht aktiviert werden!",
+        "videoUnmuteBlockedDescription": "Die Kamera und Bildschirmfreigabe kann aus Überlastungsschutzgründen temporär nicht eingeschaltet werden."
     },
     "participantsPane": {
         "close": "Schließen",
@@ -644,7 +666,8 @@
             "stopEveryonesVideo": "Alle Kameras ausschalten",
             "stopVideo": "Kamera ausschalten",
             "unblockEveryoneMicCamera": "Kamera und Mikrofon von allen entsperren",
-            "videoModeration": "Kamera einschalten"
+            "videoModeration": "Kamera einschalten",
+            "moreModerationControls": "Weitere Moderationsoptionen"
         },
         "search": "Suche Anwesende"
     },
@@ -761,6 +784,7 @@
         "title": "Profil"
     },
     "raisedHand": "Ich möchte sprechen",
+    "raisedHandsLabel": "Anzahl gehobener Hände",
     "recording": {
         "limitNotificationDescriptionWeb": "Wegen hoher Nachfrage ist Ihre Aufnahme auf {{limit}} Min. begrenzt. Für unlimitierte Aufnahmen nutzen Sie bitte <a href={{url}} rel='noopener noreferrer' target='_blank'>{{app}}</a>.",
         "limitNotificationDescriptionNative": "Wegen hoher Nachfrage ist Ihre Aufnahme auf {{limit}} Min. begrenzt. Für unlimitierte Aufnahmen nutzen Sie bitte <3>{{app}}</3>.",
@@ -803,8 +827,8 @@
     "security": {
         "about": "Sie können Ihre Konferenz mit einem Passwort sichern. Teilnehmer müssen dieses eingeben, bevor sie an der Sitzung teilnehmen dürfen.",
         "aboutReadOnly": "Mit Moderationsrechten kann die Konferenz mit einem Passwort gesichert werden. Personen müssen dieses eingeben, bevor sie an der Sitzung teilnehmen dürfen.",
-        "insecureRoomNameWarning": "Der Raumname ist unsicher. Unerwünschte Teilnehmer könnten Ihrer Konferenz beitreten",
-        "securityOptions": "Sicherheitsoptionen"
+        "header": "Sicherheitsoptionen",
+        "insecureRoomNameWarning": "Der Raumname ist unsicher. Unerwünschte Teilnehmer könnten Ihrer Konferenz beitreten"
     },
     "settings": {
         "calendar": {
@@ -836,9 +860,11 @@
         "selectAudioOutput": "Audioausgabe",
         "selectCamera": "Kamera",
         "selectMic": "Mikrofon",
+        "selfView": "Eigene Ansicht",
         "sounds": "Hinweistöne",
         "speakers": "Lautsprecher",
         "startAudioMuted": "Alle Personen treten stummgeschaltet bei",
+        "startReactionsMuted": "Interaktionstöne für alle deaktivieren",
         "startVideoMuted": "Alle Personen treten ohne Video bei",
         "talkWhileMuted": "Wenn bei Stummschaltung gesprochen wird",
         "title": "Einstellungen"
@@ -871,20 +897,20 @@
     },
     "speaker": "Sprecher/-in",
     "speakerStats": {
-        "search": "Suche",
+        "angry": "Sauer",
+        "disgusted": "Angeekelt",
+        "fearful": "Ängstlich",
+        "happy": "Fröhlich",
         "hours": "{{count}} Std. ",
         "minutes": "{{count}} Min. ",
         "name": "Name",
-        "seconds": "{{count}} Sek.",
-        "speakerStats": "Sprechstatistik",
-        "speakerTime": "Sprechzeit",
-        "happy": "Fröhlich",
         "neutral": "Neutral",
         "sad": "Traurig",
-        "surprised": "Überrascht",
-        "angry": "Sauer",
-        "fearful": "Ängstlich",
-        "disgusted": "Angeekelt"
+        "search": "Suche",
+        "seconds": "{{count}} Sek.",
+        "speakerTime": "Sprechzeit",
+        "speakerStats": "Sprechstatistik",
+        "surprised": "Überrascht"
     },
     "startupoverlay": {
         "policyText": " ",
@@ -1104,6 +1130,7 @@
         "domuteVideoOfOthers": "Alle anderen Kameras auschalten",
         "flip": "Spiegeln",
         "grantModerator": "Moderationsrechte vergeben",
+        "hideSelfView": "Eigene Ansicht ausblenden",
         "kick": "Hinauswerfen",
         "moderator": "Moderation",
         "mute": "Person ist stumm geschaltet",

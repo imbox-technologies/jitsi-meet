@@ -1,10 +1,13 @@
 // @flow
 
+import { batch } from 'react-redux';
+
 import UIEvents from '../../../../service/UI/UIEvents';
 import { showModeratedNotification } from '../../av-moderation/actions';
 import { shouldShowModeratedNotification } from '../../av-moderation/functions';
 import { hideNotification, isModerationNotificationDisplayed } from '../../notifications';
 import { isPrejoinPageVisible } from '../../prejoin/functions';
+import { getCurrentConference } from '../conference/functions';
 import { getAvailableDevices } from '../devices/actions';
 import {
     CAMERA_FACING_MODE,
@@ -17,7 +20,7 @@ import {
     toggleCameraFacingMode,
     VIDEO_TYPE
 } from '../media';
-import { MiddlewareRegistry } from '../redux';
+import { MiddlewareRegistry, StateListenerRegistry } from '../redux';
 
 import {
     TRACK_ADDED,
@@ -28,8 +31,10 @@ import {
 } from './actionTypes';
 import {
     createLocalTracksA,
+    destroyLocalTracks,
     showNoDataFromSourceVideoError,
     toggleScreensharing,
+    trackRemoved,
     trackNoDataFromSourceNotificationInfoChanged
 } from './actions';
 import {
@@ -203,6 +208,29 @@ MiddlewareRegistry.register(store => next => action => {
 
     return next(action);
 });
+
+/**
+ * Set up state change listener to perform maintenance tasks when the conference
+ * is left or failed, remove all tracks from the store.
+ */
+StateListenerRegistry.register(
+    state => getCurrentConference(state),
+    (conference, { dispatch, getState }, prevConference) => {
+
+        // conference keep flipping while we are authenticating, skip clearing while we are in that process
+        if (prevConference && !conference && !getState()['features/base/conference'].authRequired) {
+
+            // Clear all tracks.
+            const remoteTracks = getState()['features/base/tracks'].filter(t => !t.local);
+
+            batch(() => {
+                dispatch(destroyLocalTracks());
+                for (const track of remoteTracks) {
+                    dispatch(trackRemoved(track.jitsiTrack));
+                }
+            });
+        }
+    });
 
 /**
  * Handles no data from source errors.

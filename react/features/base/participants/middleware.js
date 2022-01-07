@@ -1,12 +1,17 @@
 // @flow
 
+import i18n from 'i18next';
 import { batch } from 'react-redux';
 
 import UIEvents from '../../../../service/UI/UIEvents';
 import { approveParticipant } from '../../av-moderation/actions';
 import { toggleE2EE } from '../../e2ee/actions';
 import { MAX_MODE } from '../../e2ee/constants';
-import { NOTIFICATION_TIMEOUT, showNotification } from '../../notifications';
+import {
+    NOTIFICATION_TIMEOUT_TYPE,
+    RAISE_HAND_NOTIFICATION_ID,
+    showNotification
+} from '../../notifications';
 import { isForceMuted } from '../../participants-pane/functions';
 import { CALLING, INVITED } from '../../presence-status';
 import { RAISE_HAND_SOUND_ID } from '../../reactions/constants';
@@ -284,6 +289,12 @@ StateListenerRegistry.register(
                     })),
                 'raisedHand': (participant, value) =>
                     _raiseHandUpdated(store, conference, participant.getId(), value),
+                'region': (participant, value) =>
+                    store.dispatch(participantUpdated({
+                        conference,
+                        id: participant.getId(),
+                        region: value
+                    })),
                 'remoteControlSessionStatus': (participant, value) =>
                     store.dispatch(participantUpdated({
                         conference,
@@ -483,8 +494,8 @@ function _participantJoinedOrUpdated(store, next, action) {
             const updatedParticipant = getParticipantById(getState(), participantId);
 
             getFirstLoadableAvatarUrl(updatedParticipant, store)
-                .then(url => {
-                    dispatch(setLoadableAvatarUrl(participantId, url));
+                .then(urlData => {
+                    dispatch(setLoadableAvatarUrl(participantId, urlData?.src, urlData?.isUsingCORS));
                 });
         }
     }
@@ -550,19 +561,34 @@ function _raiseHandUpdated({ dispatch, getState }, conference, participantId, ne
     }
 
     const action = shouldDisplayAllowAction ? {
-        customActionNameKey: 'notify.allowAction',
-        customActionHandler: () => dispatch(approveParticipant(participantId))
+        customActionNameKey: [ 'notify.allowAction' ],
+        customActionHandler: [ () => dispatch(approveParticipant(participantId)) ]
     } : {};
 
     if (raisedHandTimestamp) {
+        let notificationTitle;
+        const participantName = getParticipantDisplayName(state, participantId);
+        const { raisedHandsQueue } = state['features/base/participants'];
+
+        if (raisedHandsQueue.length > 1) {
+            const raisedHands = raisedHandsQueue.length - 1;
+
+            notificationTitle = i18n.t('notify.raisedHands', {
+                participantName,
+                raisedHands
+            });
+        } else {
+            notificationTitle = participantName;
+        }
         dispatch(showNotification({
             titleKey: 'notify.somebody',
-            title: getParticipantDisplayName(state, participantId),
+            title: notificationTitle,
             descriptionKey: 'notify.raisedHand',
             raiseHandNotification: true,
             concatText: true,
+            uid: RAISE_HAND_NOTIFICATION_ID,
             ...action
-        }, NOTIFICATION_TIMEOUT * (shouldDisplayAllowAction ? 2 : 1)));
+        }, shouldDisplayAllowAction ? NOTIFICATION_TIMEOUT_TYPE.MEDIUM : NOTIFICATION_TIMEOUT_TYPE.SHORT));
         dispatch(playSound(RAISE_HAND_SOUND_ID));
     }
 }

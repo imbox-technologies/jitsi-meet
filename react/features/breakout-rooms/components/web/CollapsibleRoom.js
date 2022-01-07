@@ -4,11 +4,13 @@ import { makeStyles } from '@material-ui/styles';
 import clsx from 'clsx';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 
 import { ListItem } from '../../../base/components';
 import { Icon, IconArrowDown, IconArrowUp } from '../../../base/icons';
 import ParticipantItem from '../../../participants-pane/components/web/ParticipantItem';
 import { ACTION_TRIGGER } from '../../../participants-pane/constants';
+import { participantMatchesSearch } from '../../../participants-pane/functions';
 
 type Props = {
 
@@ -41,6 +43,11 @@ type Props = {
      * Room reference.
      */
     room: Object,
+
+    /**
+     * Participants search string.
+     */
+    searchString: string
 }
 
 const useStyles = makeStyles(theme => {
@@ -77,7 +84,8 @@ export const CollapsibleRoom = ({
     isHighlighted,
     onRaiseMenu,
     onLeave,
-    room
+    room,
+    searchString
 }: Props) => {
     const { t } = useTranslation();
     const styles = useStyles();
@@ -88,6 +96,7 @@ export const CollapsibleRoom = ({
     const raiseMenu = useCallback(target => {
         onRaiseMenu(target);
     }, [ onRaiseMenu ]);
+    const { defaultRemoteDisplayName } = useSelector(state => state['features/base/config']);
 
     const arrow = (<div className = { styles.arrowContainer }>
         <Icon
@@ -114,13 +123,14 @@ export const CollapsibleRoom = ({
                 textChildren = { roomName }
                 trigger = { actionsTrigger } />
             {!collapsed && room?.participants
-                && Object.values(room?.participants || {}).map((p: Object) => (
-                    <ParticipantItem
-                        displayName = { p.displayName }
-                        key = { p.jid }
-                        local = { false }
-                        participantID = { p.jid } />
-                ))
+                && Object.values(room?.participants || {}).map((p: Object) =>
+                    participantMatchesSearch(p, searchString) && (
+                        <ParticipantItem
+                            displayName = { p.displayName || defaultRemoteDisplayName }
+                            key = { p.jid }
+                            local = { false }
+                            participantID = { p.jid } />
+                    ))
             }
         </>
     );

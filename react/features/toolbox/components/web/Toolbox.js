@@ -1,6 +1,7 @@
 // @flow
 
 import { withStyles } from '@material-ui/core/styles';
+import clsx from 'clsx';
 import React, { Component, Fragment } from 'react';
 
 import keyboardShortcut from '../../../../../modules/keyboardshortcut/keyboardshortcut';
@@ -42,7 +43,7 @@ import { ParticipantsPaneButton } from '../../../participants-pane/components/we
 import { getParticipantsPaneOpen } from '../../../participants-pane/functions';
 import { addReactionToBuffer } from '../../../reactions/actions.any';
 import { ReactionsMenuButton } from '../../../reactions/components';
-import { REACTIONS } from '../../../reactions/constants';
+import { REACTIONS, REACTIONS_MENU_HEIGHT } from '../../../reactions/constants';
 import { isReactionsEnabled } from '../../../reactions/functions.any';
 import {
     LiveStreamButton,
@@ -54,10 +55,10 @@ import {
     ShareAudioButton,
     startScreenShareFlow
 } from '../../../screen-share/';
-import SecurityDialogButton from '../../../security/components/security-dialog/SecurityDialogButton';
+import SecurityDialogButton from '../../../security/components/security-dialog/web/SecurityDialogButton';
 import { SettingsButton } from '../../../settings';
 import { SharedVideoButton } from '../../../shared-video/components';
-import { SpeakerStatsButton } from '../../../speaker-stats';
+import { SpeakerStatsButton } from '../../../speaker-stats/components/web';
 import {
     ClosedCaptionButton
 } from '../../../subtitles';
@@ -67,8 +68,7 @@ import {
     toggleTileView
 } from '../../../video-layout';
 import { VideoQualityDialog, VideoQualityButton } from '../../../video-quality/components';
-import { VideoBackgroundButton } from '../../../virtual-background';
-import { toggleBackgroundEffect } from '../../../virtual-background/actions';
+import { VideoBackgroundButton, toggleBackgroundEffect } from '../../../virtual-background';
 import { VIRTUAL_BACKGROUND_TYPE } from '../../../virtual-background/constants';
 import {
     setFullScreen,
@@ -76,8 +76,8 @@ import {
     setToolbarHovered,
     showToolbox
 } from '../../actions';
-import { THRESHOLDS, NOT_APPLICABLE } from '../../constants';
-import { isToolboxVisible } from '../../functions';
+import { THRESHOLDS, NOT_APPLICABLE, DRAWER_MAX_HEIGHT, NOTIFY_CLICK_MODE } from '../../constants';
+import { isDesktopShareButtonDisabled, isToolboxVisible } from '../../functions';
 import DownloadButton from '../DownloadButton';
 import HangupButton from '../HangupButton';
 import HelpButton from '../HelpButton';
@@ -106,7 +106,7 @@ type Props = {
     /**
      * Toolbar buttons which have their click exposed through the API.
      */
-    _buttonsWithNotifyClick: Array<string>,
+    _buttonsWithNotifyClick: Array<string | Object>,
 
     /**
      * Whether or not the chat feature is currently displayed.
@@ -122,6 +122,11 @@ type Props = {
      * The {@code JitsiConference} for the current conference.
      */
     _conference: Object,
+
+    /**
+     * Whether or not screensharing button is disabled.
+     */
+    _desktopSharingButtonDisabled: boolean,
 
     /**
      * The tooltip key to use when screensharing is disabled. Or undefined
@@ -179,6 +184,11 @@ type Props = {
      * The JitsiLocalTrack to display.
      */
     _localVideo: Object,
+
+    /**
+     *Whether or not the overflow menu is displayed in a drawer drawer.
+     */
+    _overflowDrawer: boolean,
 
     /**
      * Whether or not the overflow menu is visible.
@@ -266,6 +276,11 @@ const styles = theme => {
             listStyleType: 'none',
             padding: '8px 0',
             backgroundColor: theme.palette.ui03
+        },
+
+        overflowMenuDrawer: {
+            overflowY: 'auto',
+            height: `calc(${DRAWER_MAX_HEIGHT} - ${REACTIONS_MENU_HEIGHT}px - 16px)`
         }
     };
 };
@@ -527,6 +542,7 @@ class Toolbox extends Component<Props> {
     _doToggleScreenshare() {
         const {
             _backgroundType,
+            _desktopSharingButtonDisabled,
             _desktopSharingEnabled,
             _localVideo,
             _virtualSource,
@@ -548,7 +564,7 @@ class Toolbox extends Component<Props> {
             return;
         }
 
-        if (_desktopSharingEnabled) {
+        if (_desktopSharingEnabled && !_desktopSharingButtonDisabled) {
             dispatch(startScreenShareFlow());
         }
     }
@@ -809,22 +825,31 @@ class Toolbox extends Component<Props> {
     }
 
     /**
-     * Overwrites click handlers for buttons in case click is exposed through the iframe API.
+     * Sets the notify click mode for the buttons.
      *
      * @param {Object} buttons - The list of toolbar buttons.
      * @returns {void}
      */
-    _overwriteButtonsClickHandlers(buttons) {
+    _setButtonsNotifyClickMode(buttons) {
         if (typeof APP === 'undefined' || !this.props._buttonsWithNotifyClick?.length) {
             return;
         }
 
         Object.values(buttons).forEach((button: any) => {
-            if (
-                typeof button === 'object'
-                && this.props._buttonsWithNotifyClick.includes(button.key)
-            ) {
-                button.handleClick = () => APP.API.notifyToolbarButtonClicked(button.key);
+            if (typeof button === 'object') {
+                const notify = this.props._buttonsWithNotifyClick.find(
+                    (btn: string | Object) =>
+                        (typeof btn === 'string' && btn === button.key)
+                        || (typeof btn === 'object' && btn.key === button.key)
+                );
+
+                if (notify) {
+                    const notifyMode = typeof notify === 'string' || notify.preventExecution
+                        ? NOTIFY_CLICK_MODE.PREVENT_AND_NOTIFY
+                        : NOTIFY_CLICK_MODE.ONLY_NOTIFY;
+
+                    button.notifyMode = notifyMode;
+                }
             }
         });
     }
@@ -844,7 +869,7 @@ class Toolbox extends Component<Props> {
 
         const buttons = this._getAllButtons();
 
-        this._overwriteButtonsClickHandlers(buttons);
+        this._setButtonsNotifyClickMode(buttons);
         const isHangupVisible = isToolbarButtonEnabled('hangup', _toolbarButtons);
         const { order } = THRESHOLDS.find(({ width }) => _clientWidth > width)
             || THRESHOLDS[THRESHOLDS.length - 1];
@@ -1040,6 +1065,10 @@ class Toolbox extends Component<Props> {
      * @returns {void}
      */
     _onShortcutToggleScreenshare() {
+        // Ignore the shortcut if the button is disabled.
+        if (this.props._desktopSharingButtonDisabled) {
+            return;
+        }
         sendAnalytics(createShortcutEvent(
                 'toggle.screen.sharing',
                 ACTION_SHORTCUT_TRIGGERED,
@@ -1225,6 +1254,7 @@ class Toolbox extends Component<Props> {
     _renderToolboxContent() {
         const {
             _isMobile,
+            _overflowDrawer,
             _overflowMenuVisible,
             _reactionsEnabled,
             _toolbarButtons,
@@ -1254,6 +1284,7 @@ class Toolbox extends Component<Props> {
                         {mainMenuButtons.map(({ Content, key, ...rest }) => Content !== Separator && (
                             <Content
                                 { ...rest }
+                                buttonKey = { key }
                                 key = { key } />))}
 
                         {Boolean(overflowMenuButtons.length) && (
@@ -1267,7 +1298,9 @@ class Toolbox extends Component<Props> {
                                 }>
                                 <ul
                                     aria-label = { t(toolbarAccLabel) }
-                                    className = { classes.overflowMenu }
+                                    className = { clsx(classes.overflowMenu,
+                                        _overflowDrawer && classes.overflowMenuDrawer)
+                                    }
                                     id = 'overflow-menu'
                                     onKeyDown = { this._onEscKey }
                                     role = 'menu'>
@@ -1279,6 +1312,7 @@ class Toolbox extends Component<Props> {
                                                 {showSeparator && <Separator key = { `hr${group}` } />}
                                                 <Content
                                                     { ...rest }
+                                                    buttonKey = { key }
                                                     key = { key }
                                                     showLabel = { true } />
                                             </Fragment>
@@ -1319,7 +1353,8 @@ function _mapStateToProps(state, ownProps) {
     } = state['features/base/config'];
     const {
         fullScreen,
-        overflowMenuVisible
+        overflowMenuVisible,
+        overflowDrawer
     } = state['features/toolbox'];
     const localParticipant = getLocalParticipant(state);
     const localVideo = getLocalVideoTrack(state['features/base/tracks']);
@@ -1352,6 +1387,7 @@ function _mapStateToProps(state, ownProps) {
         _clientWidth: clientWidth,
         _conference: conference,
         _desktopSharingEnabled: desktopSharingEnabled,
+        _desktopSharingButtonDisabled: isDesktopShareButtonDisabled(state),
         _desktopSharingDisabledTooltipKey: desktopSharingDisabledTooltipKey,
         _dialog: Boolean(state['features/base/dialog'].component),
         _feedbackConfigured: Boolean(callStatsID),
@@ -1363,6 +1399,7 @@ function _mapStateToProps(state, ownProps) {
         _localParticipantID: localParticipant?.id,
         _localVideo: localVideo,
         _overflowMenuVisible: overflowMenuVisible,
+        _overflowDrawer: overflowDrawer,
         _participantsPaneOpen: getParticipantsPaneOpen(state),
         _raisedHand: hasRaisedHand(localParticipant),
         _reactionsEnabled: isReactionsEnabled(state),
