@@ -28,7 +28,8 @@
 typedef enum {
     kAudioModeDefault,
     kAudioModeAudioCall,
-    kAudioModeVideoCall
+    kAudioModeVideoCall,
+    kAudioModeEarpieceCall
 } JitsiMeetAudioMode;
 
 // Events
@@ -75,7 +76,8 @@ RCT_EXPORT_MODULE();
         @"DEVICE_CHANGE_EVENT": kDevicesChanged,
         @"AUDIO_CALL" : [NSNumber numberWithInt: kAudioModeAudioCall],
         @"DEFAULT"    : [NSNumber numberWithInt: kAudioModeDefault],
-        @"VIDEO_CALL" : [NSNumber numberWithInt: kAudioModeVideoCall]
+        @"VIDEO_CALL" : [NSNumber numberWithInt: kAudioModeVideoCall],
+        @"EARPIECE_CALL" : [NSNumber numberWithInt: kAudioModeEarpieceCall]
     };
 };
 
@@ -95,19 +97,19 @@ RCT_EXPORT_MODULE();
 
         audioCallConfig = [[RTCAudioSessionConfiguration alloc] init];
         audioCallConfig.category = AVAudioSessionCategoryPlayAndRecord;
-        audioCallConfig.categoryOptions = AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionDefaultToSpeaker;
-        audioCallConfig.mode = AVAudioSessionModeVoiceChat;
+        audioCallConfig.categoryOptions = AVAudioSessionCategoryOptionAllowBluetooth;
+        audioCallConfig.mode = AVAudioSessionModeDefault;
 
         videoCallConfig = [[RTCAudioSessionConfiguration alloc] init];
         videoCallConfig.category = AVAudioSessionCategoryPlayAndRecord;
-        videoCallConfig.categoryOptions = AVAudioSessionCategoryOptionAllowBluetooth;
-        videoCallConfig.mode = AVAudioSessionModeVideoChat;
+        videoCallConfig.categoryOptions = AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionDefaultToSpeaker;
+        videoCallConfig.mode = AVAudioSessionModeDefault;
 
         // Manually routing audio to the earpiece doesn't quite work unless one disables BT (weird, I know).
         earpieceConfig = [[RTCAudioSessionConfiguration alloc] init];
         earpieceConfig.category = AVAudioSessionCategoryPlayAndRecord;
         earpieceConfig.categoryOptions = 0;
-        earpieceConfig.mode = AVAudioSessionModeVoiceChat;
+        earpieceConfig.mode = AVAudioSessionModeDefault;
 
         forceSpeaker = NO;
         forceEarpiece = NO;
@@ -149,6 +151,7 @@ RCT_EXPORT_MODULE();
 RCT_EXPORT_METHOD(setMode:(int)mode
                   resolve:(RCTPromiseResolveBlock)resolve
                    reject:(RCTPromiseRejectBlock)reject) {
+    DDLogInfo(@"[AudioMode] Set mode: %d", mode);
     RTCAudioSessionConfiguration *config = [self configForMode:mode];
     NSError *error;
 
@@ -247,6 +250,7 @@ RCT_EXPORT_METHOD(updateDeviceList) {
 - (void)audioSessionDidChangeRoute:(RTCAudioSession *)session
                             reason:(AVAudioSessionRouteChangeReason)reason
                      previousRoute:(AVAudioSessionRouteDescription *)previousRoute {
+    DDLogInfo(@"[AudioMode] Route changed, reason %d, previousRoute: %@", reason, previousRoute);
     // Update JS about the changes.
     [self notifyDevicesChanged];
 
@@ -270,7 +274,7 @@ RCT_EXPORT_METHOD(updateDeviceList) {
         // This is to play well with other components which could be integrated
         // into the final application.
         if (self->activeMode != kAudioModeDefault) {
-            DDLogInfo(@"[AudioMode] Route changed, reapplying RTCAudioSession config");
+            DDLogInfo(@"[AudioMode] Route changed, reapplying RTCAudioSession config for activeMode %d", activeMode);
             RTCAudioSessionConfiguration *config = [self configForMode:self->activeMode];
             [self setConfig:config error:nil];
             if (self->forceSpeaker && !self->isSpeakerOn) {
@@ -280,6 +284,7 @@ RCT_EXPORT_METHOD(updateDeviceList) {
                 [session unlockForConfiguration];
             }
         }
+
     });
 }
 
@@ -301,6 +306,8 @@ RCT_EXPORT_METHOD(updateDeviceList) {
             return defaultConfig;
         case kAudioModeVideoCall:
             return videoCallConfig;
+        case kAudioModeEarpieceCall:
+            return earpieceConfig;
         default:
             return nil;
     }

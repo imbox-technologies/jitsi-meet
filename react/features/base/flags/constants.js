@@ -232,3 +232,9 @@ export const VIDEO_SHARE_BUTTON_ENABLED = 'video-share.enabled';
  * Default: disabled (false).
  */
 export const WELCOME_PAGE_ENABLED = 'welcomepage.enabled';
+
+/**
+ * Flag indicating that the audio should be routed to the speaker by default.
+ * Default: disabled (false).
+ */
+ export const AUDIO_DEFAULT_TO_SPEAKER = 'audio-defaulttospeaker.enabled';

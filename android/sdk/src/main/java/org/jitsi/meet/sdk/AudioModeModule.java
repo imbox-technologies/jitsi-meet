@@ -70,6 +70,7 @@ class AudioModeModule extends ReactContextBaseJavaModule {
     static final int DEFAULT    = 0;
     static final int AUDIO_CALL = 1;
     static final int VIDEO_CALL = 2;
+    static final int EARPIECE_CALL = 3;
 
     /**
      * The {@code Log} tag {@code AudioModeModule} is to log messages with.
@@ -162,6 +163,7 @@ class AudioModeModule extends ReactContextBaseJavaModule {
         constants.put("AUDIO_CALL", AUDIO_CALL);
         constants.put("DEFAULT", DEFAULT);
         constants.put("VIDEO_CALL", VIDEO_CALL);
+        constants.put("EARPIECE_CALL", EARPIECE_CALL);
 
         return constants;
     }
@@ -272,7 +274,7 @@ class AudioModeModule extends ReactContextBaseJavaModule {
      */
     @ReactMethod
     public void setMode(final int mode, final Promise promise) {
-        if (mode != DEFAULT && mode != AUDIO_CALL && mode != VIDEO_CALL) {
+        if (mode != DEFAULT && mode != AUDIO_CALL && mode != VIDEO_CALL && mode != EARPIECE_CALL) {
             promise.reject("setMode", "Invalid audio mode " + mode);
             return;
         }
@@ -356,7 +358,12 @@ class AudioModeModule extends ReactContextBaseJavaModule {
         } else if (headsetAvailable) {
             audioDevice = DEVICE_HEADPHONES;
         } else {
-            audioDevice = DEVICE_SPEAKER;
+            if(mode == EARPIECE_CALL) {
+                audioDevice = DEVICE_EARPIECE;
+            }
+            else {
+                audioDevice = DEVICE_SPEAKER;
+            }
         }
 
         // Consider the user's selection
