@@ -1,20 +1,15 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
+import Dialog from 'react-native-dialog';
 import { connect as reduxConnect } from 'react-redux';
 import type { Dispatch } from 'redux';
 
 import { ColorSchemeRegistry } from '../../../base/color-scheme';
 import { toJid } from '../../../base/connection';
 import { connect } from '../../../base/connection/actions.native';
-import {
-    CustomSubmitDialog,
-    FIELD_UNDERLINE,
-    PLACEHOLDER_COLOR,
-    _abstractMapStateToProps,
-    inputDialog as inputDialogStyle
-} from '../../../base/dialog';
+import { _abstractMapStateToProps } from '../../../base/dialog';
 import { translate } from '../../../base/i18n';
 import { JitsiConnectionErrors } from '../../../base/lib-jitsi-meet';
 import type { StyleType } from '../../../base/styles';
@@ -43,11 +38,6 @@ type Props = {
      * Indicates if the dialog should display "connecting" status message.
      */
     _connecting: boolean,
-
-    /**
-     * The color-schemed stylesheet of the base/dialog feature.
-     */
-    _dialogStyles: StyleType,
 
     /**
      * The error which occurred during login/authentication.
@@ -150,42 +140,41 @@ class LoginDialog extends Component<Props, State> {
     render() {
         const {
             _connecting: connecting,
-            _dialogStyles,
-            _styles: styles,
             t
         } = this.props;
 
         return (
-            <CustomSubmitDialog
-                okDisabled = { connecting }
-                onCancel = { this._onCancel }
-                onSubmit = { this._onLogin }>
-                <View style = { styles.loginDialog }>
-                    <TextInput
+            <View>
+                <Dialog.Container
+                    visible = { true }>
+                    <Dialog.Title>
+                        { t('dialog.login') }
+                    </Dialog.Title>
+                    <Dialog.Input
                         autoCapitalize = { 'none' }
                         autoCorrect = { false }
                         onChangeText = { this._onUsernameChange }
                         placeholder = { 'user@domain.com' }
-                        placeholderTextColor = { PLACEHOLDER_COLOR }
                         spellCheck = { false }
-                        style = { _dialogStyles.field }
-                        underlineColorAndroid = { FIELD_UNDERLINE }
                         value = { this.state.username } />
-                    <TextInput
+                    <Dialog.Input
                         autoCapitalize = { 'none' }
                         onChangeText = { this._onPasswordChange }
                         placeholder = { t('dialog.userPassword') }
-                        placeholderTextColor = { PLACEHOLDER_COLOR }
                         secureTextEntry = { true }
-                        style = { [
-                            _dialogStyles.field,
-                            inputDialogStyle.bottomField
-                        ] }
-                        underlineColorAndroid = { FIELD_UNDERLINE }
                         value = { this.state.password } />
-                    { this._renderMessage() }
-                </View>
-            </CustomSubmitDialog>
+                    <Dialog.Description>
+                        { this._renderMessage() }
+                    </Dialog.Description>
+                    <Dialog.Button
+                        label = { t('dialog.Cancel') }
+                        onPress = { this._onCancel } />
+                    <Dialog.Button
+                        disabled = { connecting }
+                        label = { t('dialog.Ok') }
+                        onPress = { this._onLogin } />
+                </Dialog.Container>
+            </View>
         );
     }
 
@@ -239,10 +228,8 @@ class LoginDialog extends Component<Props, State> {
 
         if (messageKey) {
             const message = t(messageKey, messageOptions);
-            const messageStyles = [
-                styles.dialogText,
-                messageIsError ? styles.errorMessage : styles.progressMessage
-            ];
+            const messageStyles
+                = messageIsError ? styles.errorMessage : styles.progressMessage;
 
             return (
                 <Text style = { messageStyles }>
@@ -337,7 +324,7 @@ function _mapStateToProps(state) {
         progress,
         thenableWithCancel
     } = state['features/authentication'];
-    const { authRequired } = state['features/base/conference'];
+    const { authRequired, conference } = state['features/base/conference'];
     const { hosts: configHosts } = state['features/base/config'];
     const {
         connecting,
@@ -346,7 +333,7 @@ function _mapStateToProps(state) {
 
     return {
         ..._abstractMapStateToProps(state),
-        _conference: authRequired,
+        _conference: authRequired || conference,
         _configHosts: configHosts,
         _connecting: Boolean(connecting) || Boolean(thenableWithCancel),
         _error: connectionError || authenticateAndUpgradeRoleError,

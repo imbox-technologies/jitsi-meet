@@ -249,7 +249,6 @@ function getDevServerConfig() {
                 warnings: false
             }
         },
-        https: true,
         host: '127.0.0.1',
         hot: true,
         proxy: {
@@ -262,6 +261,7 @@ function getDevServerConfig() {
                 }
             }
         },
+        server: 'https',
         static: {
             directory: process.cwd()
         }
@@ -392,7 +392,7 @@ module.exports = (_env, argv) => {
                 ...config.plugins,
                 ...getBundleAnalyzerPlugin(analyzeBundle, 'facial-expressions-worker')
             ],
-            performance: getPerformanceHints(perfHintOptions, 1024 * 1024)
+            performance: getPerformanceHints(perfHintOptions, 1024 * 1024 * 1.5)
         })
     ];
 };

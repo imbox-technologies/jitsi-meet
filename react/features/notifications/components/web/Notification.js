@@ -5,8 +5,10 @@ import EditorErrorIcon from '@atlaskit/icon/glyph/editor/error';
 import EditorInfoIcon from '@atlaskit/icon/glyph/editor/info';
 import EditorSuccessIcon from '@atlaskit/icon/glyph/editor/success';
 import EditorWarningIcon from '@atlaskit/icon/glyph/editor/warning';
+import PeopleIcon from '@atlaskit/icon/glyph/people';
+import PersonIcon from '@atlaskit/icon/glyph/person';
 import QuestionsIcon from '@atlaskit/icon/glyph/questions';
-import React from 'react';
+import React, { isValidElement } from 'react';
 
 import { translate } from '../../../base/i18n';
 import Message from '../../../base/react/components/web/Message';
@@ -76,12 +78,19 @@ class Notification extends AbstractNotification<Props> {
      * @returns {ReactElement}
      */
     _renderDescription() {
-        const description = this._getDescription().join(' ');
+        const description = this._getDescription();
+
+        // Keeping in mind that:
+        // - Notifications that use the `translateToHtml` function get an element-based description array with one entry
+        // - Message notifications receive string-based description arrays that might need additional parsing
+        // We look for ready-to-render elements, and if present, we roll with them
+        // Otherwise, we use the Message component that accepts a string `text` prop
+        const shouldRenderHtml = description.length === 1 && isValidElement(description[0]);
 
         // the id is used for testing the UI
         return (
             <p data-testid = { this._getDescriptionKey() } >
-                <Message text = { description } />
+                { shouldRenderHtml ? description : <Message text = { description.join(' ') } /> }
             </p>
         );
     }
@@ -141,7 +150,8 @@ class Notification extends AbstractNotification<Props> {
                             if (this.props.customActionHandler[customActionIndex]()) {
                                 this._onDismissed();
                             }
-                        }
+                        },
+                        testId: customAction
                     };
                 });
             }
@@ -170,6 +180,12 @@ class Notification extends AbstractNotification<Props> {
             break;
         case NOTIFICATION_ICON.MESSAGE:
             Icon = QuestionsIcon;
+            break;
+        case NOTIFICATION_ICON.PARTICIPANT:
+            Icon = PersonIcon;
+            break;
+        case NOTIFICATION_ICON.PARTICIPANTS:
+            Icon = PeopleIcon;
             break;
         default:
             Icon = EditorInfoIcon;

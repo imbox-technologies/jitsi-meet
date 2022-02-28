@@ -2,6 +2,7 @@
 
 import { withStyles } from '@material-ui/styles';
 import clsx from 'clsx';
+import debounce from 'lodash/debounce';
 import React, { Component } from 'react';
 
 import { createScreenSharingIssueEvent, sendAnalytics } from '../../../analytics';
@@ -27,10 +28,15 @@ import { getCurrentLayout, LAYOUTS } from '../../../video-layout';
 import {
     DISPLAY_MODE_TO_CLASS_NAME,
     DISPLAY_VIDEO,
-    VIDEO_TEST_EVENTS,
-    SHOW_TOOLBAR_CONTEXT_MENU_AFTER
+    SHOW_TOOLBAR_CONTEXT_MENU_AFTER,
+    VIDEO_TEST_EVENTS
 } from '../../constants';
-import { isVideoPlayable, computeDisplayModeFromInput, getDisplayModeInput } from '../../functions';
+import {
+    computeDisplayModeFromInput,
+    getDisplayModeInput,
+    isVideoPlayable,
+    showGridInVerticalView
+} from '../../functions';
 
 import ThumbnailAudioIndicator from './ThumbnailAudioIndicator';
 import ThumbnailBottomIndicators from './ThumbnailBottomIndicators';
@@ -316,6 +322,10 @@ class Thumbnail extends Component<Props, State> {
         this._onCanPlay = this._onCanPlay.bind(this);
         this._onClick = this._onClick.bind(this);
         this._onMouseEnter = this._onMouseEnter.bind(this);
+        this._onMouseMove = debounce(this._onMouseMove.bind(this), 100, {
+            leading: true,
+            trailing: false
+        });
         this._onMouseLeave = this._onMouseLeave.bind(this);
         this._onTestingEvent = this._onTestingEvent.bind(this);
         this._onTouchStart = this._onTouchStart.bind(this);
@@ -475,7 +485,6 @@ class Thumbnail extends Component<Props, State> {
             style
         } = this.props;
 
-
         const tileViewActive = _currentLayout === LAYOUTS.TILE_VIEW;
         const jitsiVideoTrack = _videoTrack?.jitsiTrack;
         const track = jitsiVideoTrack?.track;
@@ -561,6 +570,20 @@ class Thumbnail extends Component<Props, State> {
         this.setState({ isHovered: true });
     }
 
+    /**
+     * Mouse move handler.
+     *
+     * @returns {void}
+     */
+    _onMouseMove() {
+        if (!this.state.isHovered) {
+            // Workaround for the use case where the layout changes (for example the participant pane is closed)
+            // and as a result the mouse appears on top of the thumbnail. In these use cases the mouse enter
+            // event on the thumbnail is not triggered in Chrome.
+            this.setState({ isHovered: true });
+        }
+    }
+
     _onMouseLeave: () => void;
 
     /**
@@ -634,6 +657,7 @@ class Thumbnail extends Component<Props, State> {
                 onClick = { this._onClick }
                 { ...(_isMobile ? {} : {
                     onMouseEnter: this._onMouseEnter,
+                    onMouseMove: this._onMouseMove,
                     onMouseLeave: this._onMouseLeave
                 }) }
                 style = { styles.thumbnail }>
@@ -810,6 +834,7 @@ class Thumbnail extends Component<Props, State> {
                     : {
                         onClick: this._onClick,
                         onMouseEnter: this._onMouseEnter,
+                        onMouseMove: this._onMouseMove,
                         onMouseLeave: this._onMouseLeave
                     }
                 ) }
@@ -928,18 +953,29 @@ function _mapStateToProps(state, ownProps): Object {
             },
             verticalViewDimensions = {
                 local: {},
-                remote: {}
+                remote: {},
+                gridView: {}
             }
         } = state['features/filmstrip'];
+        const _verticalViewGrid = showGridInVerticalView(state);
         const { local, remote }
             = _currentLayout === LAYOUTS.VERTICAL_FILMSTRIP_VIEW
                 ? verticalViewDimensions : horizontalViewDimensions;
-        const { width, height } = isLocal ? local : remote;
+        const { width, height } = (isLocal ? local : remote) ?? {};
 
         size = {
             _width: width,
             _height: height
         };
+
+        if (_verticalViewGrid) {
+            const { width: _width, height: _height } = verticalViewDimensions.gridView.thumbnailSize;
+
+            size = {
+                _width,
+                _height
+            };
+        }
 
         _isMobilePortrait = _isMobile && state['features/base/responsive-ui'].aspectRatio === ASPECT_RATIO_NARROW;
 

@@ -145,6 +145,11 @@ type Props = {
     _dialog: boolean,
 
     /**
+     * Whether or not the toolbox is disabled. It is for recorders.
+     */
+    _disabled: boolean,
+
+    /**
      * Whether or not call feedback can be sent.
      */
     _feedbackConfigured: boolean,
@@ -221,6 +226,11 @@ type Props = {
     _sharingVideo: boolean,
 
     /**
+     * Whether or not to show dominant speaker badge.
+     */
+    _showDominantSpeakerBadge: boolean,
+
+    /**
      * Whether or not the tile view is enabled.
      */
     _tileViewEnabled: boolean,
@@ -249,11 +259,6 @@ type Props = {
      * Invoked to active other features of the app.
      */
     dispatch: Function,
-
-    /**
-     * If the dominant speaker name should be displayed or not.
-     */
-    showDominantSpeakerName?: boolean,
 
     /**
      * Invoked to obtain translated strings.
@@ -447,6 +452,10 @@ class Toolbox extends Component<Props> {
      * @returns {ReactElement}
      */
     render() {
+        if (this.props._disabled) {
+            return null;
+        }
+
         const { _chatOpen, _visible, _toolbarButtons } = this.props;
         const rootClassNames = `new-toolbox ${_visible ? 'visible' : ''} ${
             _toolbarButtons.length ? '' : 'no-buttons'} ${_chatOpen ? 'shift-right' : ''}`;
@@ -1258,8 +1267,8 @@ class Toolbox extends Component<Props> {
             _overflowMenuVisible,
             _reactionsEnabled,
             _toolbarButtons,
+            _showDominantSpeakerBadge,
             classes,
-            showDominantSpeakerName,
             t
         } = this.props;
 
@@ -1278,7 +1287,7 @@ class Toolbox extends Component<Props> {
                         onMouseOver: this._onMouseOver
                     }) }>
 
-                    { showDominantSpeakerName && <DominantSpeakerName /> }
+                    { _showDominantSpeakerBadge && <DominantSpeakerName /> }
 
                     <div className = 'toolbox-content-items'>
                         {mainMenuButtons.map(({ Content, key, ...rest }) => Content !== Separator && (
@@ -1346,10 +1355,13 @@ function _mapStateToProps(state, ownProps) {
     const { conference } = state['features/base/conference'];
     let desktopSharingEnabled = JitsiMeetJS.isDesktopSharingEnabled();
     const {
+        buttonsWithNotifyClick,
         callStatsID,
         disableProfile,
         enableFeaturesBasedOnToken,
-        buttonsWithNotifyClick
+        hideDominantSpeakerBadge,
+        iAmRecorder,
+        iAmSipGateway
     } = state['features/base/config'];
     const {
         fullScreen,
@@ -1390,6 +1402,7 @@ function _mapStateToProps(state, ownProps) {
         _desktopSharingButtonDisabled: isDesktopShareButtonDisabled(state),
         _desktopSharingDisabledTooltipKey: desktopSharingDisabledTooltipKey,
         _dialog: Boolean(state['features/base/dialog'].component),
+        _disabled: Boolean(iAmRecorder || iAmSipGateway),
         _feedbackConfigured: Boolean(callStatsID),
         _fullScreen: fullScreen,
         _isProfileDisabled: Boolean(disableProfile),
@@ -1404,6 +1417,7 @@ function _mapStateToProps(state, ownProps) {
         _raisedHand: hasRaisedHand(localParticipant),
         _reactionsEnabled: isReactionsEnabled(state),
         _screenSharing: isScreenVideoShared(state),
+        _showDominantSpeakerBadge: !hideDominantSpeakerBadge,
         _tileViewEnabled: shouldDisplayTileView(state),
         _toolbarButtons: toolbarButtons,
         _virtualSource: state['features/virtual-background'].virtualSource,

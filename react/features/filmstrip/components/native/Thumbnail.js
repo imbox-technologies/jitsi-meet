@@ -5,7 +5,6 @@ import { View } from 'react-native';
 import type { Dispatch } from 'redux';
 
 import { ColorSchemeRegistry } from '../../../base/color-scheme';
-import { openDialog } from '../../../base/dialog';
 import { MEDIA_TYPE, VIDEO_TYPE } from '../../../base/media';
 import {
     PARTICIPANT_ROLE,
@@ -23,18 +22,17 @@ import { StyleType } from '../../../base/styles';
 import { getTrackByMediaTypeAndParticipant } from '../../../base/tracks';
 import { ConnectionIndicator } from '../../../connection-indicator';
 import { DisplayNameLabel } from '../../../display-name';
+import {
+    showContextMenuDetails,
+    showSharedVideoMenu
+} from '../../../participants-pane/actions.native';
 import { toggleToolboxVisible } from '../../../toolbox/actions.native';
-import { RemoteVideoMenu } from '../../../video-menu';
-import ConnectionStatusComponent from '../../../video-menu/components/native/ConnectionStatusComponent';
-import SharedVideoMenu from '../../../video-menu/components/native/SharedVideoMenu';
 import { SQUARE_TILE_ASPECT_RATIO } from '../../constants';
 
 import AudioMutedIndicator from './AudioMutedIndicator';
-import DominantSpeakerIndicator from './DominantSpeakerIndicator';
 import ModeratorIndicator from './ModeratorIndicator';
 import RaisedHandIndicator from './RaisedHandIndicator';
 import ScreenShareIndicator from './ScreenShareIndicator';
-import VideoMutedIndicator from './VideoMutedIndicator';
 import styles, { AVATAR_SIZE } from './styles';
 
 /**
@@ -104,11 +102,6 @@ type Props = {
      * The color-schemed stylesheet of the feature.
      */
     _styles: StyleType,
-
-    /**
-     * Indicates whether the participant is video muted.
-     */
-    _videoMuted: boolean,
 
     /**
      * If true, there will be no color overlay (tint) on the thumbnail
@@ -188,20 +181,12 @@ class Thumbnail extends PureComponent<Props> {
     _onThumbnailLongPress() {
         const { _participantId, _local, _isFakeParticipant, _localVideoOwner, dispatch } = this.props;
 
-        if (_local) {
-            dispatch(openDialog(ConnectionStatusComponent, {
-                participantID: _participantId
-            }));
-        } else if (_isFakeParticipant) {
-            if (_localVideoOwner) {
-                dispatch(openDialog(SharedVideoMenu, {
-                    _participantId
-                }));
-            }
-        } else {
-            dispatch(openDialog(RemoteVideoMenu, {
-                participantId: _participantId
-            }));
+        if (_isFakeParticipant && _localVideoOwner) {
+            dispatch(showSharedVideoMenu(_participantId));
+        }
+
+        if (!_isFakeParticipant) {
+            dispatch(showContextMenuDetails(_participantId, _local));
         }
     }
 
@@ -215,20 +200,11 @@ class Thumbnail extends PureComponent<Props> {
             _audioMuted: audioMuted,
             _isScreenShare: isScreenShare,
             _isFakeParticipant,
-            _renderDominantSpeakerIndicator: renderDominantSpeakerIndicator,
             _renderModeratorIndicator: renderModeratorIndicator,
             _participantId: participantId,
-            _videoMuted: videoMuted
+            renderDisplayName
         } = this.props;
         const indicators = [];
-
-        if (renderModeratorIndicator) {
-            indicators.push(<View
-                key = 'moderator-indicator'
-                style = { styles.moderatorIndicatorContainer }>
-                <ModeratorIndicator />
-            </View>);
-        }
 
         if (!_isFakeParticipant) {
             indicators.push(<View
@@ -237,23 +213,26 @@ class Thumbnail extends PureComponent<Props> {
                     styles.thumbnailTopIndicatorContainer,
                     styles.thumbnailTopLeftIndicatorContainer
                 ] }>
-                <RaisedHandIndicator participantId = { participantId } />
-                { renderDominantSpeakerIndicator && <DominantSpeakerIndicator /> }
-            </View>);
-            indicators.push(<View
-                key = 'top-right-indicators'
-                style = { [
-                    styles.thumbnailTopIndicatorContainer,
-                    styles.thumbnailTopRightIndicatorContainer
-                ] }>
                 <ConnectionIndicator participantId = { participantId } />
+                <RaisedHandIndicator participantId = { participantId } />
+                {isScreenShare && (
+                    <View style = { styles.indicatorContainer }>
+                        <ScreenShareIndicator />
+                    </View>
+                )}
             </View>);
             indicators.push(<Container
                 key = 'bottom-indicators'
                 style = { styles.thumbnailIndicatorContainer }>
-                { audioMuted && <AudioMutedIndicator /> }
-                { videoMuted && <VideoMutedIndicator /> }
-                { isScreenShare && <ScreenShareIndicator /> }
+                <Container style = { (audioMuted || renderModeratorIndicator) && styles.bottomIndicatorsContainer }>
+                    { audioMuted && <AudioMutedIndicator /> }
+                    { renderModeratorIndicator && <ModeratorIndicator />}
+                </Container>
+                {
+                    renderDisplayName && <DisplayNameLabel
+                        contained = { true }
+                        participantId = { participantId } />
+                }
             </Container>);
         }
 
@@ -274,10 +253,10 @@ class Thumbnail extends PureComponent<Props> {
             _participantInLargeVideo: participantInLargeVideo,
             _pinned,
             _raisedHand,
+            _renderDominantSpeakerIndicator,
             _styles,
             disableTint,
             height,
-            renderDisplayName,
             tileView
         } = this.props;
         const styleOverrides = tileView ? {
@@ -297,23 +276,17 @@ class Thumbnail extends PureComponent<Props> {
                     styles.thumbnail,
                     _pinned && !tileView ? _styles.thumbnailPinned : null,
                     styleOverrides,
-                    _raisedHand ? styles.thumbnailRaisedHand : null
+                    _raisedHand ? styles.thumbnailRaisedHand : null,
+                    _renderDominantSpeakerIndicator ? styles.thumbnailDominantSpeaker : null
                 ] }
                 touchFeedback = { false }>
                 <ParticipantView
                     avatarSize = { tileView ? AVATAR_SIZE * 1.5 : AVATAR_SIZE }
                     disableVideo = { isScreenShare || _isFakeParticipant }
                     participantId = { participantId }
-                    style = { _styles.participantViewStyle }
                     tintEnabled = { participantInLargeVideo && !disableTint }
                     tintStyle = { _styles.activeThumbnailTint }
                     zOrder = { 1 } />
-                {
-                    renderDisplayName
-                        && <Container style = { styles.displayNameContainer }>
-                            <DisplayNameLabel participantId = { participantId } />
-                        </Container>
-                }
                 {
                     this._renderIndicators()
                 }
@@ -344,7 +317,6 @@ function _mapStateToProps(state, ownProps) {
         = getTrackByMediaTypeAndParticipant(tracks, MEDIA_TYPE.AUDIO, id);
     const videoTrack
         = getTrackByMediaTypeAndParticipant(tracks, MEDIA_TYPE.VIDEO, id);
-    const videoMuted = videoTrack?.muted ?? true;
     const isScreenShare = videoTrack?.videoType === VIDEO_TYPE.DESKTOP;
     const participantCount = getParticipantCount(state);
     const renderDominantSpeakerIndicator = participant && participant.dominantSpeaker && participantCount > 2;
@@ -365,8 +337,7 @@ function _mapStateToProps(state, ownProps) {
         _raisedHand: hasRaisedHand(participant),
         _renderDominantSpeakerIndicator: renderDominantSpeakerIndicator,
         _renderModeratorIndicator: renderModeratorIndicator,
-        _styles: ColorSchemeRegistry.get(state, 'Thumbnail'),
-        _videoMuted: videoMuted
+        _styles: ColorSchemeRegistry.get(state, 'Thumbnail')
     };
 }
 
