@@ -120,8 +120,10 @@ RCT_EXPORT_METHOD(sendEvent:(NSString *)name
     NSString *completionHandlerId = [data objectForKey:@"requestId"];
     
     void (^completionHandler)(NSArray*) = [participantInfoCompletionHandlers objectForKey:completionHandlerId];
-    completionHandler(participantsInfoArray);
-    [participantInfoCompletionHandlers removeObjectForKey:completionHandlerId];
+    if (completionHandler) {
+        completionHandler(participantsInfoArray);
+        [participantInfoCompletionHandlers removeObjectForKey:completionHandlerId];
+    }
 }
 
 /**

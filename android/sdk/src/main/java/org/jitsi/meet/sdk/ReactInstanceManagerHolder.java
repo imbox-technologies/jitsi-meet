@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class ReactInstanceManagerHolder {
+public class ReactInstanceManagerHolder {
     /**
      * FIXME (from linter): Do not place Android context classes in static
      * fields (static reference to ReactInstanceManager which has field
@@ -157,8 +157,12 @@ class ReactInstanceManagerHolder {
         return reactContext != null ? reactContext.getCurrentActivity() : null;
     }
 
-    static ReactInstanceManager getReactInstanceManager() {
+    public static ReactInstanceManager getReactInstanceManager() {
         return reactInstanceManager;
+    }
+
+    public static void deinitReactInstanceManager() {
+        reactInstanceManager = null;
     }
 
     /**
@@ -169,7 +173,7 @@ class ReactInstanceManagerHolder {
      *
      * @param activity {@code Activity} current running Activity.
      */
-    static void initReactInstanceManager(Activity activity) {
+    public static void initReactInstanceManager(Activity activity) {
         if (reactInstanceManager != null) {
             return;
         }
