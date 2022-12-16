@@ -7,8 +7,8 @@ import React, { Component } from 'react';
 import { JitsiRecordingConstants } from '../../../base/lib-jitsi-meet';
 import { connect } from '../../../base/redux';
 import { E2EELabel } from '../../../e2ee';
-import { LocalRecordingLabel } from '../../../local-recording';
 import { RecordingLabel } from '../../../recording';
+import HighlightButton from '../../../recording/components/Recording/web/HighlightButton';
 import { isToolboxVisible } from '../../../toolbox/functions.web';
 import { TranscribingLabel } from '../../../transcribing';
 import { VideoQualityLabel } from '../../../video-quality';
@@ -18,7 +18,9 @@ import { getConferenceInfo } from '../functions';
 import ConferenceInfoContainer from './ConferenceInfoContainer';
 import InsecureRoomNameLabel from './InsecureRoomNameLabel';
 import ParticipantsCount from './ParticipantsCount';
+import RaisedHandsCountLabel from './RaisedHandsCountLabel';
 import SubjectText from './SubjectText';
+import ToggleTopPanelLabel from './ToggleTopPanelLabel';
 
 /**
  * The type of the React {@code Component} props of {@link Subject}.
@@ -37,6 +39,10 @@ type Props = {
 };
 
 const COMPONENTS = [
+    {
+        Component: HighlightButton,
+        id: 'highlight-moment'
+    },
     {
         Component: SubjectText,
         id: 'subject'
@@ -63,8 +69,8 @@ const COMPONENTS = [
         id: 'recording'
     },
     {
-        Component: LocalRecordingLabel,
-        id: 'local-recording'
+        Component: RaisedHandsCountLabel,
+        id: 'raised-hands-count'
     },
     {
         Component: TranscribingLabel,
@@ -77,6 +83,10 @@ const COMPONENTS = [
     {
         Component: InsecureRoomNameLabel,
         id: 'insecure-room'
+    },
+    {
+        Component: ToggleTopPanelLabel,
+        id: 'top-panel-toggle'
     }
 ];
 
@@ -115,7 +125,9 @@ class ConferenceInfo extends Component<Props> {
         }
 
         return (
-            <ConferenceInfoContainer visible = { this.props._visible } >
+            <ConferenceInfoContainer
+                id = 'autoHide'
+                visible = { this.props._visible }>
                 {
                     COMPONENTS
                         .filter(comp => autoHide.includes(comp.id))
@@ -142,7 +154,9 @@ class ConferenceInfo extends Component<Props> {
         }
 
         return (
-            <ConferenceInfoContainer visible = { true } >
+            <ConferenceInfoContainer
+                id = 'alwaysVisible'
+                visible = { true } >
                 {
                     COMPONENTS
                         .filter(comp => alwaysVisible.includes(comp.id))

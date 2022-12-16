@@ -1,10 +1,20 @@
-import { ColorSchemeRegistry, schemeColor } from '../../../base/color-scheme';
-import { BoxModel, fixAndroidViewClipping } from '../../../base/styles';
+import { fixAndroidViewClipping } from '../../../base/styles';
 import BaseTheme from '../../../base/ui/components/BaseTheme.native';
 
-export const INSECURE_ROOM_NAME_LABEL_COLOR = BaseTheme.palette.warning03;
+export const INSECURE_ROOM_NAME_LABEL_COLOR = BaseTheme.palette.actionDanger;
 
-const NAVBAR_BUTTON_SIZE = 24;
+const TITLE_BAR_BUTTON_SIZE = 24;
+
+
+/**
+ * The styles of the safe area view that contains the title bar.
+ */
+const titleBarSafeView = {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0
+};
 
 /**
  * The styles of the feature conference.
@@ -24,16 +34,6 @@ export default {
         margin: 10
     },
 
-    headerNavigationIcon: {
-        marginLeft: 12
-    },
-
-    headerNavigationButton: {
-        height: BaseTheme.spacing[6],
-        marginTop: BaseTheme.spacing[3],
-        width: BaseTheme.spacing[6]
-    },
-
     /**
      * View that contains the indicators.
      */
@@ -42,97 +42,112 @@ export default {
         flexDirection: 'row'
     },
 
-    inviteButtonContainer: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        zIndex: 1
+    titleBarButtonContainer: {
+        borderRadius: 3,
+        height: BaseTheme.spacing[7],
+        marginTop: BaseTheme.spacing[1],
+        marginRight: BaseTheme.spacing[1],
+        zIndex: 1,
+        width: BaseTheme.spacing[7]
     },
 
-    inviteButton: {
+    titleBarButton: {
         iconStyle: {
-            padding: 10,
             color: BaseTheme.palette.icon01,
-            fontSize: NAVBAR_BUTTON_SIZE
+            padding: 12,
+            fontSize: TITLE_BAR_BUTTON_SIZE
         },
-        underlayColor: BaseTheme.spacing.underlay01
-    },
-
-    lonelyButton: {
-        alignItems: 'center',
-        borderRadius: 24,
-        flexDirection: 'row',
-        height: BaseTheme.spacing[6],
-        justifyContent: 'space-around',
-        paddingHorizontal: 12
-    },
-
-    lonelyButtonComponents: {
-        marginHorizontal: 6
+        underlayColor: 'transparent'
     },
 
     lonelyMeetingContainer: {
         alignSelf: 'stretch',
         alignItems: 'center',
-        padding: BoxModel.padding * 2
+        padding: BaseTheme.spacing[3]
     },
 
     lonelyMessage: {
-        paddingVertical: 12
+        color: BaseTheme.palette.text01,
+        paddingVertical: BaseTheme.spacing[2]
     },
 
     pipButtonContainer: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        zIndex: 1
+        '&:not(:empty)': {
+            borderRadius: 3,
+            height: BaseTheme.spacing[7],
+            marginTop: BaseTheme.spacing[1],
+            marginLeft: BaseTheme.spacing[1],
+            zIndex: 1,
+            width: BaseTheme.spacing[7]
+        }
     },
 
     pipButton: {
         iconStyle: {
-            padding: 10,
             color: BaseTheme.palette.icon01,
-            fontSize: NAVBAR_BUTTON_SIZE
+            padding: 12,
+            fontSize: TITLE_BAR_BUTTON_SIZE
         },
-        underlayColor: BaseTheme.palette.underlay01
+        underlayColor: 'transparent'
     },
 
-    navBarSafeView: {
-        left: 0,
-        position: 'absolute',
-        right: 0,
-        top: 0
+    titleBarSafeViewColor: {
+        ...titleBarSafeView,
+        backgroundColor: BaseTheme.palette.uiBackground
     },
 
-    navBarWrapper: {
+    titleBarSafeViewTransparent: {
+        ...titleBarSafeView
+    },
+
+    titleBarWrapper: {
         alignItems: 'center',
         flex: 1,
         flexDirection: 'row',
-        height: 44,
+        height: BaseTheme.spacing[8],
+        justifyContent: 'center'
+    },
+
+    alwaysOnTitleBar: {
+        paddingRight: 0,
+        borderRadius: 6,
+        backgroundColor: 'rgba(0, 0, 0, .5)',
+        marginLeft: BaseTheme.spacing[2],
+        flexDirection: 'row',
+        alignSelf: 'flex-start',
+        alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 14
+        marginTop: BaseTheme.spacing[2],
+
+        '&:not(:empty)': {
+            padding: 4
+        }
+    },
+
+    expandedLabelWrapper: {
+        zIndex: 1
     },
 
     roomTimer: {
+        ...BaseTheme.typography.bodyShortBold,
         color: BaseTheme.palette.text01,
-        fontSize: 12,
-        fontWeight: '400',
-        paddingHorizontal: 8
+        textAlign: 'center'
     },
 
     roomTimerView: {
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        borderBottomRightRadius: 3,
-        borderTopRightRadius: 3,
-        height: 28,
+        backgroundColor: BaseTheme.palette.ui03,
+        borderRadius: BaseTheme.shape.borderRadius,
+        height: 32,
         justifyContent: 'center',
+        paddingHorizontal: BaseTheme.spacing[2],
+        paddingVertical: BaseTheme.spacing[1],
         minWidth: 50
     },
 
     roomName: {
         color: BaseTheme.palette.text01,
-        fontSize: 14,
-        fontWeight: '400'
+        ...BaseTheme.typography.bodyShortBold,
+        paddingVertical: 6
     },
 
     roomNameView: {
@@ -140,14 +155,16 @@ export default {
         borderBottomLeftRadius: 3,
         borderTopLeftRadius: 3,
         flexShrink: 1,
-        height: 28,
         justifyContent: 'center',
         paddingHorizontal: 10
     },
 
     roomNameWrapper: {
         flexDirection: 'row',
-        marginHorizontal: 35
+        marginRight: 10,
+        marginLeft: 8,
+        flexShrink: 1,
+        flexGrow: 1
     },
 
     /**
@@ -166,16 +183,22 @@ export default {
     },
 
     insecureRoomNameLabel: {
-        backgroundColor: INSECURE_ROOM_NAME_LABEL_COLOR
-    }
-};
-
-ColorSchemeRegistry.register('Conference', {
-    lonelyButton: {
-        backgroundColor: schemeColor('inviteButtonBackground')
+        backgroundColor: INSECURE_ROOM_NAME_LABEL_COLOR,
+        borderRadius: BaseTheme.shape.borderRadius,
+        height: 32
     },
 
-    lonelyMessage: {
-        color: schemeColor('onVideoText')
+    raisedHandsCountLabel: {
+        alignItems: 'center',
+        backgroundColor: BaseTheme.palette.warning02,
+        borderRadius: BaseTheme.shape.borderRadius,
+        flexDirection: 'row',
+        marginLeft: BaseTheme.spacing[0],
+        marginBottom: BaseTheme.spacing[0]
+    },
+
+    raisedHandsCountLabelText: {
+        color: BaseTheme.palette.uiBackground,
+        paddingLeft: BaseTheme.spacing[2]
     }
-});
+};

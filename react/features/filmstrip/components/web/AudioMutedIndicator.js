@@ -1,8 +1,8 @@
 /* @flow */
 
-import React, { Component } from 'react';
+import React from 'react';
 
-import { IconMicDisabled } from '../../../base/icons';
+import { IconMicSlash } from '../../../base/icons';
 import { BaseIndicator } from '../../../base/react';
 
 /**
@@ -19,26 +19,16 @@ type Props = {
 /**
  * React {@code Component} for showing an audio muted icon with a tooltip.
  *
- * @augments Component
+ * @returns {Component}
  */
-class AudioMutedIndicator extends Component<Props> {
-    /**
-     * Implements React's {@link Component#render()}.
-     *
-     * @inheritdoc
-     * @returns {ReactElement}
-     */
-    render() {
-        return (
-            <BaseIndicator
-                className = 'audioMuted toolbar-icon'
-                icon = { IconMicDisabled }
-                iconId = 'mic-disabled'
-                iconSize = { 13 }
-                tooltipKey = 'videothumbnail.mute'
-                tooltipPosition = { this.props.tooltipPosition } />
-        );
-    }
-}
+const AudioMutedIndicator = ({ tooltipPosition }: Props) => (
+    <BaseIndicator
+        icon = { IconMicSlash }
+        iconId = 'mic-disabled'
+        iconSize = { 16 }
+        id = 'audioMuted'
+        tooltipKey = 'videothumbnail.mute'
+        tooltipPosition = { tooltipPosition } />
+);
 
 export default AudioMutedIndicator;

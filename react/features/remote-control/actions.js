@@ -1,26 +1,34 @@
 // @flow
 
+import $ from 'jquery';
+
 import { openDialog } from '../base/dialog';
 import { JitsiConferenceEvents } from '../base/lib-jitsi-meet';
-import { getParticipantDisplayName, getPinnedParticipant, pinParticipant } from '../base/participants';
-import { getLocalVideoTrack } from '../base/tracks';
-import { showNotification } from '../notifications';
+import {
+    getParticipantDisplayName,
+    getPinnedParticipant,
+    getVirtualScreenshareParticipantByOwnerId,
+    pinParticipant
+} from '../base/participants';
+import { getLocalDesktopTrack, toggleScreensharing } from '../base/tracks';
+import { NOTIFICATION_TIMEOUT_TYPE, showNotification } from '../notifications';
+import { isScreenVideoShared } from '../screen-share/functions';
 
 import {
     CAPTURE_EVENTS,
     REMOTE_CONTROL_ACTIVE,
-    SET_REQUESTED_PARTICIPANT,
+    SET_CONTROLLED_PARTICIPANT,
     SET_CONTROLLER,
     SET_RECEIVER_ENABLED,
     SET_RECEIVER_TRANSPORT,
-    SET_CONTROLLED_PARTICIPANT
+    SET_REQUESTED_PARTICIPANT
 } from './actionTypes';
 import { RemoteControlAuthorizationDialog } from './components';
 import {
     DISCO_REMOTE_CONTROL_FEATURE,
     EVENTS,
-    REMOTE_CONTROL_MESSAGE_NAME,
     PERMISSIONS_ACTIONS,
+    REMOTE_CONTROL_MESSAGE_NAME,
     REQUESTS
 } from './constants';
 import {
@@ -38,7 +46,6 @@ import logger from './logger';
 let permissionsReplyListener, receiverEndpointMessageListener, stopListener;
 
 declare var APP: Object;
-declare var $: Function;
 
 /**
  * Signals that the remote control authorization dialog should be displayed.
@@ -190,15 +197,18 @@ export function processPermissionRequestReply(participantId: string, event: Obje
                 descriptionArguments: { user: getParticipantDisplayName(state, participantId) },
                 descriptionKey,
                 titleKey: 'dialog.remoteControlTitle'
-            }));
+            }, NOTIFICATION_TIMEOUT_TYPE.MEDIUM));
 
             if (permissionGranted) {
                 // the remote control permissions has been granted
                 // pin the controlled participant
                 const pinnedParticipant = getPinnedParticipant(state);
+                const virtualScreenshareParticipantId = getVirtualScreenshareParticipantByOwnerId(state, participantId);
                 const pinnedId = pinnedParticipant?.id;
 
-                if (pinnedId !== participantId) {
+                if (virtualScreenshareParticipantId && pinnedId !== virtualScreenshareParticipantId) {
+                    dispatch(pinParticipant(virtualScreenshareParticipantId));
+                } else if (!virtualScreenshareParticipantId && pinnedId !== participantId) {
                     dispatch(pinParticipant(participantId));
                 }
             }
@@ -269,7 +279,7 @@ export function stopController(notifyRemoteParty: boolean = false) {
         dispatch(showNotification({
             descriptionKey: 'dialog.remoteControlStopMessage',
             titleKey: 'dialog.remoteControlTitle'
-        }));
+        }, NOTIFICATION_TIMEOUT_TYPE.LONG));
     };
 }
 
@@ -425,7 +435,7 @@ export function stopReceiver(dontNotifyLocalParty: boolean = false, dontNotifyRe
             dispatch(showNotification({
                 descriptionKey: 'dialog.remoteControlStopMessage',
                 titleKey: 'dialog.remoteControlTitle'
-            }));
+            }, NOTIFICATION_TIMEOUT_TYPE.LONG));
         }
     };
 }
@@ -500,9 +510,13 @@ export function sendStartRequest() {
     return (dispatch: Function, getState: Function) => {
         const state = getState();
         const tracks = state['features/base/tracks'];
-        const track = getLocalVideoTrack(tracks);
+        const track = getLocalDesktopTrack(tracks);
         const { sourceId } = track?.jitsiTrack || {};
         const { transport } = state['features/remote-control'].receiver;
+
+        if (typeof sourceId === 'undefined') {
+            return Promise.reject(new Error('Cannot identify screen for the remote control session'));
+        }
 
         return transport.sendRequest({
             name: REMOTE_CONTROL_MESSAGE_NAME,
@@ -530,20 +544,19 @@ export function grant(participantId: string) {
         let promise;
         const state = getState();
         const tracks = state['features/base/tracks'];
-        const track = getLocalVideoTrack(tracks);
-        const isScreenSharing = track?.videoType === 'desktop';
+        const track = getLocalDesktopTrack(tracks);
+        const isScreenSharing = isScreenVideoShared(state);
         const { sourceType } = track?.jitsiTrack || {};
 
         if (isScreenSharing && sourceType === 'screen') {
             promise = dispatch(sendStartRequest());
         } else {
-            // FIXME: Use action here once toggleScreenSharing is moved to redux.
-            promise = APP.conference.toggleScreenSharing(
+            promise = dispatch(toggleScreensharing(
                 true,
-                {
-                    desktopSharingSources: [ 'screen' ]
-                })
-                .then(() => dispatch(sendStartRequest()));
+                false,
+                { desktopSharingSources: [ 'screen' ] }
+            ))
+            .then(() => dispatch(sendStartRequest()));
         }
 
         const { conference } = state['features/base/conference'];
@@ -564,7 +577,7 @@ export function grant(participantId: string) {
                 dispatch(showNotification({
                     descriptionKey: 'dialog.startRemoteControlErrorMessage',
                     titleKey: 'dialog.remoteControlTitle'
-                }));
+                }, NOTIFICATION_TIMEOUT_TYPE.LONG));
 
                 dispatch(stopReceiver(true));
             });

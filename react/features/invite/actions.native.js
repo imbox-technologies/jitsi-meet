@@ -2,9 +2,9 @@
 
 import type { Dispatch } from 'redux';
 
-import { getFeatureFlag, ADD_PEOPLE_ENABLED } from '../base/flags';
-import { navigate } from '../conference/components/native/ConferenceNavigationContainerRef';
-import { screen } from '../conference/components/native/routes';
+import { ADD_PEOPLE_ENABLED, getFeatureFlag } from '../base/flags';
+import { navigate } from '../mobile/navigation/components/conference/ConferenceNavigationContainerRef';
+import { screen } from '../mobile/navigation/routes';
 import { beginShareRoom } from '../share-room';
 
 import { isAddPeopleEnabled, isDialOutEnabled } from './functions';

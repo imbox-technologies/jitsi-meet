@@ -1,57 +1,31 @@
-// @flow
-
-import { DrawerActions } from '@react-navigation/native';
 import React from 'react';
-import {
-    Animated,
-    SafeAreaView,
-    TextInput,
-    TouchableHighlight,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { Animated, SafeAreaView, TouchableHighlight, View } from 'react-native';
 
 import { getName } from '../../app/functions';
-import { ColorSchemeRegistry } from '../../base/color-scheme';
 import { translate } from '../../base/i18n';
-import { Icon, IconMenu, IconWarning } from '../../base/icons';
-import { MEDIA_TYPE } from '../../base/media';
-import JitsiStatusBar from '../../base/modal/components/JitsiStatusBar';
+import { Icon, IconWarning } from '../../base/icons';
 import { LoadingIndicator, Text } from '../../base/react';
 import { connect } from '../../base/redux';
-import {
-    createDesiredLocalTracks,
-    destroyLocalDesktopTrackIfExists,
-    destroyLocalTracks
-} from '../../base/tracks';
 import BaseTheme from '../../base/ui/components/BaseTheme.native';
+import Button from '../../base/ui/components/native/Button';
+import Input from '../../base/ui/components/native/Input';
+import { BUTTON_TYPES } from '../../base/ui/constants.native';
+import WelcomePageTabs
+    from '../../mobile/navigation/components/welcome/components/WelcomePageTabs';
 
 import {
+    type Props as AbstractProps,
     AbstractWelcomePage,
-    _mapStateToProps as _abstractMapStateToProps,
-    type Props as AbstractProps
+    _mapStateToProps as _abstractMapStateToProps
 } from './AbstractWelcomePage';
-import VideoSwitch from './VideoSwitch';
-import WelcomePageTabs from './WelcomePageTabs';
-import styles, { PLACEHOLDER_TEXT_COLOR } from './styles';
-
+import styles from './styles';
 
 type Props = AbstractProps & {
-
-    /**
-     * The color schemed style of the Header component.
-     */
-    _headerStyles: Object,
 
     /**
      * Default prop for navigating between screen components(React Navigation).
      */
     navigation: Object,
-
-    /**
-     * Default prop for navigating between screen components(React Navigation).
-     */
-    route: Object,
 
     /**
      * The translate function.
@@ -73,10 +47,12 @@ class WelcomePage extends AbstractWelcomePage<*> {
     constructor(props: Props) {
         super(props);
 
-        // $FlowExpectedError
         this.state._fieldFocused = false;
 
-        // $FlowExpectedError
+        this.state.isSettingsScreenFocused = false;
+
+        this.state.roomNameInputAnimation = new Animated.Value(1);
+
         this.state.hintBoxAnimation = new Animated.Value(0);
 
         // Bind event handlers so they are only bound once per instance.
@@ -86,6 +62,7 @@ class WelcomePage extends AbstractWelcomePage<*> {
         // Specially bind functions to avoid function definition on render.
         this._onFieldBlur = this._onFieldFocusChange.bind(this, false);
         this._onFieldFocus = this._onFieldFocusChange.bind(this, true);
+        this._onSettingsScreenFocused = this._onSettingsScreenFocused.bind(this);
     }
 
     _onFieldBlur: () => void;
@@ -109,45 +86,28 @@ class WelcomePage extends AbstractWelcomePage<*> {
     componentDidMount() {
         super.componentDidMount();
 
-        this._updateRoomname();
-
         const {
-            _headerStyles,
-            dispatch,
-            navigation
+            navigation,
+            t
         } = this.props;
 
         navigation.setOptions({
-            headerLeft: () => (
-                <TouchableOpacity
-                    /* eslint-disable-next-line react/jsx-no-bind */
-                    onPress = { () =>
-                        navigation.dispatch(DrawerActions.openDrawer()) }
-                    style = { styles.drawerNavigationIcon }>
-                    <Icon
-                        size = { 20 }
-                        src = { IconMenu }
-                        style = { _headerStyles.headerButtonIcon } />
-                </TouchableOpacity>
-            ),
-            // eslint-disable-next-line react/no-multi-comp
-            headerRight: () =>
-                <VideoSwitch />
+            headerTitle: t('welcomepage.headerTitle')
         });
 
-        if (this.props._settings.startAudioOnly) {
-            dispatch(destroyLocalTracks());
-        } else {
-            dispatch(destroyLocalDesktopTrackIfExists());
+        navigation.addListener('focus', () => {
+            this._updateRoomname();
+        });
 
-            // Make sure we don't request the permission for the camera from
-            // the start. We will, however, create a video track iff the user
-            // already granted the permission.
-            navigator.permissions.query({ name: 'camera' }).then(response => {
-                response === 'granted'
-                    && dispatch(createDesiredLocalTracks(MEDIA_TYPE.VIDEO));
+        navigation.addListener('blur', () => {
+            this._clearTimeouts();
+
+            this.setState({
+                generatedRoomname: '',
+                insecureRoomName: false,
+                room: ''
             });
-        }
+        });
     }
 
     /**
@@ -209,7 +169,6 @@ class WelcomePage extends AbstractWelcomePage<*> {
             styles.messageContainer,
             styles.hintContainer,
             {
-                // $FlowExpectedError
                 opacity: this.state.hintBoxAnimation
             }
         ];
@@ -228,7 +187,6 @@ class WelcomePage extends AbstractWelcomePage<*> {
     _onFieldFocusChange(focused) {
         if (focused) {
             // Stop placeholder animation.
-            // $FlowExpectedError
             this._clearTimeouts();
             this.setState({
                 _fieldFocused: true,
@@ -241,27 +199,52 @@ class WelcomePage extends AbstractWelcomePage<*> {
 
         Animated.timing(
 
-            // $FlowExpectedError
             this.state.hintBoxAnimation,
 
-            // $FlowExpectedError
             {
                 duration: 300,
-                toValue: focused ? 1 : 0
+                toValue: focused ? 1 : 0,
+                useNativeDriver: true
             })
             .start(animationState =>
 
-                // $FlowExpectedError
                 animationState.finished
 
-                // $FlowExpectedError
                 && !focused
                     && this.setState({
                         _fieldFocused: false
                     }));
     }
 
-    _renderHintBox: () => React$Element<any>;
+    _onSettingsScreenFocused: boolean => void;
+
+    /**
+     * Callback for when the settings screen is focused.
+     *
+     * @private
+     * @param {boolean} focused - The focused state of the screen.
+     * @returns {void}
+     */
+    _onSettingsScreenFocused(focused) {
+        this.setState({
+            isSettingsScreenFocused: focused
+        });
+
+        this.props.navigation.setOptions({
+            headerShown: !focused
+        });
+
+        Animated.timing(
+            this.state.roomNameInputAnimation,
+            {
+                toValue: focused ? 0 : 1,
+                duration: 500,
+                useNativeDriver: true
+            })
+            .start();
+    }
+
+    _renderHintBox: () => React.ReactElement;
 
     /**
      * Renders the hint box if necessary.
@@ -272,7 +255,6 @@ class WelcomePage extends AbstractWelcomePage<*> {
     _renderHintBox() {
         const { t } = this.props;
 
-        // $FlowExpectedError
         if (this.state._fieldFocused) {
             return (
                 <Animated.View style = { this._getHintBoxStyle() }>
@@ -299,37 +281,86 @@ class WelcomePage extends AbstractWelcomePage<*> {
      */
     _renderJoinButton() {
         const { t } = this.props;
-        let children;
+        let joinButton;
 
 
         if (this.state.joining) {
             // TouchableHighlight is picky about what its children can be, so
             // wrap it in a native component, i.e. View to avoid having to
             // modify non-native children.
-            children = (
-                <View>
-                    <LoadingIndicator
-                        color = { styles.buttonText.color }
-                        size = 'small' />
-                </View>
+            joinButton = (
+                <TouchableHighlight
+                    accessibilityLabel =
+                        { t('welcomepage.accessibilityLabel.join') }
+                    onPress = { this._onJoin }
+                    style = { styles.button }>
+                    <View>
+                        <LoadingIndicator
+                            color = { BaseTheme.palette.icon01 }
+                            size = 'small' />
+                    </View>
+                </TouchableHighlight>
             );
         } else {
-            children = (
-                <Text style = { styles.buttonText }>
-                    { this.props.t('welcomepage.join') }
-                </Text>
+            joinButton = (
+                <Button
+                    accessibilityLabel = { 'welcomepage.accessibilityLabel.join' }
+                    labelKey = { 'welcomepage.join' }
+                    labelStyle = { styles.joinButtonLabel }
+                    onClick = { this._onJoin }
+                    style = { styles.buttonText }
+                    type = { BUTTON_TYPES.PRIMARY } />
             );
         }
 
+        return joinButton;
+    }
+
+    /**
+     * Renders the room name input.
+     *
+     * @private
+     * @returns {ReactElement}
+     */
+    _renderRoomNameInput() {
+        const roomnameAccLabel = 'welcomepage.accessibilityLabel.roomname';
+        const { t } = this.props;
+        const { isSettingsScreenFocused } = this.state;
+
         return (
-            <TouchableHighlight
-                accessibilityLabel =
-                    { t('welcomepage.accessibilityLabel.join') }
-                onPress = { this._onJoin }
-                style = { styles.button }
-                underlayColor = { BaseTheme.palette.ui12 }>
-                { children }
-            </TouchableHighlight>
+            <Animated.View
+                style = { [
+                    isSettingsScreenFocused && styles.roomNameInputContainer,
+                    { opacity: this.state.roomNameInputAnimation }
+                ] }>
+                <SafeAreaView style = { styles.roomContainer }>
+                    <View style = { styles.joinControls } >
+                        <Text style = { styles.enterRoomText }>
+                            { t('welcomepage.roomname') }
+                        </Text>
+                        <Input
+                            accessibilityLabel = { t(roomnameAccLabel) }
+                            autoCapitalize = { 'none' }
+                            autoComplete = { 'off' }
+                            autoCorrect = { false }
+                            autoFocus = { false }
+                            customStyles = {{ input: styles.customInput }}
+                            onBlur = { this._onFieldBlur }
+                            onChange = { this._onRoomChange }
+                            onFocus = { this._onFieldFocus }
+                            onSubmitEditing = { this._onJoin }
+                            placeholder = { this.state.roomPlaceholder }
+                            returnKeyType = { 'go' }
+                            value = { this.state.room } />
+                        {
+                            this._renderInsecureRoomNameWarning()
+                        }
+                        {
+                            this._renderHintBox()
+                        }
+                    </View>
+                </SafeAreaView>
+            </Animated.View>
         );
     }
 
@@ -339,48 +370,14 @@ class WelcomePage extends AbstractWelcomePage<*> {
      * @returns {ReactElement}
      */
     _renderFullUI() {
-        const roomnameAccLabel = 'welcomepage.accessibilityLabel.roomname';
-        const { t } = this.props;
-
         return (
             <>
-                <JitsiStatusBar />
+                { this._renderRoomNameInput() }
                 <View style = { styles.welcomePage }>
-                    <SafeAreaView style = { styles.roomContainer } >
-                        <View style = { styles.joinControls } >
-                            <Text style = { styles.enterRoomText }>
-                                { t('welcomepage.roomname') }
-                            </Text>
-                            {/* // $FlowExpectedError*/}
-                            <TextInput
-                                accessibilityLabel = { t(roomnameAccLabel) }
-                                autoCapitalize = { 'none' }
-                                autoComplete = { 'off' }
-                                autoCorrect = { false }
-                                autoFocus = { false }
-                                onBlur = { this._onFieldBlur }
-                                onChangeText = { this._onRoomChange }
-                                onFocus = { this._onFieldFocus }
-                                onSubmitEditing = { this._onJoin }
-                                placeholder = { this.state.roomPlaceholder }
-                                placeholderTextColor = { PLACEHOLDER_TEXT_COLOR }
-                                returnKeyType = { 'go' }
-                                spellCheck = { false }
-                                style = { styles.textInput }
-                                underlineColorAndroid = 'transparent'
-                                value = { this.state.room } />
-                            {
-
-                                // $FlowExpectedError
-                                this._renderInsecureRoomNameWarning()
-                            }
-                            {
-                                this._renderHintBox()
-                            }
-                        </View>
-                    </SafeAreaView>
-                    {/* // $FlowExpectedError*/}
-                    <WelcomePageTabs disabled = { this.state._fieldFocused } />
+                    <WelcomePageTabs
+                        disabled = { this.state._fieldFocused }
+                        onListContainerPress = { this._onFieldBlur }
+                        onSettingsScreenFocused = { this._onSettingsScreenFocused } />
                 </View>
             </>
         );
@@ -412,8 +409,7 @@ class WelcomePage extends AbstractWelcomePage<*> {
  */
 function _mapStateToProps(state) {
     return {
-        ..._abstractMapStateToProps(state),
-        _headerStyles: ColorSchemeRegistry.get(state, 'Header')
+        ..._abstractMapStateToProps(state)
 
         // _reducedUI: state['features/base/responsive-ui'].reducedUI
     };

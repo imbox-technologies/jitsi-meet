@@ -1,6 +1,6 @@
 // @flow
 
-import { IconMicrophoneEmpty, IconMicrophoneEmptySlash } from '../../icons';
+import { IconMic, IconMicSlash } from '../../icons';
 
 import AbstractButton from './AbstractButton';
 import type { Props } from './AbstractButton';
@@ -11,8 +11,8 @@ import type { Props } from './AbstractButton';
 export default class AbstractAudioMuteButton<P: Props, S: *>
     extends AbstractButton<P, S> {
 
-    icon = IconMicrophoneEmpty;
-    toggledIcon = IconMicrophoneEmptySlash;
+    icon = IconMic;
+    toggledIcon = IconMicSlash;
 
     /**
      * Handles clicking / pressing the button, and toggles the audio mute state
@@ -23,14 +23,6 @@ export default class AbstractAudioMuteButton<P: Props, S: *>
      * @returns {void}
      */
     _handleClick() {
-        const { handleClick } = this.props;
-
-        if (handleClick) {
-            handleClick();
-
-            return;
-        }
-
         this._setAudioMuted(!this._isAudioMuted());
     }
 

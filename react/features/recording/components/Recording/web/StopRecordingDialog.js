@@ -2,9 +2,10 @@
 
 import React from 'react';
 
-import { Dialog } from '../../../../base/dialog';
 import { translate } from '../../../../base/i18n';
 import { connect } from '../../../../base/redux';
+import Dialog from '../../../../base/ui/components/web/Dialog';
+import { toggleScreenshotCaptureSummary } from '../../../../screenshot-capture';
 import AbstractStopRecordingDialog, {
     type Props,
     _mapStateToProps
@@ -24,20 +25,28 @@ class StopRecordingDialog extends AbstractStopRecordingDialog<Props> {
      * @returns {ReactElement}
      */
     render() {
-        const { t } = this.props;
+        const { t, localRecordingVideoStop } = this.props;
 
         return (
             <Dialog
-                okKey = 'dialog.confirm'
+                ok = {{ translationKey: 'dialog.confirm' }}
                 onSubmit = { this._onSubmit }
-                titleKey = 'dialog.recording'
-                width = 'small'>
-                { t('dialog.stopRecordingWarning') }
+                titleKey = 'dialog.recording'>
+                {t(localRecordingVideoStop ? 'recording.localRecordingVideoStop' : 'dialog.stopRecordingWarning') }
             </Dialog>
         );
     }
 
     _onSubmit: () => boolean;
+
+    /**
+     * Toggles screenshot capture.
+     *
+     * @returns {void}
+     */
+    _toggleScreenshotCapture() {
+        this.props.dispatch(toggleScreenshotCaptureSummary(false));
+    }
 }
 
 export default translate(connect(_mapStateToProps)(StopRecordingDialog));

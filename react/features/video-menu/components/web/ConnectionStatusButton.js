@@ -2,11 +2,10 @@
 import React, { useCallback } from 'react';
 
 import { translate } from '../../../base/i18n';
-import { IconInfo } from '../../../base/icons';
+import { IconInfoCircle } from '../../../base/icons';
 import { connect } from '../../../base/redux';
+import ContextMenuItem from '../../../base/ui/components/web/ContextMenuItem';
 import { renderConnectionStatus } from '../../actions.web';
-
-import VideoMenuButton from './VideoMenuButton';
 
 type Props = {
 
@@ -29,19 +28,19 @@ type Props = {
 
 const ConnectionStatusButton = ({
     dispatch,
-    participantId,
     t
 }: Props) => {
-    const onClick = useCallback(() => {
+    const onClick = useCallback(e => {
+        e.stopPropagation();
         dispatch(renderConnectionStatus(true));
     }, [ dispatch ]);
 
     return (
-        <VideoMenuButton
-            buttonText = { t('videothumbnail.connectionInfo') }
-            icon = { IconInfo }
-            id = { `connstatus_${participantId}` }
-            onClick = { onClick } />
+        <ContextMenuItem
+            accessibilityLabel = { t('videothumbnail.connectionInfo') }
+            icon = { IconInfoCircle }
+            onClick = { onClick }
+            text = { t('videothumbnail.connectionInfo') } />
     );
 };
 

@@ -1,11 +1,11 @@
 // @flow
 
 import { translate } from '../../base/i18n';
-import { IconInfo } from '../../base/icons';
+import { IconInfoCircle } from '../../base/icons';
 import { connect } from '../../base/redux';
 import { AbstractButton, type AbstractButtonProps } from '../../base/toolbox/components';
-import { screen } from '../../conference/components/native/routes';
-import { navigate } from '../../welcome/components/RootNavigationContainerRef';
+import { navigateRoot } from '../../mobile/navigation/rootNavigationContainerRef';
+import { screen } from '../../mobile/navigation/routes';
 
 export type Props = AbstractButtonProps & {
 
@@ -30,7 +30,7 @@ export type Props = AbstractButtonProps & {
  */
 class ShowDialInInfoButton extends AbstractButton<Props, *> {
     accessibilityLabel = 'welcomepage.info';
-    icon = IconInfo;
+    icon = IconInfoCircle;
     label = 'welcomepage.info';
 
     /**
@@ -42,7 +42,7 @@ class ShowDialInInfoButton extends AbstractButton<Props, *> {
     _handleClick() {
         const { itemId } = this.props;
 
-        navigate(screen.dialInSummary, {
+        navigateRoot(screen.dialInSummary, {
             summaryUrl: itemId.url
         });
     }

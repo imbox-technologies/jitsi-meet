@@ -1,7 +1,7 @@
 // @flow
 
 import { translate } from '../../base/i18n';
-import { IconGauge } from '../../base/icons';
+import { IconPerformance } from '../../base/icons';
 import { AbstractButton, type AbstractButtonProps } from '../../base/toolbox/components';
 
 /**
@@ -38,25 +38,7 @@ class VideoQualityButton extends AbstractButton<Props, *> {
     accessibilityLabel = 'toolbar.accessibilityLabel.callQuality';
     label = 'videoStatus.performanceSettings';
     tooltip = 'videoStatus.performanceSettings';
-    icon = IconGauge;
-
-
-    /**
-     * Handles clicking / pressing the button.
-     *
-     * @override
-     * @protected
-     * @returns {void}
-     */
-    _handleClick() {
-        const { handleClick } = this.props;
-
-        if (handleClick) {
-            handleClick();
-
-            return;
-        }
-    }
+    icon = IconPerformance;
 }
 
 export default translate(VideoQualityButton);

@@ -24,27 +24,28 @@ import {
     getURLWithoutParams
 } from '../../base/connection';
 import {
-    isFatalJitsiConferenceError,
-    isFatalJitsiConnectionError,
     JitsiConferenceEvents } from '../../base/lib-jitsi-meet';
 import { MEDIA_TYPE } from '../../base/media';
 import { SET_AUDIO_MUTED, SET_VIDEO_MUTED } from '../../base/media/actionTypes';
 import {
     PARTICIPANT_JOINED,
     PARTICIPANT_LEFT,
+    getLocalParticipant,
     getParticipantById,
     getRemoteParticipants,
-    getLocalParticipant
+    isScreenShareParticipant
 } from '../../base/participants';
 import { MiddlewareRegistry, StateListenerRegistry } from '../../base/redux';
-import { toggleScreensharing } from '../../base/tracks';
-import { OPEN_CHAT, CLOSE_CHAT } from '../../chat';
+import { getLocalTracks, isLocalTrackMuted, toggleScreensharing } from '../../base/tracks';
+import { CLOSE_CHAT, OPEN_CHAT } from '../../chat';
 import { openChat } from '../../chat/actions';
-import { sendMessage, setPrivateMessageRecipient, closeChat } from '../../chat/actions.any';
+import { closeChat, sendMessage, setPrivateMessageRecipient } from '../../chat/actions.any';
 import { SET_PAGE_RELOAD_OVERLAY_CANCELED } from '../../overlay/actionTypes';
+import { setRequestingSubtitles } from '../../subtitles';
 import { muteLocal } from '../../video-menu/actions';
 import { ENTER_PICTURE_IN_PICTURE } from '../picture-in-picture';
 
+import { READY_TO_CLOSE } from './actionTypes';
 import { setParticipantsWithScreenShare } from './actions';
 import { sendEvent } from './functions';
 import logger from './logger';
@@ -94,6 +95,7 @@ const eventEmitter = new NativeEventEmitter(ExternalAPI);
  * @returns {Function}
  */
 MiddlewareRegistry.register(store => next => action => {
+    const oldAudioMuted = store.getState()['features/base/media'].audio.muted;
     const result = next(action);
     const { type } = action;
 
@@ -116,7 +118,7 @@ MiddlewareRegistry.register(store => next => action => {
         // counterpart of the External API (or at least not in the
         // fatality/finality semantics attributed to
         // conferenceFailed:/onConferenceFailed).
-        if (!error.recoverable && !isFatalJitsiConnectionError(error) && !isFatalJitsiConferenceError(error)) {
+        if (!error.recoverable) {
             _sendConferenceEvent(store, /* action */ {
                 error: _toErrorString(error),
                 ...data
@@ -126,7 +128,6 @@ MiddlewareRegistry.register(store => next => action => {
     }
 
     case CONFERENCE_LEFT:
-    case CONFERENCE_WILL_JOIN:
         _sendConferenceEvent(store, action);
         break;
 
@@ -182,6 +183,10 @@ MiddlewareRegistry.register(store => next => action => {
 
         const { participant } = action;
 
+        if (isScreenShareParticipant(participant)) {
+            break;
+        }
+
         sendEvent(
             store,
             action.type,
@@ -190,17 +195,23 @@ MiddlewareRegistry.register(store => next => action => {
         break;
     }
 
+    case READY_TO_CLOSE:
+        sendEvent(store, type, /* data */ {});
+        break;
+
     case SET_ROOM:
         _maybeTriggerEarlyConferenceWillJoin(store, action);
         break;
 
     case SET_AUDIO_MUTED:
-        sendEvent(
-            store,
-            'AUDIO_MUTED_CHANGED',
-            /* data */ {
-                muted: action.muted
-            });
+        if (action.muted !== oldAudioMuted) {
+            sendEvent(
+                store,
+                'AUDIO_MUTED_CHANGED',
+                /* data */ {
+                    muted: action.muted
+                });
+        }
         break;
 
     case SET_PAGE_RELOAD_OVERLAY_CANCELED:
@@ -333,7 +344,7 @@ function _registerForNativeEvents(store) {
 
         participantsInfo.push(_participantToParticipantInfo(localParticipant));
         remoteParticipants.forEach(participant => {
-            if (!participant.isFakeParticipant) {
+            if (!participant.fakeParticipant) {
                 participantsInfo.push(_participantToParticipantInfo(participant));
             }
         });
@@ -367,6 +378,9 @@ function _registerForNativeEvents(store) {
         dispatch(sendMessage(message));
     });
 
+    eventEmitter.addListener(ExternalAPI.SET_CLOSED_CAPTIONS_ENABLED, ({ enabled }) => {
+        dispatch(setRequestingSubtitles(enabled));
+    });
 }
 
 /**
@@ -385,6 +399,7 @@ function _unregisterForNativeEvents() {
     eventEmitter.removeAllListeners(ExternalAPI.OPEN_CHAT);
     eventEmitter.removeAllListeners(ExternalAPI.CLOSE_CHAT);
     eventEmitter.removeAllListeners(ExternalAPI.SEND_CHAT_MESSAGE);
+    eventEmitter.removeAllListeners(ExternalAPI.SET_CLOSED_CAPTIONS_ENABLED);
 }
 
 /**
@@ -524,6 +539,11 @@ function _sendConferenceEvent(
     // transport an "equivalent".
     if (conference) {
         data.url = _normalizeUrl(conference[JITSI_CONFERENCE_URL_KEY]);
+
+        const localTracks = getLocalTracks(store.getState()['features/base/tracks']);
+        const isAudioMuted = isLocalTrackMuted(localTracks, MEDIA_TYPE.AUDIO);
+
+        data.isAudioMuted = isAudioMuted;
     }
 
     if (_swallowEvent(store, action, data)) {
@@ -594,11 +614,6 @@ function _swallowEvent(store, action, data) {
     switch (action.type) {
     case CONFERENCE_LEFT:
         return _swallowConferenceLeft(store, action, data);
-    case CONFERENCE_WILL_JOIN:
-        // CONFERENCE_WILL_JOIN is dispatched to the external API on SET_ROOM,
-        // before the connection is created, so we need to swallow the original
-        // one emitted by base/conference.
-        return true;
 
     default:
         return false;

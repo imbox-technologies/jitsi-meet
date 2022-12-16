@@ -1,5 +1,4 @@
-// @flow
-
+import { NOTIFICATION_TIMEOUT_TYPE } from '../../notifications';
 import { showWarningNotification } from '../../notifications/actions';
 import { timeout } from '../../virtual-background/functions';
 import logger from '../../virtual-background/logger';
@@ -8,20 +7,16 @@ import JitsiStreamBackgroundEffect from './JitsiStreamBackgroundEffect';
 import createTFLiteModule from './vendor/tflite/tflite';
 import createTFLiteSIMDModule from './vendor/tflite/tflite-simd';
 const models = {
-    model96: 'libs/segm_lite_v681.tflite',
-    model144: 'libs/segm_full_v679.tflite'
+    modelLandscape: 'libs/selfie_segmentation_landscape.tflite'
 };
 
+let modelBuffer;
 let tflite;
 let wasmCheck;
 let isWasmDisabled = false;
 
 const segmentationDimensions = {
-    model96: {
-        height: 96,
-        width: 160
-    },
-    model144: {
+    modelLandscape: {
         height: 144,
         width: 256
     }
@@ -41,11 +36,19 @@ export async function createVirtualBackgroundEffect(virtualBackground: Object, d
         throw new Error('JitsiStreamBackgroundEffect not supported!');
     }
 
+    if (isWasmDisabled) {
+        dispatch(showWarningNotification({
+            titleKey: 'virtualBackground.backgroundEffectError'
+        }, NOTIFICATION_TIMEOUT_TYPE.LONG));
+
+        return;
+    }
+
     // Checks if WebAssembly feature is supported or enabled by/in the browser.
     // Conditional import of wasm-check package is done to prevent
     // the browser from crashing when the user opens the app.
 
-    if (!tflite && !isWasmDisabled) {
+    if (!tflite) {
         try {
             wasmCheck = require('wasm-check');
             const tfliteTimeout = 10000;
@@ -56,40 +59,40 @@ export async function createVirtualBackgroundEffect(virtualBackground: Object, d
                 tflite = await timeout(tfliteTimeout, createTFLiteModule());
             }
         } catch (err) {
-            isWasmDisabled = true;
-
             if (err?.message === '408') {
                 logger.error('Failed to download tflite model!');
                 dispatch(showWarningNotification({
                     titleKey: 'virtualBackground.backgroundEffectError'
-                }));
+                }, NOTIFICATION_TIMEOUT_TYPE.LONG));
             } else {
-                logger.error('Looks like WebAssembly is disabled or not supported on this browser');
+                isWasmDisabled = true;
+                logger.error('Looks like WebAssembly is disabled or not supported on this browser', err);
                 dispatch(showWarningNotification({
                     titleKey: 'virtualBackground.webAssemblyWarning',
-                    description: 'WebAssembly disabled or not supported by this browser'
-                }));
+                    descriptionKey: 'virtualBackground.webAssemblyWarningDescription'
+                }, NOTIFICATION_TIMEOUT_TYPE.LONG));
             }
 
             return;
         }
     }
 
-    const modelBufferOffset = tflite._getModelBufferMemoryOffset();
-    const modelResponse = await fetch(wasmCheck.feature.simd ? models.model144 : models.model96);
+    if (!modelBuffer) {
+        const modelResponse = await fetch(models.modelLandscape);
 
-    if (!modelResponse.ok) {
-        throw new Error('Failed to download tflite model!');
+        if (!modelResponse.ok) {
+            throw new Error('Failed to download tflite model!');
+        }
+
+        modelBuffer = await modelResponse.arrayBuffer();
+
+        tflite.HEAPU8.set(new Uint8Array(modelBuffer), tflite._getModelBufferMemoryOffset());
+
+        tflite._loadModel(modelBuffer.byteLength);
     }
 
-    const model = await modelResponse.arrayBuffer();
-
-    tflite.HEAPU8.set(new Uint8Array(model), modelBufferOffset);
-
-    tflite._loadModel(model.byteLength);
-
     const options = {
-        ...wasmCheck.feature.simd ? segmentationDimensions.model144 : segmentationDimensions.model96,
+        ...segmentationDimensions.modelLandscape,
         virtualBackground
     };
 

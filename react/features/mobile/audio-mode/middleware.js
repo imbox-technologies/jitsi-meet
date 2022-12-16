@@ -5,8 +5,8 @@ import { APP_WILL_MOUNT, APP_WILL_UNMOUNT } from '../../base/app';
 import { SET_AUDIO_ONLY } from '../../base/audio-only';
 import {
     CONFERENCE_FAILED,
-    CONFERENCE_LEFT,
     CONFERENCE_JOINED,
+    CONFERENCE_LEFT,
     getCurrentConference
 } from '../../base/conference';
 import { getFeatureFlag, AUDIO_FOCUS_DISABLED, CALL_INTEGRATION_ENABLED, AUDIO_DEFAULT_TO_SPEAKER } from '../../base/flags';

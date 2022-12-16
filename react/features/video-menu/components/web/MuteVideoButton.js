@@ -3,14 +3,13 @@
 import React from 'react';
 
 import { translate } from '../../../base/i18n';
-import { IconCameraDisabled } from '../../../base/icons';
+import { IconVideoOff } from '../../../base/icons';
 import { connect } from '../../../base/redux';
+import ContextMenuItem from '../../../base/ui/components/web/ContextMenuItem';
 import AbstractMuteVideoButton, {
-    _mapStateToProps,
-    type Props
+    type Props,
+    _mapStateToProps
 } from '../AbstractMuteVideoButton';
-
-import VideoMenuButton from './VideoMenuButton';
 
 /**
  * Implements a React {@link Component} which displays a button for disabling
@@ -41,23 +40,20 @@ class MuteVideoButton extends AbstractMuteVideoButton {
      * @returns {ReactElement}
      */
     render() {
-        const { _videoTrackMuted, participantID, t } = this.props;
-        const muteConfig = _videoTrackMuted ? {
-            translationKey: 'videothumbnail.videoMuted',
-            muteClassName: 'mutevideolink disabled'
-        } : {
-            translationKey: 'videothumbnail.domuteVideo',
-            muteClassName: 'mutevideolink'
-        };
+        const { _videoTrackMuted, t } = this.props;
+
+        if (_videoTrackMuted) {
+            return null;
+        }
 
         return (
-            <VideoMenuButton
-                buttonText = { t(muteConfig.translationKey) }
-                displayClass = { muteConfig.muteClassName }
-                icon = { IconCameraDisabled }
-                id = { `mutelink_${participantID}` }
+            <ContextMenuItem
+                accessibilityLabel = { t('participantsPane.actions.stopVideo') }
+                className = 'mutevideolink'
+                icon = { IconVideoOff }
                 // eslint-disable-next-line react/jsx-handler-names
-                onClick = { this._handleClick } />
+                onClick = { this._handleClick }
+                text = { t('participantsPane.actions.stopVideo') } />
         );
     }
 

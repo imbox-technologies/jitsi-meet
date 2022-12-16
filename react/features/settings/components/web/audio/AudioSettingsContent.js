@@ -3,7 +3,7 @@
 import React, { Component } from 'react';
 
 import { translate } from '../../../../base/i18n';
-import { IconMicrophoneHollow, IconVolumeEmpty } from '../../../../base/icons';
+import { IconMic, IconVolumeUp } from '../../../../base/icons';
 import JitsiMeetJS from '../../../../base/lib-jitsi-meet';
 import { equals } from '../../../../base/redux';
 import { createLocalAudioTracks } from '../../../functions';
@@ -39,6 +39,11 @@ export type Props = {
     * The deviceId of the output device in use.
     */
     currentOutputDeviceId: string,
+
+    /**
+    * Used to decide whether to measure audio levels for microphone devices.
+    */
+    measureAudioLevels: boolean,
 
    /**
     * Used to set a new microphone as the current one.
@@ -179,6 +184,7 @@ class AudioSettingsContent extends Component<Props, State> {
                 key = { `me-${index}` }
                 length = { length }
                 listHeaderId = { this.microphoneHeaderId }
+                measureAudioLevels = { this.props.measureAudioLevels }
                 onClick = { this._onMicrophoneEntryClick }>
                 {label}
             </MicrophoneEntry>
@@ -304,7 +310,7 @@ class AudioSettingsContent extends Component<Props, State> {
                     tabIndex = { -1 }>
                     <div role = 'menuitem'>
                         <AudioSettingsHeader
-                            IconComponent = { IconMicrophoneHollow }
+                            IconComponent = { IconMic }
                             id = { this.microphoneHeaderId }
                             text = { t('settings.microphones') } />
                         <ul
@@ -321,7 +327,7 @@ class AudioSettingsContent extends Component<Props, State> {
                         <div role = 'menuitem'>
                             <hr className = 'audio-preview-hr' />
                             <AudioSettingsHeader
-                                IconComponent = { IconVolumeEmpty }
+                                IconComponent = { IconVolumeUp }
                                 id = { this.speakerHeaderId }
                                 text = { t('settings.speakers') } />
                             <ul

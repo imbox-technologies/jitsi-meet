@@ -3,7 +3,7 @@
 import { createToolbarEvent, sendAnalytics } from '../../analytics';
 import { openDialog } from '../../base/dialog';
 import { translate } from '../../base/i18n';
-import { IconCodeBlock } from '../../base/icons';
+import { IconCode } from '../../base/icons';
 import { connect } from '../../base/redux';
 import { AbstractButton, type AbstractButtonProps } from '../../base/toolbox/components';
 
@@ -25,7 +25,7 @@ type Props = AbstractButtonProps & {
  */
 class EmbedMeetingButton extends AbstractButton<Props, *> {
     accessibilityLabel = 'toolbar.accessibilityLabel.embedMeeting';
-    icon = IconCodeBlock;
+    icon = IconCode;
     label = 'toolbar.embedMeeting';
     tooltip = 'toolbar.embedMeeting';
 
@@ -36,13 +36,7 @@ class EmbedMeetingButton extends AbstractButton<Props, *> {
      * @returns {void}
      */
     _handleClick() {
-        const { dispatch, handleClick } = this.props;
-
-        if (handleClick) {
-            handleClick();
-
-            return;
-        }
+        const { dispatch } = this.props;
 
         sendAnalytics(createToolbarEvent('embed.meeting'));
         dispatch(openDialog(EmbedMeetingDialog));

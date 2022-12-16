@@ -5,7 +5,7 @@ import { Image, Text, View } from 'react-native';
 
 import { Icon } from '../../../icons';
 import { type StyleType } from '../../../styles';
-import AbstractStatelessAvatar, { type Props as AbstractProps } from '../AbstractStatelessAvatar';
+import AbstractStatelessAvatar, { type IProps as AbstractProps } from '../AbstractStatelessAvatar';
 
 import styles from './styles';
 
@@ -29,6 +29,18 @@ type Props = AbstractProps & {
  * props.
  */
 export default class StatelessAvatar extends AbstractStatelessAvatar<Props> {
+
+    /**
+     * Instantiates a new {@code Component}.
+     *
+     * @inheritdoc
+     */
+    constructor(props: Props) {
+        super(props);
+
+        this._onAvatarLoadError = this._onAvatarLoadError.bind(this);
+    }
+
     /**
      * Implements {@code Component#render}.
      *
@@ -163,5 +175,23 @@ export default class StatelessAvatar extends AbstractStatelessAvatar<Props> {
                 source = {{ uri: url }}
                 style = { styles.avatarContent(size) } />
         );
+    }
+
+    _onAvatarLoadError: () => void;
+
+    /**
+     * Handles avatar load errors.
+     *
+     * @returns {void}
+     */
+    _onAvatarLoadError() {
+        const { onAvatarLoadError, onAvatarLoadErrorParams = {} } = this.props;
+
+        if (onAvatarLoadError) {
+            onAvatarLoadError({
+                ...onAvatarLoadErrorParams,
+                dontRetry: true
+            });
+        }
     }
 }

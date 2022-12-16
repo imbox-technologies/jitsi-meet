@@ -5,15 +5,7 @@ import { StyleSheet } from 'react-native';
 import { BoxModel } from '../../base/styles';
 import BaseTheme from '../../base/ui/components/BaseTheme.native';
 
-export const PLACEHOLDER_TEXT_COLOR = BaseTheme.palette.text01;
-
-export const DRAWER_AVATAR_SIZE = 104;
-
-const DRAWER_HEADER_HEIGHT = 220;
-
-export const SWITCH_THUMB_COLOR = BaseTheme.palette.action04;
-
-export const SWITCH_UNDER_COLOR = BaseTheme.palette.video01Disabled;
+export const AVATAR_SIZE = 104;
 
 /**
  * The default color of text on the WelcomePage.
@@ -26,20 +18,9 @@ const TEXT_COLOR = BaseTheme.palette.text01;
  */
 export default {
 
-    /**
-     * The audio-video switch itself.
-     */
-    audioVideoSwitch: {
-        marginHorizontal: 5
-    },
-
-    /**
-     * View that contains the audio-video switch and the labels.
-     */
-    audioVideoSwitchContainer: {
-        alignItems: 'center',
-        flexDirection: 'row',
-        marginRight: BaseTheme.spacing[2]
+    blankPageText: {
+        color: TEXT_COLOR,
+        fontSize: 18
     },
 
     /**
@@ -48,6 +29,7 @@ export default {
     blankPageWrapper: {
         ...StyleSheet.absoluteFillObject,
         alignItems: 'center',
+        backgroundColor: BaseTheme.palette.uiBackground,
         flex: 1,
         flexDirection: 'column',
         justifyContent: 'center'
@@ -57,40 +39,23 @@ export default {
      * Join button style.
      */
     button: {
-        backgroundColor: BaseTheme.palette.screen01Header,
-        borderColor: BaseTheme.palette.screen01Header,
-        borderRadius: 4,
+        backgroundColor: BaseTheme.palette.action01,
+        borderColor: BaseTheme.palette.action01,
+        borderRadius: BaseTheme.shape.borderRadius,
         borderWidth: 1,
-        height: 30,
+        height: BaseTheme.spacing[7],
         justifyContent: 'center',
-        paddingHorizontal: 20
+        paddingHorizontal: BaseTheme.spacing[4]
     },
 
-    /**
-     * Join button text style.
-     */
-    buttonText: {
+    joinButtonLabel: {
+        textTransform: 'uppercase'
+    },
+
+    joinButtonText: {
         alignSelf: 'center',
         color: BaseTheme.palette.text01,
         fontSize: 14
-    },
-
-    /**
-     * Drawer style.
-     */
-    drawerStyle: {
-        backgroundColor: BaseTheme.palette.ui12,
-        width: '54%'
-    },
-
-    /**
-     * The style of the display name label in the side bar.
-     */
-    displayName: {
-        color: BaseTheme.palette.text01,
-        fontSize: 16,
-        marginTop: BoxModel.margin,
-        textAlign: 'center'
     },
 
     enterRoomText: {
@@ -119,6 +84,7 @@ export default {
      * The text of the hint box.
      */
     hintText: {
+        color: BaseTheme.palette.text01,
         textAlign: 'center'
     },
 
@@ -145,23 +111,15 @@ export default {
     },
 
     messageContainer: {
-        backgroundColor: BaseTheme.palette.ui12,
-        borderColor: BaseTheme.palette.field02,
-        borderRadius: 4,
-        borderWidth: 1,
-        marginVertical: 5,
-        paddingHorizontal: BoxModel.padding,
-        paddingVertical: 2 * BoxModel.padding
+        backgroundColor: BaseTheme.palette.ui03,
+        borderRadius: BaseTheme.shape.borderRadius,
+        marginVertical: BaseTheme.spacing[1],
+        paddingHorizontal: BaseTheme.spacing[2],
+        paddingVertical: 2 * BaseTheme.spacing[2]
     },
 
-    /**
-     * The style of the top-level container/{@code View} of
-     * {@code LocalVideoTrackUnderlay}.
-     */
-    localVideoTrackUnderlay: {
-        alignSelf: 'stretch',
-        backgroundColor: 'transparent',
-        flex: 1
+    roomNameInputContainer: {
+        height: '0%'
     },
 
     /**
@@ -192,25 +150,8 @@ export default {
      */
     roomContainer: {
         alignSelf: 'stretch',
-        flexDirection: 'column'
-    },
-
-    /**
-     * The style of the side bar header.
-     */
-    drawerHeader: {
-        alignItems: 'center',
-        backgroundColor: BaseTheme.palette.screen01Header,
         flexDirection: 'column',
-        height: DRAWER_HEADER_HEIGHT,
-        justifyContent: 'center'
-    },
-
-    drawerNavigationIcon: {
-        height: BaseTheme.spacing[6],
-        marginLeft: BaseTheme.spacing[1],
-        marginTop: BaseTheme.spacing[1],
-        width: BaseTheme.spacing[6]
+        marginHorizontal: BaseTheme.spacing[2]
     },
 
     /**
@@ -248,7 +189,7 @@ export default {
     insecureRoomNameWarningContainer: {
         alignItems: 'center',
         flexDirection: 'row',
-        paddingHorizontal: 5
+        paddingHorizontal: BaseTheme.spacing[1]
     },
 
     insecureRoomNameWarningIcon: {
@@ -269,6 +210,12 @@ export default {
         backgroundColor: BaseTheme.palette.uiBackground,
         flex: 1,
         overflow: 'hidden'
+    },
+
+    customInput: {
+        fontSize: 18,
+        letterSpacing: 0,
+        textAlign: 'center'
     },
 
     recentList: {

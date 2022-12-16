@@ -1,7 +1,7 @@
 // @flow
 
 import { translate } from '../../../base/i18n';
-import { IconParticipants } from '../../../base/icons';
+import { IconUsers } from '../../../base/icons';
 import { connect } from '../../../base/redux';
 import { AbstractButton, type AbstractButtonProps } from '../../../base/toolbox/components';
 
@@ -21,25 +21,9 @@ type Props = AbstractButtonProps & {
  */
 class ParticipantsPaneButton extends AbstractButton<Props, *> {
     accessibilityLabel = 'toolbar.accessibilityLabel.participants';
-    icon = IconParticipants;
+    icon = IconUsers;
     label = 'toolbar.participants';
     tooltip = 'toolbar.participants';
-
-    /**
-     * Handles clicking / pressing the button, and opens the appropriate dialog.
-     *
-     * @protected
-     * @returns {void}
-     */
-    _handleClick() {
-        const { handleClick } = this.props;
-
-        if (handleClick) {
-            handleClick();
-
-            return;
-        }
-    }
 
     /**
      * Indicates whether this button is in toggled state or not.

@@ -20,12 +20,12 @@ export type Props = {
     /**
      * Callback invoked when the custom button is clicked.
      */
-    customActionHandler: Function,
+    customActionHandler: Function[],
 
     /**
      * The text to display as button in the notification for the custom action.
      */
-    customActionNameKey: string,
+    customActionNameKey: string[],
 
     /**
      * The text to display in the body of the notification. If not passed
@@ -56,9 +56,10 @@ export type Props = {
     hideErrorSupportLink: boolean,
 
     /**
-     * Whether or not the dismiss button should be displayed.
+     * The type of icon to be displayed. If not passed in, the appearance
+     * type will be used.
      */
-    isDismissAllowed: boolean,
+    icon?: String,
 
     /**
      * Maximum lines of the description.
@@ -110,8 +111,7 @@ export default class AbstractNotification<P: Props> extends Component<P> {
      * @static
      */
     static defaultProps = {
-        appearance: NOTIFICATION_TYPE.NORMAL,
-        isDismissAllowed: true
+        appearance: NOTIFICATION_TYPE.NORMAL
     };
 
     /**

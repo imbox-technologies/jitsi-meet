@@ -7,7 +7,8 @@ import { toState } from '../base/redux';
 import { Conference } from '../conference';
 import { getDeepLinkingPage } from '../deep-linking';
 import { UnsupportedDesktopBrowser } from '../unsupported-browser';
-import { BlankPage, isWelcomePageUserEnabled, WelcomePage } from '../welcome';
+import { BlankPage, WelcomePage } from '../welcome';
+import { isWelcomePageEnabled } from '../welcome/functions';
 
 /**
  * Determines which route is to be rendered in order to depict a specific Redux
@@ -72,7 +73,7 @@ function _getWebConferenceRoute(state) {
 function _getWebWelcomePageRoute(state) {
     const route = _getEmptyRoute();
 
-    if (isWelcomePageUserEnabled(state)) {
+    if (isWelcomePageEnabled(state)) {
         if (isSupportedBrowser()) {
             route.component = WelcomePage;
         } else {
@@ -80,11 +81,10 @@ function _getWebWelcomePageRoute(state) {
         }
     } else {
         // Web: if the welcome page is disabled, go directly to a random room.
+        const url = new URL(window.location.href);
 
-        let href = window.location.href;
-
-        href.endsWith('/') || (href += '/');
-        route.href = href + generateRoomWithoutSeparator();
+        url.pathname += generateRoomWithoutSeparator();
+        route.href = url.href;
     }
 
     return Promise.resolve(route);
