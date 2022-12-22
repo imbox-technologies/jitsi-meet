@@ -156,6 +156,13 @@ public class JitsiMeetView extends FrameLayout {
     }
 
     /**
+     * Leaves the currently active conference.
+     */
+    public void leave() {
+        setProps(new Bundle());
+    }
+
+    /**
      * Creates the {@code ReactRootView} for the given app name with the given
      * props. Once created it's set as the view of this {@code FrameLayout}.
      *

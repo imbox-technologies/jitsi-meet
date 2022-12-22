@@ -162,7 +162,7 @@ public class JitsiMeetActivity extends AppCompatActivity
     }
 
     protected FrameLayout getRootView() {
-        return (FrameLayout) findViewById(R.id.jitsiActivityRootFrameLayout);
+        return (FrameLayout) findViewById(R.id.jitsi_layout);
     }
 
     public void join(@Nullable String url) {
