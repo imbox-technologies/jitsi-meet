@@ -259,6 +259,19 @@ export const WELCOME_PAGE_ENABLED = 'welcomepage.enabled';
 
 /**
  * Flag indicating that the audio should be routed to the speaker by default.
- * Default: disabled (false).
+ * Default: enabled (true).
  */
 export const AUDIO_DEFAULT_TO_SPEAKER = 'audio-defaulttospeaker.enabled';
+
+/**
+ * Flag indicating that the end conference option is enabled.
+ * Default: enabled (true).
+ */
+export const END_CONFERENCE_ENABLED = 'end-conference.enabled';
+
+/**
+ * Flag indicating that the hack that allows the conference to be initiated
+ * while the app is in background (iOS) should be enabled.
+ * Default: disabled (false).
+ */
+export const SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK = 'skip-root-navigation-ready-hack.enabled';

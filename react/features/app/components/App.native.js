@@ -6,7 +6,7 @@ import SplashScreen from 'react-native-splash-screen';
 import { DialogContainer } from '../../base/dialog';
 import BottomSheetContainer from '../../base/dialog/components/native/BottomSheetContainer';
 import { updateFlags } from '../../base/flags/actions';
-import { CALL_INTEGRATION_ENABLED, SERVER_URL_CHANGE_ENABLED } from '../../base/flags/constants';
+import { CALL_INTEGRATION_ENABLED, SERVER_URL_CHANGE_ENABLED, SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK } from '../../base/flags/constants';
 import { getFeatureFlag } from '../../base/flags/functions';
 import { DimensionsDetector, clientResized, setSafeAreaInsets } from '../../base/responsive-ui';
 import { updateSettings } from '../../base/settings';
@@ -123,7 +123,12 @@ export class App extends AbstractApp {
             }, 50);
         });
 
-        await rootNavigationReady;
+        // This hack is needed to allow a conference to start while the app is in background (iOS)
+        const skipAwaitRootNavigationReady = getFeatureFlag(getState(), SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK, false);
+
+        if (!skipAwaitRootNavigationReady) {
+            await rootNavigationReady;
+        }
 
         // Check if serverURL is configured externally and not allowed to change.
         const serverURLChangeEnabled = getFeatureFlag(getState(), SERVER_URL_CHANGE_ENABLED, true);

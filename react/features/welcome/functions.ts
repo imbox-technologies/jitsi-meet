@@ -1,5 +1,5 @@
 import { IStateful } from '../base/app/types';
-import { WELCOME_PAGE_ENABLED } from '../base/flags/constants';
+import { WELCOME_PAGE_ENABLED, SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK } from '../base/flags/constants';
 import { getFeatureFlag } from '../base/flags/functions';
 import { toState } from '../base/redux/functions';
 
@@ -18,4 +18,14 @@ export function isWelcomePageEnabled(stateful: IStateful) {
     }
 
     return toState(stateful)['features/base/config'].enableWelcomePage;
+}
+
+/**
+ * TODO: explain this infamous hack
+ */
+export function isSkipRootNavigationReadyHackEnabled(stateful: IStateful) {
+    if (navigator.product === 'ReactNative') {
+        return getFeatureFlag(stateful, SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK, false);
+    }
+    return false;
 }

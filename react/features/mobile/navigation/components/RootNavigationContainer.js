@@ -7,7 +7,7 @@ import { connect } from '../../../base/redux';
 import { DialInSummary } from '../../../invite';
 import Prejoin from '../../../prejoin/components/native/Prejoin';
 import WelcomePage from '../../../welcome/components/WelcomePage';
-import { isWelcomePageEnabled } from '../../../welcome/functions';
+import { isWelcomePageEnabled, isSkipRootNavigationReadyHackEnabled } from '../../../welcome/functions';
 import { _ROOT_NAVIGATION_READY } from '../actionTypes';
 import { rootNavigationRef } from '../rootNavigationContainerRef';
 import { screen } from '../routes';
@@ -37,13 +37,18 @@ type Props = {
     /**
     * Is welcome page available?
     */
-    isWelcomePageAvailable: boolean
+    isWelcomePageAvailable: boolean,
+
+    /**
+    * Is this infamous hack enabled?
+    */
+    isSkipRootNavigationReadyHackEnabled: boolean
 }
 
 
-const RootNavigationContainer = ({ dispatch, isWelcomePageAvailable }: Props) => {
+const RootNavigationContainer = ({ dispatch, isWelcomePageAvailable, isSkipRootNavigationReadyHackEnabled }: Props) => {
     const initialRouteName = isWelcomePageAvailable
-        ? screen.welcome.main : screen.connecting;
+        ? screen.welcome.main : (isSkipRootNavigationReadyHackEnabled ? screen.conference.root : screen.connecting);
     const onReady = useCallback(() => {
         dispatch({
             type: _ROOT_NAVIGATION_READY,
@@ -102,7 +107,8 @@ const RootNavigationContainer = ({ dispatch, isWelcomePageAvailable }: Props) =>
  */
 function mapStateToProps(state: Object) {
     return {
-        isWelcomePageAvailable: isWelcomePageEnabled(state)
+        isWelcomePageAvailable: isWelcomePageEnabled(state),
+        isSkipRootNavigationReadyHackEnabled: isSkipRootNavigationReadyHackEnabled(state)
     };
 }
 

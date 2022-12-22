@@ -151,7 +151,7 @@ RCT_EXPORT_MODULE();
 RCT_EXPORT_METHOD(setMode:(int)mode
                   resolve:(RCTPromiseResolveBlock)resolve
                    reject:(RCTPromiseRejectBlock)reject) {
-    DDLogInfo(@"[AudioMode] Set mode: %d", mode);
+    RCTLogInfo(@"[AudioMode] Set mode: %d", mode);
     RTCAudioSessionConfiguration *config = [self configForMode:mode];
     NSError *error;
 

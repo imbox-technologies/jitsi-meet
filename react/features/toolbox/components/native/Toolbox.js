@@ -23,6 +23,9 @@ import RaiseHandButton from './RaiseHandButton';
 import ScreenSharingButton from './ScreenSharingButton';
 import styles from './styles';
 
+import { getFeatureFlag, END_CONFERENCE_ENABLED } from '../../../base/flags';
+import { toState } from '../../../base/redux/functions';
+
 /**
  * The type of {@link Toolbox}'s React {@code Component} props.
  */
@@ -32,6 +35,11 @@ type Props = {
      * Whether the end conference feature is supported.
      */
     _endConferenceSupported: boolean,
+
+    /**
+     * Whether the end conference feature is enabled.
+     */
+    _endConferenceEnabled: boolean;
 
     /**
      * Whether or not the reactions feature is enabled.
@@ -61,7 +69,7 @@ type Props = {
  * @returns {React$Element}.
  */
 function Toolbox(props: Props) {
-    const { _endConferenceSupported, _reactionsEnabled, _styles, _visible, _width } = props;
+    const { _endConferenceSupported, _endConferenceEnabled, _reactionsEnabled, _styles, _visible, _width } = props;
 
     if (!_visible) {
         return null;
@@ -111,7 +119,7 @@ function Toolbox(props: Props) {
                 <OverflowMenuButton
                     styles = { buttonStylesBorderless }
                     toggledStyles = { toggledButtonStyles } />
-                { _endConferenceSupported
+                { _endConferenceSupported && _endConferenceEnabled
                     ? <HangupMenuButton
                         styles = { hangupMenuButtonStyles }
                         toggledStyles = { toggledButtonStyles } />
@@ -135,9 +143,11 @@ function Toolbox(props: Props) {
 function _mapStateToProps(state: Object): Object {
     const { conference } = state['features/base/conference'];
     const endConferenceSupported = conference?.isEndConferenceSupported();
+    const endConferenceEnabled = getFeatureFlag(toState(state), END_CONFERENCE_ENABLED, true);
 
     return {
         _endConferenceSupported: Boolean(endConferenceSupported),
+        _endConferenceEnabled: Boolean(endConferenceEnabled),
         _styles: ColorSchemeRegistry.get(state, 'Toolbox'),
         _visible: isToolboxVisible(state),
         _width: state['features/base/responsive-ui'].clientWidth,

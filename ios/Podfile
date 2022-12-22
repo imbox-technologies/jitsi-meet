@@ -4,6 +4,8 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 platform :ios, '12.0'
 workspace 'jitsi-meet'
 
+use_frameworks! :linkage => :static
+
 install! 'cocoapods', :deterministic_uuids => false
 
 target 'JitsiMeet' do
