@@ -22,6 +22,9 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -60,7 +63,7 @@ import java.util.concurrent.Executors;
  */
 @SuppressLint("AnnotateVersionCheck")
 @ReactModule(name = AudioModeModule.NAME)
-class AudioModeModule extends ReactContextBaseJavaModule {
+public class AudioModeModule extends ReactContextBaseJavaModule {
     public static final String NAME = "AudioMode";
 
     /**
@@ -72,10 +75,10 @@ class AudioModeModule extends ReactContextBaseJavaModule {
      * - VIDEO_CALL: Used for video calls. It will use the speaker by default,
      *   unless a wired or Bluetooth headset is connected.
      */
-    static final int DEFAULT    = 0;
-    static final int AUDIO_CALL = 1;
-    static final int VIDEO_CALL = 2;
-    static final int EARPIECE_CALL = 3;
+    public static final int DEFAULT    = 0;
+    public static final int AUDIO_CALL = 1;
+    public static final int VIDEO_CALL = 2;
+    public static final int EARPIECE_CALL = 3;
 
     /**
      * The {@code Log} tag {@code AudioModeModule} is to log messages with.
@@ -141,16 +144,41 @@ class AudioModeModule extends ReactContextBaseJavaModule {
     private String userSelectedDevice;
 
     /**
+     * Module singleton instance.
+     */
+    private static AudioModeModule instance;
+
+    /**
      * Initializes a new module instance. There shall be a single instance of
      * this module throughout the lifetime of the application.
      *
      * @param reactContext the {@link ReactApplicationContext} where this module
      * is created.
      */
-    public AudioModeModule(ReactApplicationContext reactContext) {
+    private AudioModeModule(ReactApplicationContext reactContext) {
         super(reactContext);
 
         audioManager = (AudioManager)reactContext.getSystemService(Context.AUDIO_SERVICE);
+    }
+
+    /**
+     * Returns the module instance. Initializes the singleton module instance needed.
+     *
+     * @param reactContext the {@link ReactApplicationContext} where this module
+     * is created.
+     */
+    public static AudioModeModule getSharedInstance(ReactApplicationContext reactContext) {
+        if (instance == null) {
+            instance = new AudioModeModule(reactContext);
+        }
+        return instance;
+    }
+
+    /**
+     * Returns the module instance. It may be null.
+     */
+    public static AudioModeModule getSharedInstance() {
+        return instance;
     }
 
     @ReactMethod
@@ -322,6 +350,78 @@ class AudioModeModule extends ReactContextBaseJavaModule {
                     promise.resolve(null);
                 } else {
                     promise.reject("setMode", "Failed to set audio mode to " + mode);
+                }
+            }
+        });
+    }
+
+    public interface AudioModeSetListener {
+        void onResolved();
+        void onRejected(String code, String message, Throwable throwable, WritableMap userInfo);
+    }
+
+    /**
+     * Public method to set the current audio mode.
+     *
+     * @param mode the desired audio mode.
+     * @param listener a {@link AudioModeSetListener} which will be used to inform
+     *                 if the operation was successful or failed.
+     */
+    public void setMode(final int mode, AudioModeSetListener listener) {
+        setMode(mode, new Promise() {
+            public void resolve(@Nullable Object value) {
+                if (listener != null) {
+                    listener.onResolved();
+                }
+            }
+            public void reject(String code, String message) {
+                if (listener != null) {
+                    listener.onRejected(code, message, null, null);
+                }
+             }
+            public void reject(String code, Throwable throwable) {
+                if (listener != null) {
+                    listener.onRejected(code, null, throwable, null);
+                }
+            }
+            public void reject(String code, String message, Throwable throwable) {
+                if (listener != null) {
+                    listener.onRejected(code, message, throwable, null);
+                }
+            }
+            public void reject(Throwable throwable) {
+                if (listener != null) {
+                    listener.onRejected(null, null, throwable, null);
+                }
+            }
+            public void reject(Throwable throwable, WritableMap userInfo) {
+                if (listener != null) {
+                    listener.onRejected(null, null, throwable, userInfo);
+                }
+            }
+            public void reject(String code, @NonNull WritableMap userInfo) {
+                if (listener != null) {
+                    listener.onRejected(code, null, null, userInfo);
+                }
+            }
+            public void reject(String code, Throwable throwable, WritableMap userInfo) {
+                if (listener != null) {
+                    listener.onRejected(code, null, throwable, userInfo);
+                }
+             }
+            public void reject(String code, String message, @NonNull WritableMap userInfo) {
+                if (listener != null) {
+                    listener.onRejected(code, message, null, userInfo);
+                }
+             }
+            public void reject(String code, String message, Throwable throwable, WritableMap userInfo) {
+                if (listener != null) {
+                    listener.onRejected(code, message, throwable, userInfo);
+                }
+            }
+            public void reject(String message) {
+                if (listener != null) {
+                    listener.onRejected(null, message, null, null);
                 }
             }
         });

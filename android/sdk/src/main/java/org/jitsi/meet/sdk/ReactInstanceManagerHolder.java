@@ -64,7 +64,7 @@ class ReactInstanceManagerHolder {
             = new ArrayList<>(Arrays.<NativeModule>asList(
                 new AndroidSettingsModule(reactContext),
                 new AppInfoModule(reactContext),
-                new AudioModeModule(reactContext),
+                AudioModeModule.getSharedInstance(reactContext),
                 new DropboxModule(reactContext),
                 new ExternalAPIModule(reactContext),
                 new JavaScriptSandboxModule(reactContext),
