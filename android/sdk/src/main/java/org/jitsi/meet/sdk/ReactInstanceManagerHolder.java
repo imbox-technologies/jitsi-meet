@@ -17,6 +17,7 @@
 package org.jitsi.meet.sdk;
 
 import android.app.Activity;
+import android.app.Application;
 
 import androidx.annotation.Nullable;
 
@@ -173,12 +174,12 @@ public class ReactInstanceManagerHolder {
      *
      * @param activity {@code Activity} current running Activity.
      */
-    public static void initReactInstanceManager(Activity activity) {
+    public static void initReactInstanceManager(Activity activity, Application application) {
         if (reactInstanceManager != null) {
             return;
         }
 
-        SoLoader.init(activity.getApplication(), /* native exopackage */ false);
+        SoLoader.init(application, /* native exopackage */ false);
 
         List<ReactPackage> packages
             = new ArrayList<>(Arrays.asList(
@@ -232,7 +233,7 @@ public class ReactInstanceManagerHolder {
 
         reactInstanceManager
             = ReactInstanceManager.builder()
-                .setApplication(activity.getApplication())
+                .setApplication(application)
                 .setCurrentActivity(activity)
                 .setBundleAssetName("index.android.bundle")
                 .setJSMainModulePath("index.android")
