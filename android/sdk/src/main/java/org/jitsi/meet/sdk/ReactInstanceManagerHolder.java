@@ -278,7 +278,7 @@ class ReactInstanceManagerHolder {
      *
      * @param activity {@code Activity} current running Activity.
      */
-    static void initReactInstanceManager(Activity activity) {
+    static void initReactInstanceManager(Activity activity, Application application) {
         if (reactInstanceManager != null) {
             return;
         }
@@ -287,7 +287,7 @@ class ReactInstanceManagerHolder {
 
         reactInstanceManager
             = ReactInstanceManager.builder()
-                .setApplication(activity.getApplication())
+                .setApplication(application)
                 .setCurrentActivity(activity)
                 .setBundleAssetName("index.android.bundle")
                 .setJSMainModulePath("index.android")

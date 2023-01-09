@@ -101,13 +101,21 @@ public class JitsiMeetActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_jitsi_meet);
-        this.jitsiView = findViewById(R.id.jitsiView);
+
+        this.jitsiView = createJitsiView();
+        jitsiView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        FrameLayout jitsiViewContainer = findViewById(R.id.jitsiView);
+        jitsiViewContainer.addView(jitsiView);
 
         registerForBroadcastMessages();
 
         if (!extraInitialize()) {
             initialize();
         }
+    }
+
+    protected JitsiMeetView createJitsiView() {
+        return new JitsiMeetView(this);
     }
 
     @Override
