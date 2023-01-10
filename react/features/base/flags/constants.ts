@@ -275,3 +275,9 @@ export const END_CONFERENCE_ENABLED = 'end-conference.enabled';
  * Default: disabled (false).
  */
 export const SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK = 'skip-root-navigation-ready-hack.enabled';
+
+/**
+ * Flag indicating if the SDK should handle the proximity sensor.
+ * Default: disabled (false).
+ */
+export const PROXIMITY_DISABLED = 'proximity.disabled';

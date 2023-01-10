@@ -3,6 +3,8 @@ import { NativeModules } from 'react-native';
 import { getCurrentConference } from '../../base/conference';
 import { StateListenerRegistry } from '../../base/redux';
 
+import { isProximitySensorDisabled } from './functions';
+
 /**
  * State listener which enables / disables the proximity sensor based on the
  * current conference state. If the proximity sensor is enabled, it will dim
@@ -15,7 +17,7 @@ StateListenerRegistry.register(
         const selectedDevice = devices.filter(d => d.selected)[0];
         const conference = getCurrentConference(state);
 
-        return Boolean(conference && selectedDevice?.type === 'EARPIECE');
+        return !isProximitySensorDisabled(state) && Boolean(conference && selectedDevice?.type === 'EARPIECE');
     },
     /* listener */ proximityEnabled => _setProximityEnabled(proximityEnabled)
 );
