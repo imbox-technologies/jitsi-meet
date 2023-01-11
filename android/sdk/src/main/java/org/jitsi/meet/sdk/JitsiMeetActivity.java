@@ -104,8 +104,7 @@ public class JitsiMeetActivity extends AppCompatActivity
 
         this.jitsiView = createJitsiView();
         jitsiView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        FrameLayout jitsiViewContainer = findViewById(R.id.jitsiView);
-        jitsiViewContainer.addView(jitsiView);
+        getRootView().addView(jitsiView);
 
         registerForBroadcastMessages();
 
