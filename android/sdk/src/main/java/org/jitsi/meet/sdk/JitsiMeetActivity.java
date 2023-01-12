@@ -64,7 +64,7 @@ public class JitsiMeetActivity extends AppCompatActivity
     /**
      * Instance of the {@link JitsiMeetView} which this activity will display.
      */
-    private JitsiMeetView jitsiView;
+    protected JitsiMeetView jitsiView;
 
     // Helpers for starting the activity
     //
@@ -103,8 +103,10 @@ public class JitsiMeetActivity extends AppCompatActivity
         setContentView(R.layout.activity_jitsi_meet);
 
         this.jitsiView = createJitsiView();
-        jitsiView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        getRootView().addView(jitsiView);
+        if (jitsiView != null) {
+            jitsiView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            getRootView().addView(jitsiView);
+        }
 
         registerForBroadcastMessages();
 
