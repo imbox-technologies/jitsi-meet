@@ -85,7 +85,6 @@ class ReactInstanceManagerHolder {
         WebRTCModule.Options options = new WebRTCModule.Options();
 
         AudioDeviceModule adm = JavaAudioDeviceModule.builder(reactContext)
-            .setEnableVolumeLogger(false)
             .createAudioDeviceModule();
         options.setAudioDeviceModule(adm);
 
