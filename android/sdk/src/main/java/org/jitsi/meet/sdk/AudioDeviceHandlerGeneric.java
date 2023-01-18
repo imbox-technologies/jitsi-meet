@@ -34,7 +34,7 @@ import org.jitsi.meet.sdk.log.JitsiMeetLogger;
  * default it's only used on versions < O, since versions >= O use ConnectionService, but it
  * can be disabled.
  */
-class AudioDeviceHandlerGeneric implements
+public class AudioDeviceHandlerGeneric implements
         AudioModeModule.AudioDeviceHandlerInterface,
         AudioManager.OnAudioFocusChangeListener {
 
@@ -197,6 +197,8 @@ class AudioDeviceHandlerGeneric implements
 
     @Override
     public void setAudioRoute(String device) {
+        JitsiMeetLogger.i(TAG + " Set audio route: " + device);
+
         // Turn speaker on / off
         audioManager.setSpeakerphoneOn(device.equals(AudioModeModule.DEVICE_SPEAKER));
 
@@ -206,6 +208,7 @@ class AudioDeviceHandlerGeneric implements
 
     @Override
     public boolean setMode(int mode) {
+        JitsiMeetLogger.i(TAG + " Set audio mode: " + mode);
         if (mode == AudioModeModule.DEFAULT) {
             audioFocusLost = false;
             audioManager.setMode(AudioManager.MODE_NORMAL);

@@ -305,7 +305,7 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
                 if (mode != -1) {
                     JitsiMeetLogger.i(TAG + " User selected device set to: " + device);
                     userSelectedDevice = device;
-                    updateAudioRoute(mode, false);
+                    updateAudioRoute(mode, false, device);
                 }
             }
         });
@@ -320,6 +320,7 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
      */
     @ReactMethod
     public void setMode(final int mode, final Promise promise) {
+        JitsiMeetLogger.i(TAG + " Set audio mode: " + mode);
         if (mode != DEFAULT && mode != AUDIO_CALL && mode != VIDEO_CALL && mode != EARPIECE_CALL) {
             promise.reject("setMode", "Invalid audio mode " + mode);
             return;
@@ -451,12 +452,8 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
      * @return {@code true} if the audio route was updated successfully;
      * {@code false}, otherwise.
      */
-    private boolean updateAudioRoute(int mode, boolean force) {
+    private boolean updateAudioRoute(int mode, boolean force, String device) {
         JitsiMeetLogger.i(TAG + " Update audio route for mode: " + mode);
-
-        if (!audioDeviceHandler.setMode(mode)) {
-            return false;
-        }
 
         if (mode == DEFAULT) {
             selectedDevice = null;
@@ -476,7 +473,7 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
         } else if (headsetAvailable) {
             audioDevice = DEVICE_HEADPHONES;
         } else {
-            if(mode == EARPIECE_CALL) {
+            if(mode == EARPIECE_CALL || DEVICE_EARPIECE.equals(device)) {
                 audioDevice = DEVICE_EARPIECE;
             }
             else {
@@ -502,6 +499,10 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
 
         notifyDevicesChanged();
         return true;
+    }
+
+    private boolean updateAudioRoute(int mode, boolean force) {
+        return updateAudioRoute(mode, force, null);
     }
 
     /**
