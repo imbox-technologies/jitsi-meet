@@ -279,7 +279,7 @@ public class JitsiMeetView extends FrameLayout {
         }
     }
 
-    private FragmentActivity createDummyFragmentActivity(final Context context) {
+    public static FragmentActivity createDummyFragmentActivity(final Context context) {
         return new FragmentActivity() {
             @Override
             public Window getWindow() {
