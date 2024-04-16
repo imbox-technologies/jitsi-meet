@@ -147,6 +147,11 @@ static NSString *const PiPEnabledFeatureFlag = @"pip.enabled";
     [externalAPI sendSetClosedCaptionsEnabled:enabled];
 }
 
+- (void)setAudioDevice:(NSString*)device {
+    ExternalAPI *externalAPI = [[JitsiMeet sharedInstance] getExternalAPI];
+    [externalAPI sendSetAudioDevice:device];
+}
+
 #pragma mark Private methods
 
 - (void)registerObservers {

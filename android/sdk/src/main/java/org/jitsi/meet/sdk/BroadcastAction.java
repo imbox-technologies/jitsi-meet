@@ -77,7 +77,8 @@ public class BroadcastAction {
         CLOSE_CHAT("org.jitsi.meet.CLOSE_CHAT"),
         SEND_CHAT_MESSAGE("org.jitsi.meet.SEND_CHAT_MESSAGE"),
         SET_VIDEO_MUTED("org.jitsi.meet.SET_VIDEO_MUTED"),
-        SET_CLOSED_CAPTIONS_ENABLED("org.jitsi.meet.SET_CLOSED_CAPTIONS_ENABLED");
+        SET_CLOSED_CAPTIONS_ENABLED("org.jitsi.meet.SET_CLOSED_CAPTIONS_ENABLED"),
+        SET_AUDIO_DEVICE("org.jitsi.meet.SET_AUDIO_DEVICE");
 
         private final String action;
 

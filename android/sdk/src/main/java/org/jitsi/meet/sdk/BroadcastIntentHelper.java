@@ -54,4 +54,10 @@ public class BroadcastIntentHelper {
         intent.putExtra("enabled", enabled);
         return intent;
     }
+
+    public static Intent buildSetAudioDeviceIntent(String device) {
+        Intent intent = new Intent(BroadcastAction.Type.SET_AUDIO_DEVICE.getAction());
+        intent.putExtra("device", device);
+        return intent;
+    }
 }

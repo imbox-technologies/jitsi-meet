@@ -15,7 +15,7 @@ import {
 } from '../../../base/icons';
 import { connect } from '../../../base/redux';
 import BaseTheme from '../../../base/ui/components/BaseTheme.native';
-
+import logger from '../logger';
 import styles from './styles';
 
 const { AudioMode } = NativeModules;
@@ -227,6 +227,7 @@ class AudioRoutePickerDialog extends Component<Props, State> {
         return () => {
             this.props.dispatch(hideSheet());
             AudioMode.setAudioDevice(device.uid || device.type);
+            logger.log('setAudioDevice: ' + device.uid + ' ' + device.type);
         };
     }
 

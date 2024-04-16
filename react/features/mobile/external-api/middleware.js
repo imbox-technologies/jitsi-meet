@@ -50,6 +50,8 @@ import { setParticipantsWithScreenShare } from './actions';
 import { sendEvent } from './functions';
 import logger from './logger';
 
+const { AudioMode } = NativeModules;
+
 /**
  * Event which will be emitted on the native side when a chat message is received
  * through the channel.
@@ -319,6 +321,11 @@ function _registerForNativeEvents(store) {
         dispatch(muteLocal(muted, MEDIA_TYPE.VIDEO));
     });
 
+    eventEmitter.addListener(ExternalAPI.SET_AUDIO_DEVICE, ({ device }) => {
+        logger.log('SET_AUDIO_DEVICE ' + device);
+        AudioMode.setAudioDevice(device);
+    });
+
     eventEmitter.addListener(ExternalAPI.SEND_ENDPOINT_TEXT_MESSAGE, ({ to, message }) => {
         const conference = getCurrentConference(getState());
 
@@ -400,6 +407,7 @@ function _unregisterForNativeEvents() {
     eventEmitter.removeAllListeners(ExternalAPI.CLOSE_CHAT);
     eventEmitter.removeAllListeners(ExternalAPI.SEND_CHAT_MESSAGE);
     eventEmitter.removeAllListeners(ExternalAPI.SET_CLOSED_CAPTIONS_ENABLED);
+    eventEmitter.removeAllListeners(ExternalAPI.SET_AUDIO_DEVICE);
 }
 
 /**
