@@ -5,6 +5,7 @@ export interface INotificationProps {
     concatText?: boolean;
     customActionHandler?: Function[];
     customActionNameKey?: string[];
+    customActionType?: string[];
     description?: string | React.ReactNode;
     descriptionArguments?: Object;
     descriptionKey?: string;
@@ -14,7 +15,7 @@ export interface INotificationProps {
     sticky?: boolean;
     title?: string;
     titleArguments?: {
-        [key: string]: string;
+        [key: string]: string | number;
     };
     titleKey?: string;
     uid?: string;

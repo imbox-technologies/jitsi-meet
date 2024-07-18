@@ -1,4 +1,3 @@
-/* eslint-disable lines-around-comment */
 import { setRoom } from '../base/conference/actions';
 import {
     configWillLoad,
@@ -9,10 +8,11 @@ import {
 import {
     createFakeConfig,
     restoreConfig
-} from '../base/config/functions';
-import { connect, disconnect, setLocationURL } from '../base/connection/actions';
+} from '../base/config/functions.native';
+import { connect, disconnect, setLocationURL } from '../base/connection/actions.native';
 import { loadConfig } from '../base/lib-jitsi-meet/functions.native';
-import { createDesiredLocalTracks } from '../base/tracks/actions';
+import { createDesiredLocalTracks } from '../base/tracks/actions.native';
+import isInsecureRoomName from '../base/util/isInsecureRoomName';
 import { parseURLParams } from '../base/util/parseURLParams';
 import {
     appendURLParam,
@@ -20,22 +20,18 @@ import {
     parseURIString,
     toURLString
 } from '../base/util/uri';
-// @ts-ignore
 import { isPrejoinPageEnabled } from '../mobile/navigation/functions';
 import {
     goBackToRoot,
     navigateRoot
-    // @ts-ignore
 } from '../mobile/navigation/rootNavigationContainerRef';
-// @ts-ignore
 import { screen } from '../mobile/navigation/routes';
 import { clearNotifications } from '../notifications/actions';
-// @ts-ignore
-import { setFatalError } from '../overlay';
+import { isUnsafeRoomWarningEnabled } from '../prejoin/functions';
 
 import { addTrackStateToURL, getDefaultURL } from './functions.native';
 import logger from './logger';
-import { IStore } from './types';
+import { IReloadNowOptions, IStore } from './types';
 
 export * from './actions.any';
 
@@ -46,9 +42,10 @@ export * from './actions.any';
  * @param {string|undefined} uri - The URI to which to navigate. It may be a
  * full URL with an HTTP(S) scheme, a full or partial URI with the app-specific
  * scheme, or a mere room name.
+ * @param {Object} [options] - Options.
  * @returns {Function}
  */
-export function appNavigate(uri?: string) {
+export function appNavigate(uri?: string, options: IReloadNowOptions = {}) {
     logger.info(`appNavigate to ${uri}`);
 
     return async (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
@@ -56,7 +53,7 @@ export function appNavigate(uri?: string) {
 
         // If the specified location (URI) does not identify a host, use the app's
         // default.
-        if (!location || !location.host) {
+        if (!location?.host) {
             const defaultLocation = parseURIString(getDefaultURL(getState));
 
             if (location) {
@@ -140,18 +137,24 @@ export function appNavigate(uri?: string) {
         dispatch(setConfig(config));
         dispatch(setRoom(room));
 
-        if (room) {
-            dispatch(createDesiredLocalTracks());
-            dispatch(clearNotifications());
+        if (!room) {
+            goBackToRoot(getState(), dispatch);
 
-            if (isPrejoinPageEnabled(getState())) {
-                navigateRoot(screen.preJoin);
+            return;
+        }
+
+        dispatch(createDesiredLocalTracks());
+        dispatch(clearNotifications());
+
+        if (!options.hidePrejoin && isPrejoinPageEnabled(getState())) {
+            if (isUnsafeRoomWarningEnabled(getState()) && isInsecureRoomName(room)) {
+                navigateRoot(screen.unsafeRoomWarning);
             } else {
-                dispatch(connect());
-                navigateRoot(screen.conference.root);
+                navigateRoot(screen.preJoin);
             }
         } else {
-            goBackToRoot(getState(), dispatch);
+            dispatch(connect());
+            navigateRoot(screen.conference.root);
         }
     };
 }
@@ -162,10 +165,10 @@ export function appNavigate(uri?: string) {
  * If we have a close page enabled, redirect to it without
  * showing any other dialog.
  *
- * @param {Object} options - Ignored.
+ * @param {Object} _options - Ignored.
  * @returns {Function}
  */
-export function maybeRedirectToWelcomePage(options: any) { // eslint-disable-line @typescript-eslint/no-unused-vars
+export function maybeRedirectToWelcomePage(_options?: any): any {
     // Dummy.
 }
 
@@ -177,7 +180,6 @@ export function maybeRedirectToWelcomePage(options: any) { // eslint-disable-lin
  */
 export function reloadNow() {
     return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
-        dispatch(setFatalError(undefined));
 
         const state = getState();
         const { locationURL } = state['features/base/connection'];
@@ -188,6 +190,8 @@ export function reloadNow() {
 
         logger.info(`Reloading the conference using URL: ${locationURL}`);
 
-        dispatch(appNavigate(toURLString(newURL)));
+        dispatch(appNavigate(toURLString(newURL), {
+            hidePrejoin: true
+        }));
     };
 }

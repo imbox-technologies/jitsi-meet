@@ -11,7 +11,7 @@ import {
     isScreenShareParticipant
 } from '../base/participants/functions';
 import { toState } from '../base/redux/functions';
-import { shouldHideSelfView } from '../base/settings/functions.web';
+import { getHideSelfView } from '../base/settings/functions.any';
 import {
     getVideoTrackByParticipant,
     isLocalTrackMuted,
@@ -218,7 +218,7 @@ export function getTileDefaultAspectRatio(disableResponsiveTiles: boolean,
  */
 export function getNumberOfPartipantsForTileView(state: IReduxState) {
     const { iAmRecorder } = state['features/base/config'];
-    const disableSelfView = shouldHideSelfView(state);
+    const disableSelfView = getHideSelfView(state);
     const { localScreenShare } = state['features/base/participants'];
     const localParticipantsCount = localScreenShare ? 2 : 1;
     const numberOfParticipants = getParticipantCountWithFake(state)
@@ -613,8 +613,8 @@ export function getDisplayModeInput(props: any, state: { canPlayEventReceived: b
  * @param {string} thumbnailType - The current thumbnail type.
  * @returns {string}
  */
-export function getIndicatorsTooltipPosition(thumbnailType: string) {
-    return INDICATORS_TOOLTIP_POSITION[thumbnailType] || 'top';
+export function getIndicatorsTooltipPosition(thumbnailType?: string) {
+    return INDICATORS_TOOLTIP_POSITION[thumbnailType ?? ''] || 'top';
 }
 
 /**
@@ -760,7 +760,19 @@ export function isStageFilmstripTopPanel(state: IReduxState, minParticipantCount
 export function isStageFilmstripEnabled(state: IReduxState) {
     const { filmstrip } = state['features/base/config'];
 
-    return !filmstrip?.disableStageFilmstrip && interfaceConfig.VERTICAL_FILMSTRIP;
+    return Boolean(!filmstrip?.disableStageFilmstrip && interfaceConfig.VERTICAL_FILMSTRIP);
+}
+
+/**
+ * Whether the vertical/horizontal filmstrip is disabled.
+ *
+ * @param {Object} state - Redux state.
+ * @returns {boolean}
+ */
+export function isFilmstripDisabled(state: IReduxState) {
+    const { filmstrip } = state['features/base/config'];
+
+    return Boolean(filmstrip?.disabled);
 }
 
 /**

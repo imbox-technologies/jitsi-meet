@@ -1,15 +1,11 @@
-/* eslint-disable lines-around-comment */
-
 import React from 'react';
 import { WithTranslation } from 'react-i18next';
 import { makeStyles } from 'tss-react/mui';
 
-// @ts-ignore
-import { Avatar } from '../../../../base/avatar';
+import Avatar from '../../../../base/avatar/components/Avatar';
 import { translate } from '../../../../base/i18n/functions';
 import Icon from '../../../../base/icons/components/Icon';
 import { IconCloseLarge } from '../../../../base/icons/svg';
-// @ts-ignore
 import Label from '../Label';
 
 interface IProps extends WithTranslation {
@@ -22,12 +18,7 @@ interface IProps extends WithTranslation {
     /**
      * Closes the dialog.
      */
-    onClose: Function;
-
-    /**
-     * Handler used on hangup click.
-     */
-    onHangup: Function;
+    onClose: (e?: React.MouseEvent) => void;
 
     /**
      * The status of the call.

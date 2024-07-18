@@ -1,6 +1,6 @@
-/* eslint-disable lines-around-comment */
 import React, { useEffect } from 'react';
 import { WithTranslation } from 'react-i18next';
+import { connect } from 'react-redux';
 
 import { createInviteDialogEvent } from '../../../../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../../../../analytics/functions';
@@ -8,14 +8,11 @@ import { IReduxState } from '../../../../app/types';
 import { getInviteURL } from '../../../../base/connection/functions';
 import { translate } from '../../../../base/i18n/functions';
 import { JitsiRecordingConstants } from '../../../../base/lib-jitsi-meet';
-import { connect } from '../../../../base/redux/functions';
 import Dialog from '../../../../base/ui/components/web/Dialog';
+import { StatusCode } from '../../../../base/util/uri';
 import { isDynamicBrandingDataLoaded } from '../../../../dynamic-branding/functions.any';
-import { isVpaasMeeting } from '../../../../jaas/functions';
-// @ts-ignore
-import { getActiveSession } from '../../../../recording';
-// @ts-ignore
-import { updateDialInNumbers } from '../../../actions';
+import { getActiveSession } from '../../../../recording/functions';
+import { updateDialInNumbers } from '../../../actions.web';
 import {
     _getDefaultPhoneNumber,
     getInviteText,
@@ -24,17 +21,13 @@ import {
     isDialOutEnabled,
     isSharingEnabled,
     sharingFeatures
-    // @ts-ignore
 } from '../../../functions';
 
 import CopyMeetingLinkSection from './CopyMeetingLinkSection';
 import DialInLimit from './DialInLimit';
-// @ts-ignore
 import DialInSection from './DialInSection';
 import InviteByEmailSection from './InviteByEmailSection';
-// @ts-ignore
 import InviteContactsSection from './InviteContactsSection';
-// @ts-ignore
 import LiveStreamSection from './LiveStreamSection';
 
 interface IProps extends WithTranslation {
@@ -68,7 +61,7 @@ interface IProps extends WithTranslation {
     /**
      * An alternate app name to be displayed in the email subject.
      */
-    _inviteAppName?: string;
+    _inviteAppName?: string | null;
 
     /**
      * Whether or not invite contacts should be visible.
@@ -81,19 +74,19 @@ interface IProps extends WithTranslation {
     _inviteUrl: string;
 
     /**
-     * Whether or not the current meeting belongs to a JaaS user.
+     * Whether the dial in limit has been exceeded.
      */
-    _isVpaasMeeting: boolean;
+    _isDialInOverLimit?: boolean;
 
     /**
      * The current known URL for a live stream in progress.
      */
-    _liveStreamViewURL: string;
+    _liveStreamViewURL?: string;
 
     /**
      * The default phone number.
      */
-    _phoneNumber?: string;
+    _phoneNumber?: string | null;
 
     /**
      * Whether or not url sharing button should be visible.
@@ -121,7 +114,7 @@ function AddPeopleDialog({
     _inviteAppName,
     _inviteContactsVisible,
     _inviteUrl,
-    _isVpaasMeeting,
+    _isDialInOverLimit,
     _liveStreamViewURL,
     _phoneNumber,
     t,
@@ -183,7 +176,7 @@ function AddPeopleDialog({
                         && <DialInSection phoneNumber = { _phoneNumber } />
                 }
                 {
-                    !_phoneNumber && _dialInVisible && _isVpaasMeeting && <DialInLimit />
+                    !_phoneNumber && _dialInVisible && _isDialInOverLimit && <DialInLimit />
                 }
             </div>
         </Dialog>
@@ -206,8 +199,9 @@ function mapStateToProps(state: IReduxState, ownProps: Partial<IProps>) {
     const addPeopleEnabled = isAddPeopleEnabled(state);
     const dialOutEnabled = isDialOutEnabled(state);
     const hideInviteContacts = iAmRecorder || (!addPeopleEnabled && !dialOutEnabled);
-    const dialIn = state['features/invite'];
+    const dialIn = state['features/invite']; // @ts-ignore
     const phoneNumber = dialIn?.numbers ? _getDefaultPhoneNumber(dialIn.numbers) : undefined;
+    const isDialInOverLimit = dialIn?.error?.status === StatusCode.PaymentRequired;
 
     return {
         _dialIn: dialIn,
@@ -223,7 +217,7 @@ function mapStateToProps(state: IReduxState, ownProps: Partial<IProps>) {
         _inviteAppName: inviteAppName,
         _inviteContactsVisible: interfaceConfig.ENABLE_DIAL_OUT && !hideInviteContacts,
         _inviteUrl: getInviteURL(state),
-        _isVpaasMeeting: isVpaasMeeting(state),
+        _isDialInOverLimit: isDialInOverLimit,
         _liveStreamViewURL: currentLiveStreamingSession?.liveStreamViewURL,
         _phoneNumber: phoneNumber
     };

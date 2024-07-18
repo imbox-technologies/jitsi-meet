@@ -1,4 +1,3 @@
-/* eslint-disable lines-around-comment */
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,17 +25,14 @@ import {
     getParticipantCount,
     isEveryoneModerator
 } from '../../../base/participants/functions';
+import { withPixelLineHeight } from '../../../base/styles/functions.web';
 import ContextMenu from '../../../base/ui/components/web/ContextMenu';
 import ContextMenuItemGroup from '../../../base/ui/components/web/ContextMenuItemGroup';
 import { isInBreakoutRoom } from '../../../breakout-rooms/functions';
-import {
-    openSettingsDialog,
-    shouldShowModeratorSettings
-    // @ts-ignore
-} from '../../../settings';
+import { openSettingsDialog } from '../../../settings/actions';
 import { SETTINGS_TABS } from '../../../settings/constants';
-// @ts-ignore
-import { MuteEveryonesVideoDialog } from '../../../video-menu/components';
+import { shouldShowModeratorSettings } from '../../../settings/functions.web';
+import MuteEveryonesVideoDialog from '../../../video-menu/components/web/MuteEveryonesVideoDialog';
 
 const useStyles = makeStyles()(theme => {
     return {
@@ -50,6 +46,7 @@ const useStyles = makeStyles()(theme => {
         },
 
         text: {
+            ...withPixelLineHeight(theme.typography.bodyShortRegular),
             color: theme.palette.text02,
             padding: '10px 16px',
             height: '40px',

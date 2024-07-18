@@ -1,6 +1,5 @@
-/* eslint-disable lines-around-comment */
 import React, { useCallback } from 'react';
-import { View } from 'react-native';
+import { View, ViewStyle } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { openDialog, openSheet } from '../../../base/dialog/actions';
@@ -8,13 +7,12 @@ import { IconDotsHorizontal } from '../../../base/icons/svg';
 import Button from '../../../base/ui/components/native/Button';
 import IconButton from '../../../base/ui/components/native/IconButton';
 import { BUTTON_TYPES } from '../../../base/ui/constants.native';
+// eslint-disable-next-line lines-around-comment
 // @ts-ignore
 import MuteEveryoneDialog from '../../../video-menu/components/native/MuteEveryoneDialog';
 import { isMoreActionsVisible, isMuteAllVisible } from '../../functions';
 
-// @ts-ignore
 import { ContextMenuMore } from './ContextMenuMore';
-// @ts-ignore
 import styles from './styles';
 
 
@@ -32,7 +30,7 @@ const ParticipantsPaneFooter = (): JSX.Element => {
     const showMuteAll = useSelector(isMuteAllVisible);
 
     return (
-        <View style = { styles.participantsPaneFooter }>
+        <View style = { styles.participantsPaneFooter as ViewStyle }>
             {
                 showMuteAll && (
                     <Button

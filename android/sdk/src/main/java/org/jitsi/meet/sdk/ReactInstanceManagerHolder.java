@@ -32,17 +32,17 @@ import com.facebook.react.jscexecutor.JSCExecutorFactory;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.ViewManager;
 import com.oney.WebRTCModule.EglUtils;
-import com.oney.WebRTCModule.RTCVideoViewManager;
-import com.oney.WebRTCModule.WebRTCModule;
+import com.oney.WebRTCModule.WebRTCModuleOptions;
+import com.oney.WebRTCModule.webrtcutils.H264AndSoftwareVideoDecoderFactory;
+import com.oney.WebRTCModule.webrtcutils.H264AndSoftwareVideoEncoderFactory;
 
 import org.devio.rn.splashscreen.SplashScreenModule;
 import org.webrtc.EglBase;
-import org.webrtc.audio.AudioDeviceModule;
-import org.webrtc.audio.JavaAudioDeviceModule;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 class ReactInstanceManagerHolder {
@@ -73,36 +73,17 @@ class ReactInstanceManagerHolder {
                 new SplashScreenModule(reactContext),
                 new PictureInPictureModule(reactContext),
                 new ProximityModule(reactContext),
-                new WiFiStatsModule(reactContext),
                 new org.jitsi.meet.sdk.net.NAT64AddrInfoModule(reactContext)));
 
         if (AudioModeModule.useConnectionService()) {
             nativeModules.add(new RNConnectionService(reactContext));
         }
 
-        // Initialize the WebRTC module by hand, since we want to override some
-        // initialization options.
-        WebRTCModule.Options options = new WebRTCModule.Options();
-
-        AudioDeviceModule adm = JavaAudioDeviceModule.builder(reactContext)
-            .createAudioDeviceModule();
-        options.setAudioDeviceModule(adm);
-
-        EglBase.Context eglContext = EglUtils.getRootEglBaseContext();
-
-        options.setVideoDecoderFactory(new WebRTCVideoDecoderFactory(eglContext));
-        options.setVideoEncoderFactory(new WebRTCVideoEncoderFactory(eglContext));
-
-        nativeModules.add(new WebRTCModule(reactContext, options));
-
         return nativeModules;
     }
 
     private static List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
-        return Arrays.<ViewManager>asList(
-            // WebRTC, see createNativeModules for details.
-            new RTCVideoViewManager()
-        );
+        return Collections.emptyList();
     }
 
     static List<ReactPackage> getReactNativePackages() {
@@ -119,13 +100,13 @@ class ReactInstanceManagerHolder {
             new com.oblador.performance.PerformancePackage(),
             new com.reactnativecommunity.slider.ReactSliderPackage(),
             new com.brentvatne.react.ReactVideoPackage(),
-            new org.reactnative.maskedview.RNCMaskedViewPackage(),
             new com.reactnativecommunity.webview.RNCWebViewPackage(),
             new com.kevinresol.react_native_default_preference.RNDefaultPreferencePackage(),
             new com.learnium.RNDeviceInfo.RNDeviceInfo(),
-            new com.swmansion.gesturehandler.react.RNGestureHandlerPackage(),
+            new com.oney.WebRTCModule.WebRTCModulePackage(),
+            new com.swmansion.gesturehandler.RNGestureHandlerPackage(),
             new org.linusu.RNGetRandomValuesPackage(),
-            new com.rnimmersive.RNImmersivePackage(),
+            new com.rnimmersivemode.RNImmersiveModePackage(),
             new com.swmansion.rnscreens.RNScreensPackage(),
             new com.zmxv.RNSound.RNSoundPackage(),
             new com.th3rdwave.safeareacontext.SafeAreaContextPackage(),
@@ -246,43 +227,27 @@ class ReactInstanceManagerHolder {
      * time. All {@code ReactRootView} instances will be tied to the one and
      * only {@code ReactInstanceManager}.
      *
-     * This method is only meant to be called when integrating with {@code JitsiReactNativeHost}.
-     *
-     * @param app {@code Application} current running Application.
-     */
-    static void initReactInstanceManager(Application app) {
-        if (reactInstanceManager != null) {
-            return;
-        }
-
-        Log.d(TAG, "initializing RN with Application");
-
-        reactInstanceManager
-            = ReactInstanceManager.builder()
-                .setApplication(app)
-                .setBundleAssetName("index.android.bundle")
-                .setJSMainModulePath("index.android")
-                .setJavaScriptExecutorFactory(getReactNativeJSFactory())
-                .addPackages(getReactNativePackages())
-                .setUseDeveloperSupport(BuildConfig.DEBUG)
-                .setInitialLifecycleState(LifecycleState.BEFORE_CREATE)
-                .build();
-    }
-
-    /**
-     * Internal method to initialize the React Native instance manager. We
-     * create a single instance in order to load the JavaScript bundle a single
-     * time. All {@code ReactRootView} instances will be tied to the one and
-     * only {@code ReactInstanceManager}.
-     *
      * @param activity {@code Activity} current running Activity.
      */
+
+    static void initReactInstanceManager(Activity activity) {
+        initReactInstanceManager(activity, activity.getApplication());
+    }
+
     static void initReactInstanceManager(Activity activity, Application application) {
         if (reactInstanceManager != null) {
             return;
         }
 
-        Log.d(ReactInstanceManagerHolder.class.getCanonicalName(), "initializing RN with Activity");
+        // Initialize the WebRTC module options.
+        WebRTCModuleOptions options = WebRTCModuleOptions.getInstance();
+
+        EglBase.Context eglContext = EglUtils.getRootEglBaseContext();
+
+        options.videoDecoderFactory = new H264AndSoftwareVideoDecoderFactory(eglContext);
+        options.videoEncoderFactory = new H264AndSoftwareVideoEncoderFactory(eglContext);
+
+        Log.d(TAG, "initializing RN with Activity");
 
         reactInstanceManager
             = ReactInstanceManager.builder()

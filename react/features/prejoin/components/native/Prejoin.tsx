@@ -1,16 +1,13 @@
-/* eslint-disable lines-around-comment  */
-
 import { useIsFocused } from '@react-navigation/native';
-// @ts-ignore
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     BackHandler,
-    Platform,
     StyleProp,
     Text,
     TextStyle,
-    View
+    View,
+    ViewStyle
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -19,8 +16,8 @@ import { IReduxState } from '../../../app/types';
 import { setAudioOnly } from '../../../base/audio-only/actions';
 import { getConferenceName } from '../../../base/conference/functions';
 import { connect } from '../../../base/connection/actions.native';
-import { IconCloseLarge } from '../../../base/icons/svg';
-// @ts-ignore
+import { PREJOIN_PAGE_HIDE_DISPLAY_NAME } from '../../../base/flags/constants';
+import { getFeatureFlag } from '../../../base/flags/functions';
 import JitsiScreen from '../../../base/modal/components/JitsiScreen';
 import { getLocalParticipant } from '../../../base/participants/functions';
 import { getFieldValue } from '../../../base/react/functions';
@@ -29,23 +26,16 @@ import { updateSettings } from '../../../base/settings/actions';
 import Button from '../../../base/ui/components/native/Button';
 import Input from '../../../base/ui/components/native/Input';
 import { BUTTON_TYPES } from '../../../base/ui/constants.native';
-import { BrandingImageBackground } from '../../../dynamic-branding/components/native';
-// @ts-ignore
+import BrandingImageBackground from '../../../dynamic-branding/components/native/BrandingImageBackground';
 import LargeVideo from '../../../large-video/components/LargeVideo.native';
-// @ts-ignore
-import HeaderNavigationButton from '../../../mobile/navigation/components/HeaderNavigationButton';
-// @ts-ignore
+import { screenHeaderCloseButton } from '../../../mobile/navigation/functions';
 import { navigateRoot } from '../../../mobile/navigation/rootNavigationContainerRef';
-// @ts-ignore
 import { screen } from '../../../mobile/navigation/routes';
-// @ts-ignore
-import AudioMuteButton from '../../../toolbox/components/AudioMuteButton';
-// @ts-ignore
-import VideoMuteButton from '../../../toolbox/components/VideoMuteButton';
+import AudioMuteButton from '../../../toolbox/components/native/AudioMuteButton';
+import VideoMuteButton from '../../../toolbox/components/native/VideoMuteButton';
 import { isDisplayNameRequired } from '../../functions';
 import { IPrejoinProps } from '../../types';
 
-// @ts-ignore
 import { preJoinStyles as styles } from './styles';
 
 
@@ -58,6 +48,8 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
     );
     const localParticipant = useSelector((state: IReduxState) => getLocalParticipant(state));
     const isDisplayNameMandatory = useSelector((state: IReduxState) => isDisplayNameRequired(state));
+    const isDisplayNameVisible
+        = useSelector((state: IReduxState) => !getFeatureFlag(state, PREJOIN_PAGE_HIDE_DISPLAY_NAME, false));
     const roomName = useSelector((state: IReduxState) => getConferenceName(state));
     const participantName = localParticipant?.name;
     const [ displayName, setDisplayName ]
@@ -90,22 +82,6 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
         return true;
     }, [ dispatch ]);
 
-    const headerLeft = () => {
-        if (Platform.OS === 'ios') {
-            return (
-                <HeaderNavigationButton
-                    label = { t('dialog.close') }
-                    onPress = { goBack } />
-            );
-        }
-
-        return (
-            <HeaderNavigationButton
-                onPress = { goBack }
-                src = { IconCloseLarge } />
-        );
-    };
-
     const { PRIMARY, TERTIARY } = BUTTON_TYPES;
     const joinButtonDisabled = !displayName && isDisplayNameMandatory;
 
@@ -118,7 +94,7 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
 
     useLayoutEffect(() => {
         navigation.setOptions({
-            headerLeft,
+            headerLeft: () => screenHeaderCloseButton(goBack),
             headerTitle: t('prejoin.joinMeeting')
         });
     }, [ navigation ]);
@@ -153,31 +129,29 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
                             { roomName }
                         </Text>
                     </View>
-                    {/* @ts-ignore */}
                     <LargeVideo />
                 </View>
             }
-            <View style = { contentContainerStyles }>
-                <View style = { styles.toolboxContainer }>
+            <View style = { contentContainerStyles as ViewStyle }>
+                <View style = { styles.toolboxContainer as ViewStyle }>
                     <AudioMuteButton
-                        // @ts-ignore
                         styles = { styles.buttonStylesBorderless } />
                     <VideoMuteButton
-                        // @ts-ignore
                         styles = { styles.buttonStylesBorderless } />
                 </View>
-                <Input
-                    // @ts-ignore
-                    customStyles = {{ input: styles.customInput }}
-                    onChange = { onChangeDisplayName }
-                    placeholder = { t('dialog.enterDisplayName') }
-                    value = { displayName } />
+                {
+                    isDisplayNameVisible
+                    && <Input
+                        customStyles = {{ input: styles.customInput }}
+                        onChange = { onChangeDisplayName }
+                        placeholder = { t('dialog.enterDisplayName') }
+                        value = { displayName } />
+                }
                 <Button
                     accessibilityLabel = 'prejoin.joinMeeting'
                     disabled = { joinButtonDisabled }
                     labelKey = 'prejoin.joinMeeting'
-                    // @ts-ignore
-                    onClick = { !isJoining && onJoin }
+                    onClick = { isJoining ? undefined : onJoin }
                     style = { styles.joinButton }
                     type = { PRIMARY } />
                 <Button

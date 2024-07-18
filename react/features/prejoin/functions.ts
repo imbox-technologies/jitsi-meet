@@ -1,7 +1,11 @@
 import { IReduxState } from '../app/types';
 import { getRoomName } from '../base/conference/functions';
-import { getDialOutStatusUrl, getDialOutUrl } from '../base/config/functions';
+import { getDialOutStatusUrl, getDialOutUrl } from '../base/config/functions.any';
+import { UNSAFE_ROOM_WARNING } from '../base/flags/constants';
+import { getFeatureFlag } from '../base/flags/functions';
 import { isAudioMuted, isVideoMutedByUser } from '../base/media/functions';
+import { getLobbyConfig } from '../lobby/functions';
+
 
 /**
  * Selector for the visibility of the 'join by phone' button.
@@ -31,7 +35,7 @@ export function isDeviceStatusVisible(state: IReduxState): boolean {
  * @returns {boolean}
  */
 export function isDisplayNameRequired(state: IReduxState): boolean {
-    return Boolean(state['features/prejoin']?.isDisplayNameRequired
+    return Boolean(state['features/lobby']?.isDisplayNameRequiredError
         || state['features/base/config']?.requireDisplayName);
 }
 
@@ -159,11 +163,24 @@ export function isPrejoinPageVisible(state: IReduxState): boolean {
  * @returns {boolean}
  */
 export function shouldAutoKnock(state: IReduxState): boolean {
-    const { iAmRecorder, iAmSipGateway, autoKnockLobby, prejoinConfig } = state['features/base/config'];
+    const { iAmRecorder, iAmSipGateway, prejoinConfig } = state['features/base/config'];
     const { userSelectedSkipPrejoin } = state['features/base/settings'];
+    const { autoKnock } = getLobbyConfig(state);
     const isPrejoinEnabled = prejoinConfig?.enabled;
 
     return Boolean(((isPrejoinEnabled && !userSelectedSkipPrejoin)
-            || autoKnockLobby || (iAmRecorder && iAmSipGateway))
+            || autoKnock || (iAmRecorder && iAmSipGateway))
         && !state['features/lobby'].knocking);
+}
+
+/**
+ * Returns true if the unsafe room warning flag is enabled.
+ *
+ * @param {IReduxState} state - The state of the app.
+ * @returns {boolean}
+ */
+export function isUnsafeRoomWarningEnabled(state: IReduxState): boolean {
+    const { enableInsecureRoomNameWarning = false } = state['features/base/config'];
+
+    return getFeatureFlag(state, UNSAFE_ROOM_WARNING, enableInsecureRoomNameWarning);
 }

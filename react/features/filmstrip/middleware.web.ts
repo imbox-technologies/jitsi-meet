@@ -19,6 +19,8 @@ import { SETTINGS_UPDATED } from '../base/settings/actionTypes';
 import { setTileView } from '../video-layout/actions.web';
 import { LAYOUTS } from '../video-layout/constants';
 import { getCurrentLayout } from '../video-layout/functions.web';
+import { WHITEBOARD_ID } from '../whiteboard/constants';
+import { isWhiteboardVisible } from '../whiteboard/functions';
 
 import {
     ADD_STAGE_PARTICIPANT,
@@ -118,7 +120,7 @@ MiddlewareRegistry.register(store => next => action => {
     case SETTINGS_UPDATED: {
         if (typeof action.settings?.localFlipX === 'boolean') {
             // TODO: This needs to be removed once the large video is Reactified.
-            VideoLayout.onLocalFlipXChanged();
+            VideoLayout.onLocalFlipXChanged(action.settings.localFlipX);
         }
         if (action.settings?.disableSelfView) {
             const state = store.getState();
@@ -168,6 +170,7 @@ MiddlewareRegistry.register(store => next => action => {
         const state = getState();
         const { activeParticipants } = state['features/filmstrip'];
         const { maxStageParticipants } = state['features/base/settings'];
+        const isWhiteboardActive = isWhiteboardVisible(state);
         let queue;
 
         if (activeParticipants.find(p => p.participantId === participantId)) {
@@ -203,6 +206,17 @@ MiddlewareRegistry.register(store => next => action => {
                 } ];
                 queue.splice(notPinnedIndex, 1);
             }
+        }
+
+        if (participantId === WHITEBOARD_ID) {
+            // If the whiteboard is pinned, this action should clear the other pins.
+            queue = [ {
+                participantId,
+                pinned: true
+            } ];
+        } else if (isWhiteboardActive && Array.isArray(queue)) {
+            // When another participant is pinned, remove the whiteboard from the stage area.
+            queue = queue.filter(p => p?.participantId !== WHITEBOARD_ID);
         }
 
         // If queue is undefined we haven't made any changes to the active participants. This will mostly happen

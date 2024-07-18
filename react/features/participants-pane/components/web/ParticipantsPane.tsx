@@ -1,4 +1,3 @@
-/* eslint-disable lines-around-comment */
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,8 +13,7 @@ import ClickableIcon from '../../../base/ui/components/web/ClickableIcon';
 import { BUTTON_TYPES } from '../../../base/ui/constants.web';
 import { findAncestorByClass } from '../../../base/ui/functions.web';
 import { isAddBreakoutRoomButtonVisible } from '../../../breakout-rooms/functions';
-// @ts-ignore
-import { MuteEveryoneDialog } from '../../../video-menu/components/';
+import MuteEveryoneDialog from '../../../video-menu/components/web/MuteEveryoneDialog';
 import { close } from '../../actions.web';
 import {
     getParticipantsPaneOpen,
@@ -23,7 +21,6 @@ import {
     isMuteAllVisible
 } from '../../functions';
 import { AddBreakoutRoomButton } from '../breakout-rooms/components/web/AddBreakoutRoomButton';
-// @ts-ignore
 import { RoomList } from '../breakout-rooms/components/web/RoomList';
 
 import { FooterContextMenu } from './FooterContextMenu';
@@ -33,16 +30,39 @@ import MeetingParticipants from './MeetingParticipants';
 
 const useStyles = makeStyles()(theme => {
     return {
-        container: {
-            boxSizing: 'border-box' as const,
-            flex: 1,
-            overflowY: 'auto' as const,
-            position: 'relative' as const,
-            padding: `0 ${participantsPaneTheme.panePadding}px`,
+        participantsPane: {
+            backgroundColor: theme.palette.ui01,
+            flexShrink: 0,
+            overflow: 'hidden',
+            position: 'relative',
+            transition: 'width .16s ease-in-out',
+            width: '315px',
+            zIndex: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            fontWeight: 600,
+            height: '100%',
 
-            [`& > * + *:not(.${participantsPaneTheme.ignoredChildClassName})`]: {
-                marginTop: theme.spacing(3)
+            [[ '& > *:first-child', '& > *:last-child' ] as any]: {
+                flexShrink: 0
             },
+
+            '@media (max-width: 580px)': {
+                height: '100vh',
+                position: 'fixed',
+                left: 0,
+                right: 0,
+                top: 0,
+                width: '100%'
+            }
+        },
+
+        container: {
+            boxSizing: 'border-box',
+            flex: 1,
+            overflowY: 'auto',
+            position: 'relative',
+            padding: `0 ${participantsPaneTheme.panePadding}px`,
 
             '&::-webkit-scrollbar': {
                 display: 'none'
@@ -58,10 +78,10 @@ const useStyles = makeStyles()(theme => {
 
         header: {
             alignItems: 'center',
-            boxSizing: 'border-box' as const,
+            boxSizing: 'border-box',
             display: 'flex',
-            height: `${participantsPaneTheme.headerSize}px`,
-            padding: '0 20px',
+            height: '60px',
+            padding: `0 ${participantsPaneTheme.panePadding}px`,
             justifyContent: 'flex-end'
         },
 
@@ -88,13 +108,13 @@ const useStyles = makeStyles()(theme => {
         },
 
         footerMoreContainer: {
-            position: 'relative' as const
+            position: 'relative'
         }
     };
 });
 
 const ParticipantsPane = () => {
-    const { classes } = useStyles();
+    const { classes, cx } = useStyles();
     const paneOpen = useSelector(getParticipantsPaneOpen);
     const isBreakoutRoomsSupported = useSelector((state: IReduxState) => state['features/base/conference'])
         .conference?.getBreakoutRooms()?.isSupported();
@@ -143,49 +163,47 @@ const ParticipantsPane = () => {
     }
 
     return (
-        <div className = 'participants_pane'>
-            <div className = 'participants_pane-content'>
-                <div className = { classes.header }>
-                    <ClickableIcon
-                        accessibilityLabel = { t('participantsPane.close', 'Close') }
-                        icon = { IconCloseLarge }
-                        onClick = { onClosePane } />
-                </div>
-                <div className = { classes.container }>
-                    <LobbyParticipants />
-                    <br className = { classes.antiCollapse } />
-                    <MeetingParticipants
-                        searchString = { searchString }
-                        setSearchString = { setSearchString } />
-                    {isBreakoutRoomsSupported && <RoomList searchString = { searchString } />}
-                    {showAddRoomButton && <AddBreakoutRoomButton />}
-                </div>
-                {showFooter && (
-                    <div className = { classes.footer }>
-                        {showMuteAllButton && (
-                            <Button
-                                accessibilityLabel = { t('participantsPane.actions.muteAll') }
-                                labelKey = { 'participantsPane.actions.muteAll' }
-                                onClick = { onMuteAll }
-                                type = { BUTTON_TYPES.SECONDARY } />
-                        )}
-                        {showMoreActionsButton && (
-                            <div className = { classes.footerMoreContainer }>
-                                <Button
-                                    accessibilityLabel = { t('participantsPane.actions.moreModerationActions') }
-                                    icon = { IconDotsHorizontal }
-                                    id = 'participants-pane-context-menu'
-                                    onClick = { onToggleContext }
-                                    type = { BUTTON_TYPES.SECONDARY } />
-                                <FooterContextMenu
-                                    isOpen = { contextOpen }
-                                    onDrawerClose = { onDrawerClose }
-                                    onMouseLeave = { onToggleContext } />
-                            </div>
-                        )}
-                    </div>
-                )}
+        <div className = { cx('participants_pane', classes.participantsPane) }>
+            <div className = { classes.header }>
+                <ClickableIcon
+                    accessibilityLabel = { t('participantsPane.close', 'Close') }
+                    icon = { IconCloseLarge }
+                    onClick = { onClosePane } />
             </div>
+            <div className = { classes.container }>
+                <LobbyParticipants />
+                <br className = { classes.antiCollapse } />
+                <MeetingParticipants
+                    searchString = { searchString }
+                    setSearchString = { setSearchString } />
+                {isBreakoutRoomsSupported && <RoomList searchString = { searchString } />}
+                {showAddRoomButton && <AddBreakoutRoomButton />}
+            </div>
+            {showFooter && (
+                <div className = { classes.footer }>
+                    {showMuteAllButton && (
+                        <Button
+                            accessibilityLabel = { t('participantsPane.actions.muteAll') }
+                            labelKey = { 'participantsPane.actions.muteAll' }
+                            onClick = { onMuteAll }
+                            type = { BUTTON_TYPES.SECONDARY } />
+                    )}
+                    {showMoreActionsButton && (
+                        <div className = { classes.footerMoreContainer }>
+                            <Button
+                                accessibilityLabel = { t('participantsPane.actions.moreModerationActions') }
+                                icon = { IconDotsHorizontal }
+                                id = 'participants-pane-context-menu'
+                                onClick = { onToggleContext }
+                                type = { BUTTON_TYPES.SECONDARY } />
+                            <FooterContextMenu
+                                isOpen = { contextOpen }
+                                onDrawerClose = { onDrawerClose }
+                                onMouseLeave = { onToggleContext } />
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

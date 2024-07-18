@@ -62,7 +62,7 @@ export function resetAnalytics() {
  * @param {Store} store - The redux store in which the specified {@code action} is being dispatched.
  * @returns {Promise} Resolves with the handlers that have been successfully loaded.
  */
-export async function createHandlers({ getState }: { getState: Function; }) {
+export async function createHandlers({ getState }: IStore) {
     getJitsiMeetGlobalNS().analyticsHandlers = [];
 
     if (!isAnalyticsEnabled(getState)) {
@@ -82,6 +82,7 @@ export async function createHandlers({ getState }: { getState: Function; }) {
     } = config;
     const {
         amplitudeAPPKey,
+        amplitudeIncludeUTM,
         blackListedEvents,
         scriptURLs,
         googleAnalyticsTrackingId,
@@ -92,6 +93,7 @@ export async function createHandlers({ getState }: { getState: Function; }) {
     const { group, user } = state['features/base/jwt'];
     const handlerConstructorOptions = {
         amplitudeAPPKey,
+        amplitudeIncludeUTM,
         blackListedEvents,
         envType: deploymentInfo?.envType || 'dev',
         googleAnalyticsTrackingId,
@@ -173,7 +175,15 @@ export function initAnalytics(store: IStore, handlers: Array<Object>) {
     const { group, server } = state['features/base/jwt'];
     const { locationURL = { href: '' } } = state['features/base/connection'];
     const { tenant } = parseURIString(locationURL.href) || {};
-    const permanentProperties: any = {};
+    const permanentProperties: {
+        appName?: string;
+        externalApi?: boolean;
+        group?: string;
+        inIframe?: boolean;
+        server?: string;
+        tenant?: string;
+        websocket?: boolean;
+    } & typeof deploymentInfo = {};
 
     if (server) {
         permanentProperties.server = server;
@@ -202,7 +212,8 @@ export function initAnalytics(store: IStore, handlers: Array<Object>) {
     if (deploymentInfo) {
         for (const key in deploymentInfo) {
             if (deploymentInfo.hasOwnProperty(key)) {
-                permanentProperties[key] = deploymentInfo[key as keyof typeof deploymentInfo];
+                permanentProperties[key as keyof typeof deploymentInfo] = deploymentInfo[
+                    key as keyof typeof deploymentInfo];
             }
         }
     }
@@ -235,8 +246,8 @@ export function initAnalytics(store: IStore, handlers: Array<Object>) {
  * @returns {Promise} Resolves with the handlers that have been successfully loaded and rejects if there are no handlers
  * loaded or the analytics is disabled.
  */
-function _loadHandlers(scriptURLs: any[] = [], handlerConstructorOptions: Object) {
-    const promises = [];
+function _loadHandlers(scriptURLs: string[] = [], handlerConstructorOptions: Object) {
+    const promises: Promise<{ error?: Error; type: string; url?: string; }>[] = [];
 
     for (const url of scriptURLs) {
         promises.push(
@@ -255,7 +266,7 @@ function _loadHandlers(scriptURLs: any[] = [], handlerConstructorOptions: Object
 
     return Promise.all(promises).then(values => {
         for (const el of values) {
-            if (el.type === 'error') { // @ts-ignore
+            if (el.type === 'error') {
                 logger.warn(`Failed to load ${el.url}: ${el.error}`);
             }
         }

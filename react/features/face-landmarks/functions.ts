@@ -54,9 +54,10 @@ export function sendFaceBoxToParticipants(
  * @param  {FaceLandmarks} faceLandmarks - Face landmarks to be sent.
  * @returns {void}
  */
-export function sendFaceExpressionToServer(conference: IJitsiConference, faceLandmarks: FaceLandmarks): void {
+export function sendFaceExpressionToServer(conference: IJitsiConference | undefined,
+        faceLandmarks: FaceLandmarks): void {
     try {
-        conference.sendFaceLandmarks(faceLandmarks);
+        conference?.sendFaceLandmarks(faceLandmarks);
     } catch (err) {
         logger.warn('Could not send the face landmarks to prosody', err);
     }
@@ -88,7 +89,7 @@ export async function sendFaceExpressionsWebhook(state: IReduxState) {
 
     const reqBody = {
         meetingFqn: extractFqnFromPath(),
-        sessionId: conference?.sessionId,
+        sessionId: conference?.getMeetingUniqueId(),
         submitted: Date.now(),
         emotions: faceLandmarksBuffer,
         participantId: localParticipant?.jwtId,

@@ -15,11 +15,15 @@ export type MediaType = 'audio' | 'video' | 'screenshare';
  *
  * @enum {string}
  */
-export const MEDIA_TYPE: { [key: string]: MediaType; } = {
-    AUDIO: 'audio',
-    SCREENSHARE: 'screenshare',
-    VIDEO: 'video'
-};
+export const MEDIA_TYPE: {
+    AUDIO: MediaType;
+    SCREENSHARE: MediaType;
+    VIDEO: MediaType;
+    } = {
+        AUDIO: 'audio',
+        SCREENSHARE: 'screenshare',
+        VIDEO: 'video'
+    };
 
 
 /* eslint-disable no-bitwise */
@@ -43,7 +47,8 @@ export const VIDEO_MUTISM_AUTHORITY = {
     AUDIO_ONLY: 1 << 0,
     BACKGROUND: 1 << 1,
     USER: 1 << 2,
-    CAR_MODE: 1 << 3
+    CAR_MODE: 1 << 3,
+    SCREEN_SHARE: 1 << 4
 };
 
 /* eslint-enable no-bitwise */

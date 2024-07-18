@@ -1,3 +1,5 @@
+import { IJitsiConference } from '../conference/reducer';
+
 export enum FakeParticipant {
     LocalScreenShare = 'LocalScreenShare',
     RemoteScreenShare = 'RemoteScreenShare',
@@ -8,11 +10,13 @@ export enum FakeParticipant {
 export interface IParticipant {
     avatarURL?: string;
     botType?: string;
-    conference?: Object;
+    conference?: IJitsiConference;
     displayName?: string;
     dominantSpeaker?: boolean;
     e2eeEnabled?: boolean;
     e2eeSupported?: boolean;
+    e2eeVerificationAvailable?: boolean;
+    e2eeVerified?: boolean;
     email?: string;
     fakeParticipant?: FakeParticipant;
     features?: {
@@ -35,6 +39,7 @@ export interface IParticipant {
     region?: string;
     remoteControlSessionStatus?: boolean;
     role?: string;
+    sources?: Map<string, Map<string, ISourceInfo>>;
     supportsRemoteControl?: boolean;
 }
 
@@ -49,10 +54,16 @@ export interface ILocalParticipant extends IParticipant {
     userSelectedMicDeviceLabel?: string;
 }
 
+export interface ISourceInfo {
+    muted: boolean;
+    videoType: string;
+}
+
 export interface IJitsiParticipant {
     getDisplayName: () => string;
     getId: () => string;
     getJid: () => string;
     getRole: () => string;
+    getSources: () => Map<string, Map<string, ISourceInfo>>;
     isHidden: () => boolean;
 }

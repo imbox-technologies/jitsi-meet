@@ -60,4 +60,14 @@ public class BroadcastIntentHelper {
         intent.putExtra("device", device);
         return intent;
     }
+    
+    public static Intent buildRetrieveParticipantsInfo(String requestId) {
+        Intent intent = new Intent(BroadcastAction.Type.RETRIEVE_PARTICIPANTS_INFO.getAction());
+        intent.putExtra("requestId", requestId);
+        return intent;
+    }
+
+    public static Intent buildToggleCameraIntent() {
+        return new Intent(BroadcastAction.Type.TOGGLE_CAMERA.getAction());
+    }
 }

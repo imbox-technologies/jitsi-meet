@@ -27,7 +27,11 @@ static NSString * const closeChatAction = @"org.jitsi.meet.CLOSE_CHAT";
 static NSString * const sendChatMessageAction = @"org.jitsi.meet.SEND_CHAT_MESSAGE";
 static NSString * const setVideoMutedAction = @"org.jitsi.meet.SET_VIDEO_MUTED";
 static NSString * const setClosedCaptionsEnabledAction = @"org.jitsi.meet.SET_CLOSED_CAPTIONS_ENABLED";
+<<<<<<< HEAD
 static NSString * const setAudioDeviceAction = @"org.jitsi.meet.SET_AUDIO_DEVICE";
+=======
+static NSString * const toggleCameraAction = @"org.jitsi.meet.TOGGLE_CAMERA";
+>>>>>>> 18606a4c3c6cf13109fa9772ddd64dad05b11305
 
 @implementation ExternalAPI
 
@@ -52,7 +56,8 @@ RCT_EXPORT_MODULE();
         @"SEND_CHAT_MESSAGE": sendChatMessageAction,
         @"SET_VIDEO_MUTED" : setVideoMutedAction,
         @"SET_CLOSED_CAPTIONS_ENABLED": setClosedCaptionsEnabledAction,
-        @"SET_AUDIO_DEVICE": setAudioDeviceAction
+        @"SET_AUDIO_DEVICE": setAudioDeviceAction,
+        @"TOGGLE_CAMERA": toggleCameraAction
     };
 };
 
@@ -78,7 +83,8 @@ RCT_EXPORT_MODULE();
               sendChatMessageAction,
               setVideoMutedAction,
               setClosedCaptionsEnabledAction,
-              setAudioDeviceAction
+              setAudioDeviceAction,
+              toggleCameraAction
     ];
 }
 
@@ -182,6 +188,10 @@ RCT_EXPORT_METHOD(sendEvent:(NSString *)name
     NSDictionary *data = @{ @"device": device};
 
     [self sendEventWithName:setAudioDeviceAction body:data];
+}
+
+- (void)toggleCamera {
+    [self sendEventWithName:toggleCameraAction body:nil];
 }
 
 @end

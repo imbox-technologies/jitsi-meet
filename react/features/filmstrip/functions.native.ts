@@ -10,14 +10,11 @@ import {
 import Platform from '../base/react/Platform.native';
 import { toState } from '../base/redux/functions';
 import { ASPECT_RATIO_NARROW } from '../base/responsive-ui/constants';
-import { shouldHideSelfView } from '../base/settings/functions.native';
-// eslint-disable-next-line lines-around-comment
-// @ts-ignore
+import { getHideSelfView } from '../base/settings/functions.any';
 import conferenceStyles from '../conference/components/native/styles';
 import { shouldDisplayTileView } from '../video-layout/functions.native';
 
-// @ts-ignore
-import { styles } from './components';
+import styles from './components/native/styles';
 
 export * from './functions.any';
 
@@ -104,7 +101,7 @@ export function getPinnedActiveParticipants(_state: any) {
  */
 export function getTileViewParticipantCount(stateful: IStateful) {
     const state = toState(stateful);
-    const disableSelfView = shouldHideSelfView(state);
+    const disableSelfView = getHideSelfView(state);
     const localParticipant = getLocalParticipant(state);
     const participantCount = getParticipantCountWithFake(state) - (disableSelfView && localParticipant ? 1 : 0);
 
@@ -152,7 +149,7 @@ export function isFilmstripScrollVisible(state: IReduxState) {
 
     const { aspectRatio, clientWidth, clientHeight, safeAreaInsets = {} } = state['features/base/responsive-ui'];
     const isNarrowAspectRatio = aspectRatio === ASPECT_RATIO_NARROW;
-    const disableSelfView = shouldHideSelfView(state);
+    const disableSelfView = getHideSelfView(state);
     const localParticipant = Boolean(getLocalParticipant(state));
     const localParticipantVisible = localParticipant && !disableSelfView;
     const participantCount
@@ -222,7 +219,7 @@ export function getFilmstripDimensions({
     aspectRatio: Symbol;
     clientHeight: number;
     clientWidth: number;
-    insets: {
+    insets?: {
         bottom?: number;
         left?: number;
         right?: number;
@@ -230,7 +227,7 @@ export function getFilmstripDimensions({
     };
     localParticipantVisible?: boolean;
 }) {
-    const { height, width, margin } = styles.thumbnail;
+    const { height, width, margin } = styles.thumbnail; // @ts-ignore
     const conferenceBorder = conferenceStyles.conference.borderWidth || 0;
     const { left = 0, right = 0, top = 0, bottom = 0 } = insets;
 

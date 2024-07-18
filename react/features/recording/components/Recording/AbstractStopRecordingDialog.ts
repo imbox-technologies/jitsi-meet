@@ -1,13 +1,15 @@
 import { Component } from 'react';
+import { WithTranslation } from 'react-i18next';
 
 import { createRecordingDialogEvent } from '../../../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../../../analytics/functions';
-import { IReduxState } from '../../../app/types';
+import { IReduxState, IStore } from '../../../app/types';
 import { IJitsiConference } from '../../../base/conference/reducer';
 import { JitsiRecordingConstants } from '../../../base/lib-jitsi-meet';
 import { setVideoMuted } from '../../../base/media/actions';
 import { stopLocalVideoRecording } from '../../actions';
 import { getActiveSession } from '../../functions';
+import { ISessionData } from '../../reducer';
 
 import LocalRecordingManager from './LocalRecordingManager';
 
@@ -15,17 +17,17 @@ import LocalRecordingManager from './LocalRecordingManager';
  * The type of the React {@code Component} props of
  * {@link AbstractStopRecordingDialog}.
  */
-export interface IProps {
+export interface IProps extends WithTranslation {
 
     /**
      * The {@code JitsiConference} for the current conference.
      */
-    _conference: IJitsiConference;
+    _conference?: IJitsiConference;
 
     /**
      * The redux representation of the recording session to be stopped.
      */
-    _fileRecordingSession: Object;
+    _fileRecordingSession?: ISessionData;
 
     /**
      * Whether the recording is a local recording or not.
@@ -35,17 +37,12 @@ export interface IProps {
     /**
      * The redux dispatch function.
      */
-    dispatch: Function;
+    dispatch: IStore['dispatch'];
 
     /**
      * The user trying to stop the video while local recording is running.
      */
     localRecordingVideoStop?: boolean;
-
-    /**
-     * Invoked to obtain translated strings.
-     */
-    t: Function;
 }
 
 /**
@@ -86,8 +83,8 @@ export default class AbstractStopRecordingDialog<P extends IProps>
         } else {
             const { _fileRecordingSession } = this.props;
 
-            if (_fileRecordingSession) { // @ts-ignore
-                this.props._conference.stopRecording(_fileRecordingSession.id);
+            if (_fileRecordingSession) {
+                this.props._conference?.stopRecording(_fileRecordingSession.id);
                 this._toggleScreenshotCapture();
             }
         }

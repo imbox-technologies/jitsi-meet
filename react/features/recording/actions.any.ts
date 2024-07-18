@@ -134,7 +134,7 @@ export function showPendingRecordingNotification(streamType: string) {
  * @returns {Function}
  */
 export function highlightMeetingMoment() {
-    return async (dispatch: Function, getState: Function) => {
+    return async (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
         dispatch(setHighlightMomentButtonState(true));
 
         const success = await sendMeetingHighlight(getState());
@@ -209,21 +209,27 @@ export function showStartedRecordingNotification(
         mode: string,
         initiator: { getId: Function; } | string,
         sessionId: string) {
-    return async (dispatch: Function, getState: Function) => {
+    return async (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
         const state = getState();
         const initiatorId = getResourceId(initiator);
         const participantName = getParticipantDisplayName(state, initiatorId);
-        let dialogProps: INotificationProps = {
-            descriptionKey: participantName ? 'liveStreaming.onBy' : 'liveStreaming.on',
-            descriptionArguments: { name: participantName },
-            titleKey: 'dialog.liveStreaming'
+        const notifyProps: {
+            dialogProps: INotificationProps;
+            type: string;
+        } = {
+            dialogProps: {
+                descriptionKey: participantName ? 'liveStreaming.onBy' : 'liveStreaming.on',
+                descriptionArguments: { name: participantName },
+                titleKey: 'dialog.liveStreaming'
+            },
+            type: NOTIFICATION_TIMEOUT_TYPE.SHORT
         };
 
         if (mode !== JitsiMeetJS.constants.recording.mode.STREAM) {
             const recordingSharingUrl = getRecordingSharingUrl(state);
             const iAmRecordingInitiator = getLocalParticipant(state)?.id === initiatorId;
 
-            dialogProps = {
+            notifyProps.dialogProps = {
                 customActionHandler: undefined,
                 customActionNameKey: undefined,
                 descriptionKey: participantName ? 'recording.onBy' : 'recording.on',
@@ -248,10 +254,15 @@ export function showStartedRecordingNotification(
                     }
 
                     // add the option to copy recording link
-                    dialogProps.customActionNameKey = [ 'recording.copyLink' ];
-                    dialogProps.customActionHandler = [ () => copyText(link) ];
-                    dialogProps.titleKey = 'recording.on';
-                    dialogProps.descriptionKey = 'recording.linkGenerated';
+                    notifyProps.dialogProps = {
+                        ...notifyProps.dialogProps,
+                        customActionNameKey: [ 'recording.copyLink' ],
+                        customActionHandler: [ () => copyText(link) ],
+                        titleKey: 'recording.on',
+                        descriptionKey: 'recording.linkGenerated'
+                    };
+
+                    notifyProps.type = NOTIFICATION_TIMEOUT_TYPE.STICKY;
                 } catch (err) {
                     dispatch(showErrorNotification({
                         titleKey: 'recording.errorFetchingLink'
@@ -262,7 +273,7 @@ export function showStartedRecordingNotification(
             }
         }
 
-        dispatch(showNotification(dialogProps, NOTIFICATION_TIMEOUT_TYPE.SHORT));
+        dispatch(showNotification(notifyProps.dialogProps, notifyProps.type));
     };
 }
 
@@ -339,7 +350,7 @@ function _setPendingRecordingNotificationUid(uid: string | undefined, streamType
  * @param {boolean} onlySelf - Whether to only record the local streams.
  * @returns {Object}
  */
-export function startLocalVideoRecording(onlySelf: boolean) {
+export function startLocalVideoRecording(onlySelf?: boolean) {
     return {
         type: START_LOCAL_RECORDING,
         onlySelf

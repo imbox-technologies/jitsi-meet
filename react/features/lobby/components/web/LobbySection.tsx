@@ -1,14 +1,13 @@
 import React, { PureComponent } from 'react';
 import { WithTranslation } from 'react-i18next';
+import { connect } from 'react-redux';
 
-import { IReduxState } from '../../../app/types';
+import { IReduxState, IStore } from '../../../app/types';
+import { getSecurityUiConfig } from '../../../base/config/functions.any';
 import { translate } from '../../../base/i18n/functions';
 import { isLocalParticipantModerator } from '../../../base/participants/functions';
-import { connect } from '../../../base/redux/functions';
 import Switch from '../../../base/ui/components/web/Switch';
 import { isInBreakoutRoom } from '../../../breakout-rooms/functions';
-// eslint-disable-next-line lines-around-comment
-// @ts-ignore
 import { toggleLobbyMode } from '../../actions';
 
 interface IProps extends WithTranslation {
@@ -26,7 +25,7 @@ interface IProps extends WithTranslation {
     /**
      * The Redux Dispatch function.
      */
-    dispatch: Function;
+    dispatch: IStore['dispatch'];
 }
 
 interface IState {
@@ -85,25 +84,22 @@ class LobbySection extends PureComponent<IProps, IState> {
         }
 
         return (
-            <>
-                <div id = 'lobby-section'>
-                    <p
-                        className = 'description'
-                        role = 'banner'>
-                        { t('lobby.enableDialogText') }
-                    </p>
-                    <div className = 'control-row'>
-                        <label htmlFor = 'lobby-section-switch'>
-                            { t('lobby.toggleLabel') }
-                        </label>
-                        <Switch
-                            checked = { this.state.lobbyEnabled }
-                            id = 'lobby-section-switch'
-                            onChange = { this._onToggleLobby } />
-                    </div>
+            <div id = 'lobby-section'>
+                <p
+                    className = 'description'
+                    role = 'banner'>
+                    { t('lobby.enableDialogText') }
+                </p>
+                <div className = 'control-row'>
+                    <label htmlFor = 'lobby-section-switch'>
+                        { t('lobby.toggleLabel') }
+                    </label>
+                    <Switch
+                        checked = { this.state.lobbyEnabled }
+                        id = 'lobby-section-switch'
+                        onChange = { this._onToggleLobby } />
                 </div>
-                <div className = 'separator-line' />
-            </>
+            </div>
         );
     }
 
@@ -129,9 +125,9 @@ class LobbySection extends PureComponent<IProps, IState> {
  * @param {Object} state - The Redux state.
  * @returns {IProps}
  */
-function mapStateToProps(state: IReduxState): Partial<IProps> {
+function mapStateToProps(state: IReduxState) {
     const { conference } = state['features/base/conference'];
-    const { hideLobbyButton } = state['features/base/config'];
+    const { hideLobbyButton } = getSecurityUiConfig(state);
 
     return {
         _lobbyEnabled: state['features/lobby'].lobbyEnabled,

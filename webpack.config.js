@@ -136,7 +136,6 @@ function getConfig(options = {}) {
 
                             }
                         ],
-                        require.resolve('@babel/preset-flow'),
                         require.resolve('@babel/preset-react')
                     ]
                 },
@@ -149,21 +148,6 @@ function getConfig(options = {}) {
                     'style-loader',
                     'css-loader'
                 ]
-            }, {
-                test: /\/node_modules\/@atlaskit\/modal-dialog\/.*\.js$/,
-                resolve: {
-                    alias: {
-                        'react-focus-lock': `${__dirname}/react/features/base/util/react-focus-lock-wrapper.js`,
-                        '../styled/Modal': `${__dirname}/react/features/base/dialog/components/web/ThemedDialog.js`
-                    }
-                }
-            }, {
-                test: /\/react\/features\/base\/util\/react-focus-lock-wrapper.js$/,
-                resolve: {
-                    alias: {
-                        'react-focus-lock': `${__dirname}/node_modules/react-focus-lock`
-                    }
-                }
             }, {
                 test: /\.svg$/,
                 use: [ {
@@ -266,7 +250,7 @@ function getDevServerConfig() {
                 }
             }
         },
-        server: 'https',
+        server: process.env.CODESPACES ? 'http' : 'https',
         static: {
             directory: process.cwd()
         }
@@ -314,37 +298,13 @@ module.exports = (_env, argv) => {
         }),
         Object.assign({}, config, {
             entry: {
-                'alwaysontop': './react/features/always-on-top/index.js'
+                'alwaysontop': './react/features/always-on-top/index.tsx'
             },
             plugins: [
                 ...config.plugins,
                 ...getBundleAnalyzerPlugin(analyzeBundle, 'alwaysontop')
             ],
             performance: getPerformanceHints(perfHintOptions, 800 * 1024)
-        }),
-        Object.assign({}, config, {
-            entry: {
-                'dial_in_info_bundle': './react/features/invite/components/dial-in-info-page'
-            },
-            plugins: [
-                ...config.plugins,
-                ...getBundleAnalyzerPlugin(analyzeBundle, 'dial_in_info'),
-                new webpack.IgnorePlugin({
-                    resourceRegExp: /^\.\/locale$/,
-                    contextRegExp: /moment$/
-                })
-            ],
-            performance: getPerformanceHints(perfHintOptions, 500 * 1024)
-        }),
-        Object.assign({}, config, {
-            entry: {
-                'do_external_connect': './connection_optimization/do_external_connect.js'
-            },
-            plugins: [
-                ...config.plugins,
-                ...getBundleAnalyzerPlugin(analyzeBundle, 'do_external_connect')
-            ],
-            performance: getPerformanceHints(perfHintOptions, 5 * 1024)
         }),
         Object.assign({}, config, {
             entry: {
@@ -379,7 +339,7 @@ module.exports = (_env, argv) => {
                 ...config.plugins,
                 ...getBundleAnalyzerPlugin(analyzeBundle, 'external_api')
             ],
-            performance: getPerformanceHints(perfHintOptions, 35 * 1024)
+            performance: getPerformanceHints(perfHintOptions, 40 * 1024)
         }),
         Object.assign({}, config, {
             entry: {

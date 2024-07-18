@@ -1,17 +1,20 @@
-/* eslint-disable lines-around-comment */
-// @ts-ignore
+// @ts-expect-error
 import { getGravatarURL } from '@jitsi/js-utils/avatar';
 
 import { IReduxState, IStore } from '../../app/types';
-// @ts-ignore
 import { isStageFilmstripAvailable } from '../../filmstrip/functions';
+import { isAddPeopleEnabled, isDialOutEnabled } from '../../invite/functions';
+import { toggleShareDialog } from '../../share-room/actions';
 import { IStateful } from '../app/types';
 import { GRAVATAR_BASE_URL } from '../avatar/constants';
 import { isCORSAvatarURL } from '../avatar/functions';
+import { getCurrentConference } from '../conference/functions';
+import { ADD_PEOPLE_ENABLED } from '../flags/constants';
+import { getFeatureFlag } from '../flags/functions';
 import i18next from '../i18n/i18next';
-import { VIDEO_TYPE } from '../media/constants';
+import { MEDIA_TYPE, VIDEO_TYPE } from '../media/constants';
 import { toState } from '../redux/functions';
-import { getScreenShareTrack } from '../tracks/functions';
+import { getScreenShareTrack } from '../tracks/functions.any';
 import { createDeferred } from '../util/helpers';
 
 import {
@@ -20,16 +23,16 @@ import {
     PARTICIPANT_ROLE,
     WHITEBOARD_PARTICIPANT_ICON
 } from './constants';
-// @ts-ignore
 import { preloadImage } from './preloadImage';
-import { FakeParticipant, IParticipant } from './types';
+import { FakeParticipant, IJitsiParticipant, IParticipant, ISourceInfo } from './types';
+
 
 /**
  * Temp structures for avatar urls to be checked/preloaded.
  */
 const AVATAR_QUEUE: Object[] = [];
 const AVATAR_CHECKED_URLS = new Map();
-/* eslint-disable arrow-body-style, no-unused-vars */
+/* eslint-disable arrow-body-style */
 const AVATAR_CHECKER_FUNCTIONS = [
     (participant: IParticipant) => {
         return participant?.isJigasi ? JIGASI_PARTICIPANT_ICON : null;
@@ -55,7 +58,7 @@ const AVATAR_CHECKER_FUNCTIONS = [
         return null;
     }
 ];
-/* eslint-enable arrow-body-style, no-unused-vars */
+/* eslint-enable arrow-body-style */
 
 /**
  * Returns the list of active speakers that should be moved to the top of the sorted list of participants so that the
@@ -197,7 +200,7 @@ export function getVirtualScreenshareParticipantByOwnerId(stateful: IStateful, i
  * @returns {string}
  */
 export function getNormalizedDisplayName(name: string) {
-    if (!name || !name.trim()) {
+    if (!name?.trim()) {
         return undefined;
     }
 
@@ -352,11 +355,11 @@ export function isWhiteboardParticipant(participant?: IParticipant): boolean {
  * features/base/participants.
  * @returns {number}
  */
-export function getRemoteParticipantCount(stateful: IStateful) {
+export function getRemoteParticipantCountWithFake(stateful: IStateful) {
     const state = toState(stateful);
     const participantsState = state['features/base/participants'];
 
-    return participantsState.remote.size - participantsState.sortedRemoteVirtualScreenshareParticipants.size;
+    return participantsState.remote.size;
 }
 
 /**
@@ -409,6 +412,35 @@ export function getParticipantDisplayName(stateful: IStateful, id: string): stri
 }
 
 /**
+ * Returns the source names of the screenshare sources in the conference based on the presence shared by the remote
+ * endpoints. This should be only used for creating/removing virtual screenshare participant tiles when ssrc-rewriting
+ * is enabled. Once the tile is created, the source-name gets added to the receiver constraints based on which the
+ * JVB will add the source to the video sources map and signal it to the local endpoint. Only then, a remote track is
+ * created/remapped and the tracks in redux will be updated. Once the track is updated in redux, the client will
+ * will continue to use the other track based getter functions for other operations related to screenshare.
+ *
+ * @param {(Function|Object)} stateful - The (whole) redux state, or redux's {@code getState} function to be used to
+ * retrieve the state.
+ * @returns {string[]}
+ */
+export function getRemoteScreensharesBasedOnPresence(stateful: IStateful): string[] {
+    const conference = getCurrentConference(stateful);
+
+    return conference?.getParticipants()?.reduce((screenshares: string[], participant: IJitsiParticipant) => {
+        const sources: Map<string, Map<string, ISourceInfo>> = participant.getSources();
+        const videoSources = sources.get(MEDIA_TYPE.VIDEO);
+        const screenshareSources = Array.from(videoSources ?? new Map())
+            .filter(source => source[1].videoType === VIDEO_TYPE.DESKTOP && !source[1].muted)
+            .map(source => source[0]);
+
+        // eslint-disable-next-line no-param-reassign
+        screenshares = [ ...screenshares, ...screenshareSources ];
+
+        return screenshares;
+    }, []);
+}
+
+/**
  * Returns screenshare participant's display name.
  *
  * @param {(Function|Object)} stateful - The (whole) redux state, or redux's {@code getState} function to be used to
@@ -433,6 +465,36 @@ export function getScreenshareParticipantIds(stateful: IStateful): Array<string>
     return toState(stateful)['features/base/tracks']
         .filter(track => track.videoType === VIDEO_TYPE.DESKTOP && !track.muted)
         .map(t => t.participantId);
+}
+
+/**
+ * Returns a list source name associated with a given remote participant and for the given media type.
+ *
+ * @param {(Function|Object)} stateful - The (whole) redux state, or redux's {@code getState} function to be used to
+ * retrieve the state.
+ * @param {string} id - The id of the participant whose source names are to be retrieved.
+ * @param {string} mediaType - The type of source, audio or video.
+ * @returns {Array<string>|undefined}
+ */
+export function getSourceNamesByMediaType(
+        stateful: IStateful,
+        id: string,
+        mediaType: string): Array<string> | undefined {
+    const participant: IParticipant | undefined = getParticipantById(stateful, id);
+
+    if (!participant) {
+        return;
+    }
+
+    const sources = participant.sources;
+
+    if (!sources) {
+        return;
+    }
+
+    return Array.from(sources.get(mediaType) ?? new Map())
+        .filter(source => source[1].videoType !== VIDEO_TYPE.DESKTOP || !source[1].muted)
+        .map(s => s[0]);
 }
 
 /**
@@ -544,7 +606,7 @@ export function getDominantSpeakerParticipant(stateful: IStateful) {
 export function isEveryoneModerator(stateful: IStateful) {
     const state = toState(stateful)['features/base/participants'];
 
-    return state.everyoneIsModerator === true;
+    return state.numberOfNonModeratorParticipants === 0;
 }
 
 /**
@@ -649,3 +711,32 @@ export function getRaiseHandsQueue(stateful: IStateful): Array<{ id: string; rai
 export function hasRaisedHand(participant?: IParticipant): boolean {
     return Boolean(participant?.raisedHandTimestamp);
 }
+
+/**
+ * Add people feature enabling/disabling.
+ *
+ * @param {Object|Function} stateful - Object or function that can be resolved
+ * to the Redux state.
+ * @returns {boolean}
+ */
+export const addPeopleFeatureControl = (stateful: IStateful) => {
+    const state = toState(stateful);
+
+    return getFeatureFlag(state, ADD_PEOPLE_ENABLED, true)
+    && (isAddPeopleEnabled(state) || isDialOutEnabled(state));
+};
+
+/**
+ * Controls share dialog visibility.
+ *
+ * @param {boolean} addPeopleFeatureEnabled - Checks if add people functionality is enabled.
+ * @param {Function} dispatch - The Redux dispatch function.
+ * @returns {Function}
+ */
+export const setShareDialogVisiblity = (addPeopleFeatureEnabled: boolean, dispatch: IStore['dispatch']) => {
+    if (addPeopleFeatureEnabled) {
+        dispatch(toggleShareDialog(false));
+    } else {
+        dispatch(toggleShareDialog(true));
+    }
+};

@@ -7,12 +7,12 @@ import {
 import {
     getAudioOutputDeviceId
 } from '../../react/features/base/devices/functions.web';
+import { updateSettings } from '../../react/features/base/settings/actions';
 import {
     getUserSelectedCameraDeviceId,
     getUserSelectedMicDeviceId,
-    getUserSelectedOutputDeviceId,
-    updateSettings
-} from '../../react/features/base/settings';
+    getUserSelectedOutputDeviceId
+} from '../../react/features/base/settings/functions';
 
 /**
  * Determines if currently selected audio output device should be changed after
@@ -158,7 +158,6 @@ export default {
      * Determines if currently selected media devices should be changed after
      * list of available devices has been changed.
      * @param {MediaDeviceInfo[]} newDevices
-     * @param {boolean} isSharingScreen
      * @param {JitsiLocalTrack} localVideo
      * @param {JitsiLocalTrack} localAudio
      * @returns {{
@@ -169,13 +168,12 @@ export default {
      */
     getNewMediaDevicesAfterDeviceListChanged( // eslint-disable-line max-params
             newDevices,
-            isSharingScreen,
             localVideo,
             localAudio,
             newLabels) {
         return {
             audioinput: getNewAudioInputDevice(newDevices, localAudio, newLabels),
-            videoinput: isSharingScreen ? undefined : getNewVideoInputDevice(newDevices, localVideo, newLabels),
+            videoinput: getNewVideoInputDevice(newDevices, localVideo, newLabels),
             audiooutput: getNewAudioOutputDevice(newDevices)
         };
     },

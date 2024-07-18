@@ -23,7 +23,9 @@ import android.content.MutableContextWrapper;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.util.AttributeSet;
 import android.view.InputQueue;
 import android.view.KeyEvent;
@@ -33,14 +35,17 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsetsAnimationControlListener;
+import android.view.WindowInsetsController;
+import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.FragmentActivity;
 
 import com.facebook.react.ReactRootView;
-import com.rnimmersive.RNImmersiveModule;
 
 import org.jitsi.meet.sdk.log.JitsiMeetLogger;
 
@@ -100,6 +105,8 @@ public class JitsiMeetView extends FrameLayout {
                 result.putBoolean(key, (Boolean)bValue);
             } else if (valueType.contentEquals("String")) {
                 result.putString(key, (String)bValue);
+            } else if (valueType.contentEquals("Integer")) {
+                result.putInt(key, (int)bValue);
             } else if (valueType.contentEquals("Bundle")) {
                 result.putBundle(key, mergeProps((Bundle)aValue, (Bundle)bValue));
             } else {
@@ -172,6 +179,14 @@ public class JitsiMeetView extends FrameLayout {
      */
     public void join(@Nullable JitsiMeetConferenceOptions options) {
         setProps(options != null ? options.asProps() : new Bundle());
+    }
+
+    /**
+     * Internal method which aborts running RN by passing empty props.
+     * This is only meant to be used from the enclosing Activity's onDestroy.
+     */
+    public void abort() {
+        setProps(new Bundle());
     }
 
     /**
@@ -259,24 +274,6 @@ public class JitsiMeetView extends FrameLayout {
     protected void onDetachedFromWindow() {
         dispose();
         super.onDetachedFromWindow();
-    }
-
-    /**
-     * Called when the window containing this view gains or loses focus.
-     *
-     * @param hasFocus If the window of this view now has focus, {@code true};
-     * otherwise, {@code false}.
-     */
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-
-        // https://github.com/mockingbot/react-native-immersive#restore-immersive-state
-        RNImmersiveModule immersive = RNImmersiveModule.getInstance();
-
-        if (hasFocus && immersive != null) {
-            immersive.emitImmersiveStateChangeEvent();
-        }
     }
 
     public static FragmentActivity createDummyFragmentActivity(final Context context) {
@@ -460,6 +457,60 @@ public class JitsiMeetView extends FrameLayout {
 
                             }
                         };
+                    }
+
+                    @Override
+                    public WindowInsetsController getInsetsController () {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            return new WindowInsetsController() {
+                                @Override
+                                public void show(int i) {
+
+                                }
+
+                                @Override
+                                public void hide(int i) {
+
+                                }
+
+                                @Override
+                                public void controlWindowInsetsAnimation(int i, long l, @Nullable Interpolator interpolator, @Nullable CancellationSignal cancellationSignal, @NonNull WindowInsetsAnimationControlListener windowInsetsAnimationControlListener) {
+
+                                }
+
+                                @Override
+                                public void setSystemBarsAppearance(int i, int i1) {
+
+                                }
+
+                                @Override
+                                public int getSystemBarsAppearance() {
+                                    return 0;
+                                }
+
+                                @Override
+                                public void setSystemBarsBehavior(int i) {
+
+                                }
+
+                                @RequiresApi(api = Build.VERSION_CODES.S)
+                                @Override
+                                public int getSystemBarsBehavior() {
+                                    return WindowInsetsController.BEHAVIOR_DEFAULT;
+                                }
+
+                                @Override
+                                public void addOnControllableInsetsChangedListener(@NonNull OnControllableInsetsChangedListener onControllableInsetsChangedListener) {
+
+                                }
+
+                                @Override
+                                public void removeOnControllableInsetsChangedListener(@NonNull OnControllableInsetsChangedListener onControllableInsetsChangedListener) {
+
+                                }
+                            };
+                        }
+                        return null;
                     }
 
                     @Override

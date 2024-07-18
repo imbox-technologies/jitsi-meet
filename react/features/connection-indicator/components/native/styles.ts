@@ -1,7 +1,4 @@
-/* eslint-disable lines-around-comment */
-
 import BaseTheme from '../../../base/ui/components/BaseTheme.native';
-// @ts-ignore
 import { INDICATOR_DISPLAY_THRESHOLD } from '../AbstractConnectionIndicator';
 
 export const CONNECTOR_INDICATOR_LOST = BaseTheme.palette.ui05;

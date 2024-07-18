@@ -1,16 +1,14 @@
 import { Theme } from '@mui/material';
 import { withStyles } from '@mui/styles';
 import React from 'react';
+import { connect } from 'react-redux';
 
 import { translate } from '../../../base/i18n/functions';
+import { IconRecord, IconSites } from '../../../base/icons/svg';
 import Label from '../../../base/label/components/web/Label';
 import { JitsiRecordingConstants } from '../../../base/lib-jitsi-meet';
-import { connect } from '../../../base/redux/functions';
-import AbstractRecordingLabel, {
-    _mapStateToProps
-
-    // @ts-ignore
-} from '../AbstractRecordingLabel';
+import Tooltip from '../../../base/tooltip/components/Tooltip';
+import AbstractRecordingLabel, { _mapStateToProps } from '../AbstractRecordingLabel';
 
 /**
  * Creates the styles for the component.
@@ -21,11 +19,8 @@ import AbstractRecordingLabel, {
  */
 const styles = (theme: Theme) => {
     return {
-        [JitsiRecordingConstants.mode.STREAM]: {
-            background: theme.palette.ui03
-        },
-        [JitsiRecordingConstants.mode.FILE]: {
-            background: theme.palette.iconError
+        record: {
+            background: theme.palette.actionDanger
         }
     };
 };
@@ -43,27 +38,27 @@ class RecordingLabel extends AbstractRecordingLabel {
      * @inheritdoc
      */
     _renderLabel() {
-        // @ts-ignore
         if (this.props._status !== JitsiRecordingConstants.status.ON) {
             // Since there are no expanded labels on web, we only render this
             // label when the recording status is ON.
             return null;
         }
 
-        // @ts-ignore
         const { classes, mode, t } = this.props;
+        const isRecording = mode === JitsiRecordingConstants.mode.FILE;
+        const icon = isRecording ? IconRecord : IconSites;
+        const content = t(isRecording ? 'videoStatus.recording' : 'videoStatus.streaming');
 
         return (
-            <div>
+            <Tooltip
+                content = { content }
+                position = { 'bottom' }>
                 <Label
-                    className = { classes?.[mode] }
-
-                    // @ts-ignore
-                    text = { t(this._getLabelKey()) } />
-            </div>
+                    className = { classes?.record }
+                    icon = { icon } />
+            </Tooltip>
         );
     }
 }
 
-// @ts-ignore
 export default withStyles(styles)(translate(connect(_mapStateToProps)(RecordingLabel)));

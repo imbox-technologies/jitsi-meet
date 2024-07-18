@@ -4,6 +4,7 @@ import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
 import { SET_DYNAMIC_BRANDING_DATA } from './actionTypes';
 import { fetchCustomBrandingData } from './actions.native';
 
+import './middleware.any';
 
 MiddlewareRegistry.register(store => next => action => {
     switch (action.type) {
@@ -20,6 +21,7 @@ MiddlewareRegistry.register(store => next => action => {
             avatarBackgrounds = [],
             backgroundColor,
             backgroundImageUrl,
+            brandedIcons,
             didPageUrl,
             inviteDomain
         } = action.value;
@@ -28,14 +30,18 @@ MiddlewareRegistry.register(store => next => action => {
             avatarBackgrounds,
             backgroundColor,
             backgroundImageUrl,
+            brandedIcons,
             didPageUrl,
             inviteDomain
         };
 
-        // TODO: implement support for gradients.
-        action.value.avatarBackgrounds = avatarBackgrounds.filter(
-            (color: string) => !color.includes('linear-gradient')
-        );
+        // The backend may send an empty string, make sure we skip that.
+        if (Array.isArray(avatarBackgrounds)) {
+            // TODO: implement support for gradients.
+            action.value.avatarBackgrounds = avatarBackgrounds.filter(
+                (color: string) => !color.includes('linear-gradient')
+            );
+        }
 
         break;
     }

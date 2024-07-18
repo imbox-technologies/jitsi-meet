@@ -1,5 +1,8 @@
 {
     "addPeople": {
+        "accessibilityLabel": {
+            "meetingLink": "Meeting link: {{url}}"
+        },
         "add": "Invite",
         "addContacts": "Invite your contacts",
         "contacts": "contacts",
@@ -39,6 +42,18 @@
     "audioOnly": {
         "audioOnly": "Low bandwidth"
     },
+    "bandwidthSettings": {
+        "assumedBandwidthBps": "e.g. 10000000 for 10 Mbps",
+        "assumedBandwidthBpsWarning": "Higher values might cause network issues.",
+        "customValue": "custom value",
+        "customValueEffect": "to set the actual bps value",
+        "leaveEmpty": "leave empty",
+        "leaveEmptyEffect": "to allow estimations to take place",
+        "possibleValues": "Possible values",
+        "setAssumedBandwidthBps": "Assumed bandwidth (bps)",
+        "title": "Bandwidth settings",
+        "zeroEffect": "to disable video"
+    },
     "breakoutRooms": {
         "actions": {
             "add": "Add breakout room",
@@ -48,6 +63,8 @@
             "leaveBreakoutRoom": "Leave breakout room",
             "more": "More",
             "remove": "Remove",
+            "rename": "Rename",
+            "renameBreakoutRoom": "Rename breakout room",
             "sendToBreakoutRoom": "Send participant to:"
         },
         "defaultName": "Breakout room #{{index}}",
@@ -68,9 +85,9 @@
         },
         "join": "Join",
         "joinTooltip": "Join the meeting",
-        "nextMeeting": "next meeting",
+        "nextMeeting": "Next meeting",
         "noEvents": "There are no upcoming events scheduled.",
-        "ongoingMeeting": "ongoing meeting",
+        "ongoingMeeting": "Ongoing meeting",
         "permissionButton": "Open settings",
         "permissionMessage": "The Calendar permission is required to see your meetings in the app.",
         "refresh": "Refresh calendar",
@@ -147,6 +164,7 @@
         "bridgeCount": "Server count: ",
         "codecs": "Codecs (A/V): ",
         "connectedTo": "Connected to:",
+        "e2eeVerified": "E2EE verified:",
         "framerate": "Frame rate:",
         "less": "Show less",
         "localaddress": "Local address:",
@@ -155,6 +173,7 @@
         "localport_plural": "Local ports:",
         "maxEnabledResolution": "send max",
         "more": "Show more",
+        "no": "no",
         "packetloss": "Packet loss:",
         "participant_id": "Participant id:",
         "quality": {
@@ -173,7 +192,8 @@
         "status": "Connection:",
         "transport": "Transport:",
         "transport_plural": "Transports:",
-        "video_ssrc": "Video SSRC:"
+        "video_ssrc": "Video SSRC:",
+        "yes": "yes"
     },
     "dateUtils": {
         "earlier": "Earlier",
@@ -183,13 +203,21 @@
     "deepLinking": {
         "appNotInstalled": "You need the {{app}} mobile app to join this meeting on your phone.",
         "description": "Nothing happened? We tried launching your meeting in the {{app}} desktop app. Try again or launch it in the {{app}} web app.",
+        "descriptionNew": "Nothing happened? We tried launching your meeting in the {{app}} desktop app. <br /><br /> You can try again or launch it on web.",
         "descriptionWithoutWeb": "Nothing happened? We tried launching your meeting in the {{app}} desktop app.",
         "downloadApp": "Download the app",
+        "downloadMobileApp": "Download from App Store",
         "ifDoNotHaveApp": "If you don't have the app yet:",
         "ifHaveApp": "If you already have the app:",
         "joinInApp": "Join this meeting using the app",
+        "joinInAppNew": "Join in app",
+        "joinInBrowser": "Join in browser",
+        "launchMeetingLabel": "How do you want to join this meeting?",
         "launchWebButton": "Launch in web",
+        "noMobileApp": "You don’t have the app?",
+        "termsAndConditions": "By continuing you agree to our <a href='{{termsAndConditionsLink}}' rel='noopener noreferrer' target='_blank'>terms & conditions.</a>",
         "title": "Launching your meeting in {{app}}...",
+        "titleNew": "Launching your meeting ...",
         "tryAgainButton": "Try again in desktop",
         "unsupportedBrowser": "It looks like you're using a browser we don't support."
     },
@@ -202,10 +230,16 @@
         "microphonePermission": "Error obtaining microphone permission"
     },
     "deviceSelection": {
+        "hid": {
+            "callControl": "Call control",
+            "connectedDevices": "Connected devices:",
+            "deleteDevice": "Delete device",
+            "pairDevice": "Pair device"
+        },
         "noPermission": "Permission not granted",
         "previewUnavailable": "Preview unavailable",
         "selectADevice": "Select a device",
-        "testAudio": "Play a test sound"
+        "testAudio": "Test"
     },
     "dialIn": {
         "screenTitle": "Dial-in summary"
@@ -216,21 +250,28 @@
     "dialog": {
         "Back": "Back",
         "Cancel": "Cancel",
-        "IamHost": "I am the host",
+        "IamHost": "Log-in",
         "Ok": "OK",
         "Remove": "Remove",
         "Share": "Share",
         "Submit": "Submit",
-        "WaitForHostMsg": "The conference has not yet started. If you are the host then please authenticate. Otherwise, please wait for the host to arrive.",
-        "WaitingForHostTitle": "Waiting for the host ...",
+        "WaitForHostMsg": "The conference has not yet started because no moderators have yet arrived. If you'd like to become a moderator please log-in. Otherwise, please wait.",
+        "WaitingForHostButton": "Wait for moderator",
+        "WaitingForHostTitle": "Waiting for a moderator...",
         "Yes": "Yes",
         "accessibilityLabel": {
-            "liveStreaming": "Live Stream"
+            "Cancel": "Cancel (leave dialog)",
+            "Ok": "OK (save and leave dialog)",
+            "close": "Close dialog",
+            "liveStreaming": "Live Stream",
+            "sharingTabs": "Sharing options"
         },
         "add": "Add",
         "addMeetingNote": "Add a note about this meeting",
         "addOptionalNote": "Add a note (optional):",
         "allow": "Allow",
+        "allowToggleCameraDialog": "Do you allow {{initiatorName}} to toggle your camera facing mode?",
+        "allowToggleCameraTitle": "Allow toggle camera?",
         "alreadySharedVideoMsg": "Another participant is already sharing a video. This conference allows only one shared video at a time.",
         "alreadySharedVideoTitle": "Only one shared video is allowed at a time",
         "applicationWindow": "Application window",
@@ -291,6 +332,7 @@
         "lockRoom": "Add meeting $t(lockRoomPassword)",
         "lockTitle": "Lock failed",
         "login": "Login",
+        "loginQuestion": "Are you sure you want to login and leave the conference?",
         "logoutQuestion": "Are you sure you want to logout and leave the conference?",
         "logoutTitle": "Logout",
         "maxUsersLimitReached": "The limit for maximum number of participants has been reached. The conference is full. Please contact the meeting owner or try again later!",
@@ -334,8 +376,6 @@
         "permissionCameraRequiredError": "Camera permission is required to participate in conferences with video. Please grant it in Settings",
         "permissionErrorTitle": "Permission required",
         "permissionMicRequiredError": "Microphone permission is required to participate in conferences with audio. Please grant it in Settings",
-        "popupError": "Your browser is blocking pop-up windows from this site. Please enable pop-ups in your browser's security settings and try again.",
-        "popupErrorTitle": "Pop-up blocked",
         "readMore": "more",
         "recentlyUsedObjects": "Your recently used objects",
         "recording": "Recording",
@@ -352,6 +392,8 @@
         "removePassword": "Remove $t(lockRoomPassword)",
         "removeSharedVideoMsg": "Are you sure you would like to remove your shared video?",
         "removeSharedVideoTitle": "Remove shared video",
+        "renameBreakoutRoomLabel": "Room name",
+        "renameBreakoutRoomTitle": "Rename breakout room",
         "reservationError": "Reservation system error",
         "reservationErrorMsg": "Error code: {{code}}, message: {{msg}}",
         "retry": "Retry",
@@ -371,6 +413,7 @@
         "sendPrivateMessageTitle": "Send privately?",
         "serviceUnavailable": "Service unavailable",
         "sessTerminated": "Call terminated",
+        "sessTerminatedReason": "The meeting has been terminated",
         "sessionRestarted": "Call restarted because of a connection issue.",
         "shareAudio": "Continue",
         "shareAudioTitle": "How to share audio",
@@ -402,12 +445,34 @@
         "thankYou": "Thank you for using {{appName}}!",
         "token": "token",
         "tokenAuthFailed": "Sorry, you're not allowed to join this call.",
+        "tokenAuthFailedReason": {
+            "audInvalid": "Ivalid `aud` value. It should be `jitsi`.",
+            "contextNotFound": "The `context` object is missing from the payload.",
+            "expInvalid": "Invalid `exp` value.",
+            "featureInvalid": "Invalid feature: {{feature}}, most likely not implemented yet.",
+            "featureValueInvalid": "Invalid value for feature: {{feature}}.",
+            "featuresNotFound": "The `features` object is missing from the payload.",
+            "headerNotFound": "Missing the header.",
+            "issInvalid": "Invalid `iss` value. It should be `chat`.",
+            "kidMismatch": "Key ID (kid) does not match sub.",
+            "kidNotFound": "Missing Key ID (kid).",
+            "nbfFuture": "The `nbf` value is in the future.",
+            "nbfInvalid": "Invalid `nbf` value.",
+            "payloadNotFound": "Missing the payload.",
+            "tokenExpired": "Token is expired."
+        },
         "tokenAuthFailedTitle": "Authentication failed",
+        "tokenAuthFailedWithReasons": "Sorry, you're not allowed to join this call. Possible reasons: {{reason}}",
+        "tokenAuthUnsupported": "Token URL is not supported.",
         "transcribing": "Transcribing",
         "unlockRoom": "Remove meeting $t(lockRoomPassword)",
         "user": "User",
         "userIdentifier": "User identifier",
         "userPassword": "User password",
+        "verifyParticipantConfirm": "They match",
+        "verifyParticipantDismiss": "They do not match",
+        "verifyParticipantQuestion": "EXPERIMENTAL: Ask participant {{participantName}} if they see the same content, in the same order.",
+        "verifyParticipantTitle": "User verification",
         "videoLink": "Video link",
         "viewUpgradeOptions": "View upgrade options",
         "viewUpgradeOptionsContent": "To get unlimited access to premium features like recording, transcriptions, RTMP Streaming & more, you'll need to upgrade your plan.",
@@ -424,6 +489,9 @@
         "title": "Embed this meeting"
     },
     "feedback": {
+        "accessibilityLabel": {
+            "yourChoice": "Your choice: {{rating}}"
+        },
         "average": "Average",
         "bad": "Bad",
         "detailsLabel": "Tell us more about it.",
@@ -433,12 +501,14 @@
         "veryBad": "Very Bad",
         "veryGood": "Very Good"
     },
+    "filmstrip": {
+        "accessibilityLabel": {
+            "heading": "Video thumbnails"
+        }
+    },
     "giphy": {
         "noResults": "No results found :(",
         "search": "Search GIPHY"
-    },
-    "helpView": {
-        "title": "Help center"
     },
     "incomingCall": {
         "answer": "Answer",
@@ -482,6 +552,7 @@
         "password": "$t(lockRoomPasswordUppercase): ",
         "reachedLimit": "You have reached the limit of your plan.",
         "sip": "SIP address",
+        "sipAudioOnly": "SIP audio only address",
         "title": "Share",
         "tooltip": "Share link and dial-in info for this meeting",
         "upgradeOptions": "Please check the upgrade options on"
@@ -588,13 +659,13 @@
         "knockingParticipantList": "Knocking participant list",
         "lobbyChatStartedNotification": "{{moderator}} started a lobby chat with {{attendee}}",
         "lobbyChatStartedTitle": "{{moderator}} has started a lobby chat with you.",
+        "lobbyClosed": "The lobby room has been closed.",
         "nameField": "Enter your name",
         "notificationLobbyAccessDenied": "{{targetParticipantName}} has been rejected to join by {{originParticipantName}}",
         "notificationLobbyAccessGranted": "{{targetParticipantName}} has been allowed to join by {{originParticipantName}}",
         "notificationLobbyDisabled": "Lobby has been disabled by {{originParticipantName}}",
         "notificationLobbyEnabled": "Lobby has been enabled by {{originParticipantName}}",
         "notificationTitle": "Lobby",
-        "passwordField": "Enter meeting password",
         "passwordJoinButton": "Join",
         "reject": "Reject",
         "rejectAll": "Reject all",
@@ -629,6 +700,8 @@
         "sessionToken": "Session Token",
         "start": "Start Recording",
         "stop": "Stop Recording",
+        "stopping": "Stopping Recording",
+        "wait": "Please wait while we save your recording",
         "yes": "Yes"
     },
     "lockRoomPassword": "password",
@@ -650,8 +723,10 @@
         "connectedTwoMembers": "{{first}} and {{second}} joined the meeting",
         "dataChannelClosed": "Video quality impaired",
         "dataChannelClosedDescription": "The bridge channel has been disconnected and thus video quality is limited to its lowest setting.",
+        "disabledIframe": "Embedding is only meant for demo purposes, so this call will disconnect in {{timeout}} minutes.",
         "disconnected": "disconnected",
         "displayNotifications": "Display notifications for",
+        "dontRemindMe": "Do not remind me",
         "focus": "Conference focus",
         "focusFail": "{{component}} not available - retry in {{ms}} sec",
         "gifsMenu": "GIPHY",
@@ -660,6 +735,7 @@
         "invitedOneMember": "{{name}} has been invited",
         "invitedThreePlusMembers": "{{name}} and {{count}} others have been invited",
         "invitedTwoMembers": "{{first}} and {{second}} have been invited",
+        "joinMeeting": "Join",
         "kickParticipant": "{{kicked}} was kicked by {{kicker}}",
         "leftOneMember": "{{name}} left the meeting",
         "leftThreePlusMembers": "{{name}} and many others left the meeting",
@@ -694,7 +770,6 @@
         "newDeviceCameraTitle": "New camera detected",
         "noiseSuppressionDesktopAudioDescription": "Noise suppression can't be enabled while sharing desktop audio, please disable it and try again.",
         "noiseSuppressionFailedTitle": "Failed to start noise suppression",
-        "noiseSuppressionNoTrackDescription": "Please unmute your microphone first.",
         "noiseSuppressionStereoDescription": "Stereo audio noise suppression is not currently supported.",
         "oldElectronClientDescription1": "You appear to be using an old version of the Jitsi Meet client which has known security vulnerabilities. Please make sure you update to our ",
         "oldElectronClientDescription2": "latest build",
@@ -710,6 +785,8 @@
         "reactionSoundsForAll": "Disable sounds for all",
         "screenShareNoAudio": "Share audio box was not checked in the window selection screen.",
         "screenShareNoAudioTitle": "Couldn't share system audio!",
+        "screenSharingAudioOnlyDescription": "Please note that by sharing your screen you're affecting the \"Best performance\" mode and you will use more bandwidth.",
+        "screenSharingAudioOnlyTitle": "\"Best performance\" mode",
         "selfViewTitle": "You can always un-hide the self-view from settings",
         "somebody": "Somebody",
         "startSilentDescription": "Rejoin the meeting to enable audio",
@@ -747,6 +824,7 @@
         "headings": {
             "lobby": "Lobby ({{count}})",
             "participantsList": "Meeting participants ({{count}})",
+            "visitors": "Visitors ({{count}})",
             "waitingLobby": "Waiting in lobby ({{count}})"
         },
         "search": "Search participants",
@@ -754,6 +832,7 @@
     },
     "passwordDigitsOnly": "Up to {{number}} digits",
     "passwordSetRemotely": "Set by another participant",
+    "pinParticipant": "{{participantName}} - Pin",
     "pinnedParticipant": "The participant is pinned",
     "polls": {
         "answer": {
@@ -838,9 +917,11 @@
         "lookGood": "Your microphone is working properly",
         "or": "or",
         "premeeting": "Pre meeting",
+        "proceedAnyway": "Proceed anyway",
         "screenSharingError": "Screen sharing error:",
         "showScreen": "Enable pre meeting screen",
         "startWithPhone": "Start with phone audio",
+        "unsafeRoomConsent": "I understand the risks, I want to join the meeting",
         "videoOnlyError": "Video error:",
         "videoTrackError": "Could not create video track.",
         "viewAllNumbers": "view all numbers"
@@ -859,14 +940,11 @@
         "rejected": "Rejected",
         "ringing": "Ringing..."
     },
-    "privacyView": {
-        "title": "Privacy"
-    },
     "profile": {
         "avatar": "avatar",
-        "setDisplayNameLabel": "Set your display name",
+        "setDisplayNameLabel": "Name",
         "setEmailInput": "Enter email",
-        "setEmailLabel": "Set your gravatar email",
+        "setEmailLabel": "Gravatar email",
         "title": "Profile"
     },
     "raisedHand": "Would like to speak",
@@ -915,6 +993,7 @@
         "localRecordingVideoWarning": "To record your video you must have it on when starting the recording",
         "localRecordingWarning": "Make sure you select the current tab in order to use the right video and audio. The recording is currently limited to 1GB, which is around 100 minutes.",
         "loggedIn": "Logged in as {{userName}}",
+        "noMicPermission": "Microphone track could not be created. Please grant permission to use the microphone.",
         "noStreams": "No audio or video stream detected.",
         "off": "Recording stopped",
         "offBy": "{{name}} stopped the recording",
@@ -944,10 +1023,17 @@
     "security": {
         "about": "You can add a $t(lockRoomPassword) to your meeting. Participants will need to provide the $t(lockRoomPassword) before they are allowed to join the meeting.",
         "aboutReadOnly": "Moderator participants can add a $t(lockRoomPassword) to the meeting. Participants will need to provide the $t(lockRoomPassword) before they are allowed to join the meeting.",
-        "insecureRoomNameWarning": "The room name is unsafe. Unwanted participants may join your conference. Consider securing your meeting using the security button.",
-        "title": "Security Options"
+        "insecureRoomNameWarningNative": "The room name is unsafe. Unwanted participants may join your meeting. {{recommendAction}} Learn more about securing you meeting ",
+        "insecureRoomNameWarningWeb": "The room name is unsafe. Unwanted participants may join your meeting. {{recommendAction}} Learn more about securing you meeting <a href=\"{{securityUrl}}\" rel=\"security\" target=\"_blank\">here</a>.",
+        "title": "Security Options",
+        "unsafeRoomActions": {
+            "meeting": "Consider securing your meeting using the security button.",
+            "prejoin": "Consider using a more unique meeting name.",
+            "welcome": "Consider using a more unique meeting name, or pick one of the suggestions."
+        }
     },
     "settings": {
+        "audio": "Audio",
         "buttonLabel": "Settings",
         "calendar": {
             "about": "The {{appName}} calendar integration is used to securely access your calendar so it can read upcoming events.",
@@ -968,9 +1054,11 @@
         "maxStageParticipants": "Maximum number of participants who can be pinned to the main stage (EXPERIMENTAL)",
         "microphones": "Microphones",
         "moderator": "Moderator",
-        "more": "More",
+        "moderatorOptions": "Moderator options",
+        "more": "General",
         "name": "Name",
         "noDevice": "None",
+        "notifications": "Notifications",
         "participantJoined": "Participant Joined",
         "participantKnocking": "Participant entered lobby",
         "participantLeft": "Participant Left",
@@ -981,13 +1069,14 @@
         "selectCamera": "Camera",
         "selectMic": "Microphone",
         "selfView": "Self view",
-        "sounds": "Sounds",
+        "shortcuts": "Shortcuts",
         "speakers": "Speakers",
         "startAudioMuted": "Everyone starts muted",
         "startReactionsMuted": "Mute reaction sounds for everyone",
         "startVideoMuted": "Everyone starts hidden",
         "talkWhileMuted": "Talk while muted",
-        "title": "Settings"
+        "title": "Settings",
+        "video": "Video"
     },
     "settingsView": {
         "advanced": "Advanced",
@@ -995,6 +1084,7 @@
         "alertOk": "OK",
         "alertTitle": "Warning",
         "alertURLText": "The entered server URL is invalid",
+        "apply": "Apply",
         "buildInfoSection": "Build Information",
         "conferenceSection": "Conference",
         "disableCallIntegration": "Disable native call integration",
@@ -1005,19 +1095,21 @@
         "displayNamePlaceholderText": "Eg: John Doe",
         "email": "Email",
         "emailPlaceholderText": "email@example.com",
+        "gavatarMessage": "If your email is associated with a Gravatar account, we will use it to display your profile picture.",
         "goTo": "Go to",
         "header": "Settings",
         "help": "Help",
         "links": "Links",
         "privacy": "Privacy",
         "profileSection": "Profile",
+        "sdkVersion": "SDK version",
         "serverURL": "Server URL",
         "showAdvanced": "Show advanced settings",
         "startCarModeInLowBandwidthMode": "Start car mode in low bandwidth mode",
         "startWithAudioMuted": "Start with audio muted",
         "startWithVideoMuted": "Start with video muted",
         "terms": "Terms",
-        "version": "Version"
+        "version": "App version"
     },
     "share": {
         "dialInfoText": "\n\n=====\n\nJust want to dial in on your phone?\n\n{{defaultDialInNumber}}Click this link to see the dial in phone numbers for this meeting\n{{dialInfoPageUrl}}",
@@ -1068,19 +1160,29 @@
             "cc": "Toggle subtitles",
             "chat": "Open / Close chat",
             "clap": "Clap",
+            "closeChat": "Close chat",
+            "closeMoreActions": "Close more actions menu",
+            "closeParticipantsPane": "Close participants pane",
             "collapse": "Collapse",
-            "dock": "Dock in main window",
             "document": "Toggle shared document",
+            "documentClose": "Close shared document",
+            "documentOpen": "Open shared document",
             "download": "Download our apps",
             "embedMeeting": "Embed meeting",
             "endConference": "End meeting for all",
+            "enterFullScreen": "View full screen",
+            "enterTileView": "Enter tile view",
+            "exitFullScreen": "Exit full screen",
+            "exitTileView": "Exit tile view",
             "expand": "Expand",
             "feedback": "Leave feedback",
             "fullScreen": "Toggle full screen",
             "giphy": "Toggle GIPHY menu",
             "grantModerator": "Grant Moderator Rights",
             "hangup": "Leave the meeting",
+            "heading": "Toolbar",
             "help": "Help",
+            "hideWhiteboard": "Hide whiteboard",
             "invite": "Invite people",
             "kick": "Kick participant",
             "laugh": "Laugh",
@@ -1090,21 +1192,25 @@
             "lobbyButton": "Enable/disable lobby mode",
             "localRecording": "Toggle local recording controls",
             "lockRoom": "Toggle meeting password",
+            "lowerHand": "Lower your hand",
             "moreActions": "More actions",
             "moreActionsMenu": "More actions menu",
             "moreOptions": "Show more options",
-            "mute": "Mute / Unmute",
+            "mute": "Mute",
             "muteEveryone": "Mute everyone",
             "muteEveryoneElse": "Mute everyone else",
             "muteEveryoneElsesVideoStream": "Stop everyone else's video",
             "muteEveryonesVideoStream": "Stop everyone's video",
+            "muteGUMPending": "Connecting your microphone",
             "noiseSuppression": "Noise suppression",
-            "participants": "Participants",
+            "openChat": "Open chat",
+            "participants": "Open participants pane",
             "pip": "Toggle Picture-in-Picture mode",
             "privateMessage": "Send private message",
             "profile": "Edit your profile",
-            "raiseHand": "Raise / Lower your hand",
-            "reactionsMenu": "Open / Close reactions menu",
+            "raiseHand": "Raise your hand",
+            "reactions": "Reactions",
+            "reactionsMenu": "Reactions menu",
             "recording": "Toggle recording",
             "remoteMute": "Mute participant",
             "remoteVideoMute": "Disable camera of participant",
@@ -1112,21 +1218,25 @@
             "selectBackground": "Select Background",
             "selfView": "Toggle self view",
             "shareRoom": "Invite someone",
-            "shareYourScreen": "Start / Stop sharing your screen",
+            "shareYourScreen": "Start sharing your screen",
             "shareaudio": "Share audio",
-            "sharedvideo": "Toggle video sharing",
+            "sharedvideo": "Share video",
             "shortcuts": "Toggle shortcuts",
             "show": "Show on stage",
+            "showWhiteboard": "Show whiteboard",
             "silence": "Silence",
             "speakerStats": "Toggle participants statistics",
+            "stopScreenSharing": "Stop sharing your screen",
+            "stopSharedVideo": "Stop video",
             "surprised": "Surprised",
             "tileView": "Toggle tile view",
             "toggleCamera": "Toggle camera",
             "toggleFilmstrip": "Toggle filmstrip",
-            "undock": "Undock into separate window",
+            "unmute": "Unmute",
             "videoblur": "Toggle video blur",
-            "videomute": "Start / Stop camera",
-            "whiteboard": "Show / Hide whiteboard"
+            "videomute": "Stop camera",
+            "videomuteGUMPending": "Connecting your camera",
+            "videounmute": "Start camera"
         },
         "addPeople": "Add people to your call",
         "audioOnlyOff": "Disable low bandwidth mode",
@@ -1139,15 +1249,16 @@
         "chat": "Open / Close chat",
         "clap": "Clap",
         "closeChat": "Close chat",
+        "closeParticipantsPane": "Close participants pane",
         "closeReactionsMenu": "Close reactions menu",
         "disableNoiseSuppression": "Disable noise suppression",
         "disableReactionSounds": "You can disable reaction sounds for this meeting",
-        "dock": "Dock in main window",
         "documentClose": "Close shared document",
         "documentOpen": "Open shared document",
         "download": "Download our apps",
         "e2ee": "End-to-End Encryption",
         "embedMeeting": "Embed meeting",
+        "enableNoiseSuppression": "Enable noise suppression",
         "endConference": "End meeting for all",
         "enterFullScreen": "View full screen",
         "enterTileView": "Enter tile view",
@@ -1167,14 +1278,15 @@
         "linkToSalesforce": "Link to Salesforce",
         "lobbyButtonDisable": "Disable lobby mode",
         "lobbyButtonEnable": "Enable lobby mode",
-        "login": "Login",
-        "logout": "Logout",
+        "login": "Log-in",
+        "logout": "Log-out",
         "lowerYourHand": "Lower your hand",
         "moreActions": "More actions",
         "moreOptions": "More options",
-        "mute": "Mute / Unmute",
+        "mute": "Mute",
         "muteEveryone": "Mute everyone",
         "muteEveryonesVideo": "Disable everyone's camera",
+        "muteGUMPending": "Connecting your microphone",
         "noAudioSignalDesc": "If you did not purposely mute it from system settings or hardware, consider switching the device.",
         "noAudioSignalDescSuggestion": "If you did not purposely mute it from system settings or hardware, consider switching to the suggested device.",
         "noAudioSignalDialInDesc": "You can also dial-in using:",
@@ -1189,7 +1301,7 @@
         "pip": "Enter Picture-in-Picture mode",
         "privateMessage": "Send private message",
         "profile": "Edit your profile",
-        "raiseHand": "Raise / Lower your hand",
+        "raiseHand": "Raise your hand",
         "raiseYourHand": "Raise your hand",
         "reactionBoo": "Send boo reaction",
         "reactionClap": "Send clap reaction",
@@ -1197,6 +1309,7 @@
         "reactionLike": "Send thumbs up reaction",
         "reactionSilence": "Send silence reaction",
         "reactionSurprised": "Send surprised reaction",
+        "reactions": "Reactions",
         "security": "Security options",
         "selectBackground": "Select background",
         "shareRoom": "Invite someone",
@@ -1216,9 +1329,11 @@
         "talkWhileMutedPopup": "Trying to speak? You are muted.",
         "tileViewToggle": "Toggle tile view",
         "toggleCamera": "Toggle camera",
-        "undock": "Undock into separate window",
+        "unmute": "Unmute",
         "videoSettings": "Video settings",
-        "videomute": "Start / Stop camera"
+        "videomute": "Stop camera",
+        "videomuteGUMPending": "Connecting your camera",
+        "videounmute": "Start camera"
     },
     "transcribing": {
         "ccButtonTooltip": "Start / Stop subtitles",
@@ -1236,6 +1351,7 @@
         "subtitlesOff": "Off",
         "tr": "TR"
     },
+    "unpinParticipant": "{{participantName}} - Unpin",
     "userMedia": {
         "androidGrantPermissions": "Select <b><i>Allow</i></b> when your browser asks for permissions.",
         "chromeGrantPermissions": "Select <b><i>Allow</i></b> when your browser asks for permissions.",
@@ -1263,7 +1379,7 @@
         "audioOnly": "AUD",
         "audioOnlyExpanded": "You are in low bandwidth mode. In this mode you will receive only audio and screen sharing.",
         "bestPerformance": "Best performance",
-        "callQuality": "Video Quality",
+        "callQuality": "Video Quality (0 for best performance, 3 for highest quality)",
         "hd": "HD",
         "hdTooltip": "Viewing high definition video",
         "highDefinition": "High definition",
@@ -1274,9 +1390,11 @@
         "ldTooltip": "Viewing low definition video",
         "lowDefinition": "Low definition",
         "performanceSettings": "Performance settings",
+        "recording": "Recording in progress",
         "sd": "SD",
         "sdTooltip": "Viewing standard definition video",
-        "standardDefinition": "Standard definition"
+        "standardDefinition": "Standard definition",
+        "streaming": "Streaming in progress"
     },
     "videothumbnail": {
         "connectionInfo": "Connection Info",
@@ -1288,6 +1406,7 @@
         "grantModerator": "Grant Moderator Rights",
         "hideSelfView": "Hide self view",
         "kick": "Kick out",
+        "mirrorVideo": "Mirror my video",
         "moderator": "Moderator",
         "mute": "Participant is muted",
         "muted": "Muted",
@@ -1297,10 +1416,15 @@
         "show": "Show on stage",
         "showSelfView": "Show self view",
         "unpinFromStage": "Unpin",
+        "verify": "Verify participant",
         "videoMuted": "Camera disabled",
         "videomute": "Participant has stopped the camera"
     },
     "virtualBackground": {
+        "accessibilityLabel": {
+            "currentBackground": "Current background: {{background}}",
+            "selectBackground": "Select a background"
+        },
         "addBackground": "Add background",
         "apply": "Apply",
         "backgroundEffectError": "Failed to apply background effect.",
@@ -1318,11 +1442,19 @@
         "none": "None",
         "pleaseWait": "Please wait...",
         "removeBackground": "Remove background",
-        "slightBlur": "Slight Blur",
+        "slightBlur": "Half Blur",
         "title": "Virtual backgrounds",
         "uploadedImage": "Uploaded image {{index}}",
         "webAssemblyWarning": "WebAssembly not supported",
         "webAssemblyWarningDescription": "WebAssembly disabled or not supported by this browser"
+    },
+    "visitors": {
+        "chatIndicator": "(visitor)",
+        "labelTooltip": "Number of visitors: {{count}}",
+        "notification": {
+            "description": "To participate raise your hand",
+            "title": "You are a visitor in the meeting"
+        }
     },
     "volumeSlider": "Volume slider",
     "welcomepage": {
@@ -1356,6 +1488,7 @@
             "microsoftLogo": "Microsoft logo",
             "policyLogo": "Policy logo"
         },
+        "meetingsAccessibilityLabel": "Meetings",
         "mobileDownLoadLinkAndroid": "Download mobile app for Android",
         "mobileDownLoadLinkFDroid": "Download mobile app for F-Droid",
         "mobileDownLoadLinkIos": "Download mobile app for iOS",
@@ -1364,6 +1497,7 @@
         "recentList": "Recent",
         "recentListDelete": "Delete entry",
         "recentListEmpty": "Your recent list is currently empty. Chat with your team and you will find all your recent meetings here.",
+        "recentMeetings": "Your recent meetings",
         "reducedUIText": "Welcome to {{app}}!",
         "roomNameAllowedChars": "Meeting name should not contain any of these characters: ?, &, :, ', \", %, #.",
         "roomname": "Enter room name",
@@ -1372,6 +1506,12 @@
         "settings": "Settings",
         "startMeeting": "Start meeting",
         "terms": "Terms",
-        "title": "Secure, fully featured, and completely free video conferencing"
+        "title": "Secure, fully featured, and completely free video conferencing",
+        "upcomingMeetings": "Your upcoming meetings"
+    },
+    "whiteboard": {
+        "accessibilityLabel": {
+            "heading": "Whiteboard"
+        }
     }
 }

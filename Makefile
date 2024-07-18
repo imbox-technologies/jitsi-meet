@@ -44,12 +44,8 @@ deploy-appbundle:
 	cp \
 		$(BUILD_DIR)/app.bundle.min.js \
 		$(BUILD_DIR)/app.bundle.min.js.map \
-		$(BUILD_DIR)/do_external_connect.min.js \
-		$(BUILD_DIR)/do_external_connect.min.js.map \
 		$(BUILD_DIR)/external_api.min.js \
 		$(BUILD_DIR)/external_api.min.js.map \
-		$(BUILD_DIR)/dial_in_info_bundle.min.js \
-		$(BUILD_DIR)/dial_in_info_bundle.min.js.map \
 		$(BUILD_DIR)/alwaysontop.min.js \
 		$(BUILD_DIR)/alwaysontop.min.js.map \
 		$(OUTPUT_DIR)/analytics-ga.js \
@@ -67,11 +63,7 @@ deploy-appbundle:
 
 deploy-lib-jitsi-meet:
 	cp \
-		$(LIBJITSIMEET_DIR)/dist/umd/lib-jitsi-meet.min.js \
-		$(LIBJITSIMEET_DIR)/dist/umd/lib-jitsi-meet.min.map \
-		$(LIBJITSIMEET_DIR)/dist/umd/lib-jitsi-meet.e2ee-worker.js \
-		$(LIBJITSIMEET_DIR)/connection_optimization/external_connect.js \
-		$(LIBJITSIMEET_DIR)/modules/browser/capabilities.json \
+		$(LIBJITSIMEET_DIR)/dist/umd/lib-jitsi-meet.* \
 		$(DEPLOY_DIR)
 
 deploy-olm:
@@ -131,7 +123,7 @@ dev: deploy-init deploy-css deploy-rnnoise-binary deploy-tflite deploy-meet-mode
 
 source-package:
 	mkdir -p source_package/jitsi-meet/css && \
-	cp -r *.js *.html resources/*.txt connection_optimization favicon.ico fonts images libs static sounds LICENSE lang source_package/jitsi-meet && \
+	cp -r *.js *.html resources/*.txt favicon.ico fonts images libs static sounds LICENSE lang source_package/jitsi-meet && \
 	cp css/all.css source_package/jitsi-meet/css && \
 	(cd source_package ; tar cjf ../jitsi-meet.tar.bz2 jitsi-meet) && \
 	rm -rf source_package

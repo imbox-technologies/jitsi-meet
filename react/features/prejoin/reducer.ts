@@ -10,7 +10,6 @@ import {
     SET_JOIN_BY_PHONE_DIALOG_VISIBLITY,
     SET_PRECALL_TEST_RESULTS,
     SET_PREJOIN_DEVICE_ERRORS,
-    SET_PREJOIN_DISPLAY_NAME_REQUIRED,
     SET_PREJOIN_PAGE_VISIBILITY,
     SET_SKIP_PREJOIN_RELOAD
 } from './actionTypes';
@@ -26,7 +25,6 @@ const DEFAULT_STATE = {
     },
     dialOutNumber: '',
     dialOutStatus: 'prejoin.dialing',
-    isDisplayNameRequired: false,
     name: '',
     rawError: '',
     showPrejoin: true,
@@ -45,7 +43,6 @@ export interface IPrejoinState {
     };
     dialOutNumber: string;
     dialOutStatus: string;
-    isDisplayNameRequired: boolean;
     joiningInProgress?: boolean;
     name: string;
     precallTestResults?: {
@@ -143,13 +140,6 @@ ReducerRegistry.register<IPrejoinState>(
             };
         }
 
-        case SET_PREJOIN_DISPLAY_NAME_REQUIRED: {
-            return {
-                ...state,
-                isDisplayNameRequired: true
-            };
-        }
-
         default:
             return state;
         }
@@ -165,31 +155,31 @@ ReducerRegistry.register<IPrejoinState>(
 function getStatusFromErrors(errors: {
     audioAndVideoError?: { message: string; };
     audioOnlyError?: { message: string; };
-    videoOnlyError?: Object; }
+    videoOnlyError?: { message: string; }; }
 ) {
     const { audioOnlyError, videoOnlyError, audioAndVideoError } = errors;
 
     if (audioAndVideoError) {
-        if (audioOnlyError) {
-            if (videoOnlyError) {
-                return {
-                    deviceStatusType: 'warning',
-                    deviceStatusText: 'prejoin.audioAndVideoError',
-                    rawError: audioAndVideoError.message
-                };
-            }
+        return {
+            deviceStatusType: 'warning',
+            deviceStatusText: 'prejoin.audioAndVideoError',
+            rawError: audioAndVideoError.message
+        };
+    }
 
-            return {
-                deviceStatusType: 'warning',
-                deviceStatusText: 'prejoin.audioOnlyError',
-                rawError: audioOnlyError.message
-            };
-        }
+    if (audioOnlyError) {
+        return {
+            deviceStatusType: 'warning',
+            deviceStatusText: 'prejoin.audioOnlyError',
+            rawError: audioOnlyError.message
+        };
+    }
 
+    if (videoOnlyError) {
         return {
             deviceStatusType: 'warning',
             deviceStatusText: 'prejoin.videoOnlyError',
-            rawError: audioAndVideoError.message
+            rawError: videoOnlyError.message
         };
     }
 

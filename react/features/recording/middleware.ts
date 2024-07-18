@@ -163,6 +163,8 @@ MiddlewareRegistry.register(({ dispatch, getState }) => next => async action => 
 
             } else if (err.message === 'NoLocalStreams') {
                 descriptionKey = 'recording.noStreams';
+            } else if (err.message === 'NoMicTrack') {
+                descriptionKey = 'recording.noMicPermission';
             }
             const props = {
                 descriptionKey,
@@ -227,7 +229,7 @@ MiddlewareRegistry.register(({ dispatch, getState }) => next => async action => 
                 // notification on the update from jicofo.
                 // FIXE: simplify checks when the backend start sending only one status ON update containing the
                 // initiator.
-                if (initiator && (!oldSessionData || !oldSessionData.initiator)) {
+                if (initiator && !oldSessionData?.initiator) {
                     if (typeof recordingLimit === 'object') {
                         dispatch(showRecordingLimitNotification(mode));
                     } else {

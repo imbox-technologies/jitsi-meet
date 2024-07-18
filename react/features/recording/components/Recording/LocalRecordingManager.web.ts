@@ -7,8 +7,6 @@ import { getRoomName } from '../../../base/conference/functions';
 import { MEDIA_TYPE } from '../../../base/media/constants';
 import { getLocalTrack, getTrackState } from '../../../base/tracks/functions';
 import { inIframe } from '../../../base/util/iframeUtils';
-// eslint-disable-next-line lines-around-comment
-// @ts-ignore
 import { stopLocalVideoRecording } from '../../actions.any';
 
 interface ISelfRecording {
@@ -53,6 +51,7 @@ const getMimeType = (): string => {
 };
 
 const VIDEO_BIT_RATE = 2500000; // 2.5Mbps in bits
+const MAX_SIZE = 1073741824; // 1GB in bytes
 
 // Lazily initialize.
 let preferredMediaType: string;
@@ -64,13 +63,16 @@ const LocalRecordingManager: ILocalRecordingManager = {
     audioContext: undefined,
     audioDestination: undefined,
     roomName: '',
-    totalSize: 1073741824, // 1GB in bytes
+    totalSize: MAX_SIZE,
     selfRecording: {
         on: false,
         withVideo: false
     },
 
     get mediaType() {
+        if (this.selfRecording.on && !this.selfRecording.withVideo) {
+            return 'audio/webm;';
+        }
         if (!preferredMediaType) {
             preferredMediaType = getMimeType();
         }
@@ -139,9 +141,7 @@ const LocalRecordingManager: ILocalRecordingManager = {
     async saveRecording(recordingData, filename) {
         // @ts-ignore
         const blob = await fixWebmDuration(new Blob(recordingData, { type: this.mediaType }));
-
-        // @ts-ignore
-        const url = window.URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
 
         const extension = this.mediaType.slice(this.mediaType.indexOf('/') + 1, this.mediaType.indexOf(';'));
@@ -163,6 +163,7 @@ const LocalRecordingManager: ILocalRecordingManager = {
             this.recorder = undefined;
             this.audioContext = undefined;
             this.audioDestination = undefined;
+            this.totalSize = MAX_SIZE;
             setTimeout(() => this.saveRecording(this.recordingData, this.getFilename()), 1000);
         }
     },
@@ -231,21 +232,24 @@ const LocalRecordingManager: ILocalRecordingManager = {
                 });
             }
 
+            // handle no mic permission
+            if (!getLocalTrack(getTrackState(getState()), MEDIA_TYPE.AUDIO)?.jitsiTrack?.track) {
+                throw new Error('NoMicTrack');
+            }
+
             const currentTitle = document.title;
 
             document.title = i18next.t('localRecording.selectTabTitle');
 
             // @ts-ignore
             gdmStream = await navigator.mediaDevices.getDisplayMedia({
-                // @ts-ignore
                 video: { displaySurface: 'browser',
                     frameRate: 30 },
-                audio: false,
+                audio: false, // @ts-ignore
                 preferCurrentTab: true
             });
             document.title = currentTitle;
 
-            // @ts-ignore
             const isBrowser = gdmStream.getVideoTracks()[0].getSettings().displaySurface === 'browser';
 
             if (!isBrowser || (supportsCaptureHandle // @ts-ignore
@@ -280,7 +284,7 @@ const LocalRecordingManager: ILocalRecordingManager = {
                 this.recordingData.push(e.data);
                 this.totalSize -= e.data.size;
                 if (this.totalSize <= 0) {
-                    this.stopLocalRecording();
+                    dispatch(stopLocalVideoRecording());
                 }
             }
         });

@@ -86,6 +86,8 @@ public class BroadcastEvent {
     }
 
     public enum Type {
+        CONFERENCE_BLURRED("org.jitsi.meet.CONFERENCE_BLURRED"),
+        CONFERENCE_FOCUSED("org.jitsi.meet.CONFERENCE_FOCUSED"),
         CONFERENCE_JOINED("org.jitsi.meet.CONFERENCE_JOINED"),
         CONFERENCE_TERMINATED("org.jitsi.meet.CONFERENCE_TERMINATED"),
         CONFERENCE_WILL_JOIN("org.jitsi.meet.CONFERENCE_WILL_JOIN"),
@@ -100,6 +102,8 @@ public class BroadcastEvent {
         VIDEO_MUTED_CHANGED("org.jitsi.meet.VIDEO_MUTED_CHANGED"),
         READY_TO_CLOSE("org.jitsi.meet.READY_TO_CLOSE");
 
+        private static final String CONFERENCE_BLURRED_NAME = "CONFERENCE_BLURRED";
+        private static final String CONFERENCE_FOCUSED_NAME = "CONFERENCE_FOCUSED";
         private static final String CONFERENCE_WILL_JOIN_NAME = "CONFERENCE_WILL_JOIN";
         private static final String CONFERENCE_JOINED_NAME = "CONFERENCE_JOINED";
         private static final String CONFERENCE_TERMINATED_NAME = "CONFERENCE_TERMINATED";
@@ -135,6 +139,10 @@ public class BroadcastEvent {
 
         private static Type buildTypeFromName(String name) {
             switch (name) {
+                case CONFERENCE_BLURRED_NAME:
+                    return CONFERENCE_BLURRED;
+                case CONFERENCE_FOCUSED_NAME:
+                    return CONFERENCE_FOCUSED;
                 case CONFERENCE_WILL_JOIN_NAME:
                     return CONFERENCE_WILL_JOIN;
                 case CONFERENCE_JOINED_NAME:

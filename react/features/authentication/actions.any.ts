@@ -1,15 +1,16 @@
 import { IStore } from '../app/types';
 import { checkIfCanJoin } from '../base/conference/actions';
 import { IJitsiConference } from '../base/conference/reducer';
-import { openDialog } from '../base/dialog/actions';
+import { hideDialog, openDialog } from '../base/dialog/actions';
 
 import {
+    LOGIN,
+    LOGOUT,
+    SET_TOKEN_AUTH_URL_SUCCESS,
     STOP_WAIT_FOR_OWNER,
     UPGRADE_ROLE_FINISHED,
     UPGRADE_ROLE_STARTED, WAIT_FOR_OWNER
 } from './actionTypes';
-// eslint-disable-next-line lines-around-comment
-// @ts-ignore
 import { LoginDialog, WaitForOwnerDialog } from './components';
 import logger from './logger';
 
@@ -98,7 +99,7 @@ function _upgradeRoleFinished(
             name: authenticationError || connectionError,
             ...other
         };
-        progress = authenticationError ? 0.5 : 0;
+        progress = 0;
     }
 
     return {
@@ -125,6 +126,42 @@ function _upgradeRoleStarted(thenableWithCancel: Object) {
     return {
         type: UPGRADE_ROLE_STARTED,
         thenableWithCancel
+    };
+}
+
+/**
+ * Hides an authentication dialog where the local participant
+ * should authenticate.
+ *
+ * @returns {Function}.
+ */
+export function hideLoginDialog() {
+    return hideDialog(LoginDialog);
+}
+
+/**
+ * Login.
+ *
+ * @returns {{
+*     type: LOGIN
+* }}
+*/
+export function login() {
+    return {
+        type: LOGIN
+    };
+}
+
+/**
+* Logout.
+*
+* @returns {{
+*     type: LOGOUT
+* }}
+*/
+export function logout() {
+    return {
+        type: LOGOUT
     };
 }
 
@@ -176,4 +213,17 @@ export function waitForOwner() {
  */
 export function openLoginDialog() {
     return openDialog(LoginDialog);
+}
+
+/**
+ * Updates the config with new options.
+ *
+ * @param {boolean} value - The new value.
+ * @returns {Function}
+ */
+export function setTokenAuthUrlSuccess(value: boolean) {
+    return {
+        type: SET_TOKEN_AUTH_URL_SUCCESS,
+        value
+    };
 }

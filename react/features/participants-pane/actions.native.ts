@@ -1,35 +1,22 @@
 /* eslint-disable lines-around-comment */
 import { IStore } from '../app/types';
 import { openSheet } from '../base/dialog/actions';
-// @ts-ignore
-import { SharedVideoMenu } from '../video-menu';
-// @ts-ignore
-import { LocalVideoMenu } from '../video-menu/components/native';
+import { navigate }
+    from '../mobile/navigation/components/conference/ConferenceNavigationContainerRef';
+import { screen } from '../mobile/navigation/routes';
 import ConnectionStatusComponent
-// @ts-ignore
     from '../video-menu/components/native/ConnectionStatusComponent';
 // @ts-ignore
+import LocalVideoMenu from '../video-menu/components/native/LocalVideoMenu';
+// @ts-ignore
 import RemoteVideoMenu from '../video-menu/components/native/RemoteVideoMenu';
+// @ts-ignore
+import SharedVideoMenu from '../video-menu/components/native/SharedVideoMenu';
 
-import { SET_VOLUME } from './actionTypes';
-import {
-    ContextMenuLobbyParticipantReject
-    // @ts-ignore
-} from './components/native';
+import { PARTICIPANTS_PANE_OPEN, SET_VOLUME } from './actionTypes';
 import RoomParticipantMenu from './components/native/RoomParticipantMenu';
+
 export * from './actions.any';
-/* eslint-enable lines-around-comment */
-
-/**
- * Displays the context menu for the selected lobby participant.
- *
- * @param {Object} participant - The selected lobby participant.
- * @returns {Function}
- */
-export function showContextMenuReject(participant: Object) {
-    return openSheet(ContextMenuLobbyParticipantReject, { participant });
-}
-
 
 /**
  * Displays the connection status for the local meeting participant.
@@ -103,3 +90,16 @@ export function showRoomParticipantMenu(room: Object, participantJid: string, pa
         participantJid,
         participantName });
 }
+
+/**
+ * Action to open the participants pane.
+ *
+ * @returns {Object}
+ */
+export const open = () => {
+    navigate(screen.conference.participants);
+
+    return {
+        type: PARTICIPANTS_PANE_OPEN
+    };
+};

@@ -1,7 +1,8 @@
 // @flow
 
-import { PROXIMITY_DISABLED, getFeatureFlag } from '../../base/flags';
-import { toState } from '../../base/redux';
+import { PROXIMITY_DISABLED } from '../../base/flags/constants';
+import { getFeatureFlag } from '../../base/flags/functions';
+import { toState } from '../../base/redux/functions';
 
 /**
  * Checks if proximity sensor is disabled.

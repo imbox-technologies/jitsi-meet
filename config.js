@@ -46,9 +46,9 @@ var config = {
     },
 
     // BOSH URL. FIXME: use XEP-0156 to discover it.
-    bosh: '//jitsi-meet.example.com/' + subdir + 'http-bind',
+    bosh: 'https://jitsi-meet.example.com/' + subdir + 'http-bind',
 
-    // Websocket URL
+    // Websocket URL (XMPP)
     // websocket: 'wss://jitsi-meet.example.com/' + subdir + 'xmpp-websocket',
 
     // The real JID of focus participant - can be overridden here
@@ -56,11 +56,27 @@ var config = {
     // https://github.com/jitsi/jitsi-meet/issues/7376
     // focusUserJid: 'focus@auth.jitsi-meet.example.com',
 
+    // Options related to the bridge (colibri) data channel
+    bridgeChannel: {
+        // If the backend advertises multiple colibri websockets, this options allows
+        // to filter some of them out based on the domain name. We use the first URL
+        // which does not match ignoreDomain, falling back to the first one that matches
+        // ignoreDomain. Has no effect if undefined.
+        // ignoreDomain: 'example.com',
+
+        // Prefer SCTP (WebRTC data channels over the media path) over a colibri websocket.
+        // If SCTP is available in the backend it will be used instead of a WS. Defaults to
+        // false (SCTP is used only if available and no WS are available).
+        // preferSctp: false
+    },
 
     // Testing / experimental features.
     //
 
     testing: {
+        // Allows the setting of a custom bandwidth value from the UI.
+        // assumeBandwidth: true,
+
         // Disables the End to End Encryption feature. Useful for debugging
         // issues related to insertable streams.
         // disableE2EE: false,
@@ -78,11 +94,6 @@ var config = {
         // Disables the auto-play behavior of *all* newly created video element.
         // This is useful when the client runs on a host with limited resources.
         // noAutoPlayVideo: false,
-
-        // Whether to use fake constraints (height: 99999, width: 99999) when calling getDisplayMedia on
-        // Chromium based browsers. This is intended as a workaround for
-        // https://bugs.chromium.org/p/chromium/issues/detail?id=1056311
-        // setScreenSharingResolutionConstraints: true,
 
         // Enable callstats only for a percentage of users.
         // This takes a value between 0 and 100 which determines the probability for
@@ -130,9 +141,6 @@ var config = {
 
     // Media
     //
-
-    // Enable unified plan implementation support on Chromium based browsers.
-    // enableUnifiedOnChrome: false,
 
     // Audio
 
@@ -187,6 +195,22 @@ var config = {
     //     stereo: false,
     //     opusMaxAverageBitrate: null, // Value to fit the 6000 to 510000 range.
     //     enableOpusDtx: false,
+    // },
+
+    // Noise suppression configuration. By default rnnoise is used. Optionally Krisp
+    // can be used by enabling it below, but the Krisp JS SDK files must be supplied in your
+    // installation. Specifically, these files are needed:
+    //   - https://meet.example.com/libs/krisp/krisp.mjs
+    //   - https://meet.example.com/libs/krisp/models/model_8.kw
+    //   - https://meet.example.com/libs/krisp/models/model_16.kw
+    //   - https://meet.example.com/libs/krisp/models/model_32.kw
+    // NOTE: Krisp JS SDK v1.0.9 was tested.
+    // noiseSuppression: {
+    //     krisp: {
+    //         enabled: false,
+    //         logProcessStats: false,
+    //         debugLogs: false,
+    //     },
     // },
 
     // Video
@@ -249,29 +273,12 @@ var config = {
     // Enable / disable simulcast support.
     // disableSimulcast: false,
 
-    // Enable / disable layer suspension.  If enabled, endpoints whose HD layers are not in use will be suspended
-    // (no longer sent) until they are requested again. This is enabled by default. This must be enabled for screen
-    // sharing to work as expected on Chrome. Disabling this might result in low resolution screenshare being sent
-    // by the client.
-    // enableLayerSuspension: false,
-
     // Every participant after the Nth will start video muted.
     // startVideoMuted: 10,
 
     // Start calls with video muted. Unlike the option above, this one is only
     // applied locally. FIXME: having these 2 options is confusing.
     // startWithVideoMuted: false,
-
-    // If set to true, prefer to use the H.264 video codec (if supported).
-    // Note that it's not recommended to do this because simulcast is not
-    // supported when  using H.264. For 1-to-1 calls this setting is enabled by
-    // default and can be toggled in the p2p section.
-    // This option has been deprecated, use preferredCodec under videoQuality section instead.
-    // preferH264: true,
-
-    // If set to true, disable H.264 video codec by stripping it out of the
-    // SDP.
-    // disableH264: false,
 
     // Desktop sharing
 
@@ -418,49 +425,11 @@ var config = {
     // value will be used when the quality level is selected using "Manage Video Quality" slider.
     // startLastN: 1,
 
-    // Provides a way to use different "last N" values based on the number of participants in the conference.
-    // The keys in an Object represent number of participants and the values are "last N" to be used when number of
-    // participants gets to or above the number.
-    //
-    // For the given example mapping, "last N" will be set to 20 as long as there are at least 5, but less than
-    // 29 participants in the call and it will be lowered to 15 when the 30th participant joins. The 'channelLastN'
-    // will be used as default until the first threshold is reached.
-    //
-    // lastNLimits: {
-    //     5: 20,
-    //     30: 15,
-    //     50: 10,
-    //     70: 5,
-    //     90: 2,
-    // },
-
-    // Provides a way to translate the legacy bridge signaling messages, 'LastNChangedEvent',
-    // 'SelectedEndpointsChangedEvent' and 'ReceiverVideoConstraint' into the new 'ReceiverVideoConstraints' message
-    // that invokes the new bandwidth allocation algorithm in the bridge which is described here
-    // - https://github.com/jitsi/jitsi-videobridge/blob/master/doc/allocation.md.
-    // useNewBandwidthAllocationStrategy: false,
-
     // Specify the settings for video quality optimizations on the client.
     // videoQuality: {
-    //    // Provides a way to prevent a video codec from being negotiated on the JVB connection. The codec specified
-    //    // here will be removed from the list of codecs present in the SDP answer generated by the client. If the
-    //    // same codec is specified for both the disabled and preferred option, the disable settings will prevail.
-    //    // Note that 'VP8' cannot be disabled since it's a mandatory codec, the setting will be ignored in this case.
-    //    disabledCodec: 'H264',
     //
-    //    // Provides a way to set a preferred video codec for the JVB connection. If 'H264' is specified here,
-    //    // simulcast will be automatically disabled since JVB doesn't support H264 simulcast yet. This will only
-    //    // rearrange the the preference order of the codecs in the SDP answer generated by the browser only if the
-    //    // preferred codec specified here is present. Please ensure that the JVB offers the specified codec for this
-    //    // to take effect.
-    //    preferredCodec: 'VP8',
-    //
-    //    // Provides a way to enforce the preferred codec for the conference even when the conference has endpoints
-    //    // that do not support the preferred codec. For example, older versions of Safari do not support VP9 yet.
-    //    // This will result in Safari not being able to decode video from endpoints sending VP9 video.
-    //    // When set to false, the conference falls back to VP8 whenever there is an endpoint that doesn't support the
-    //    // preferred codec and goes back to the preferred codec when that endpoint leaves.
-    //    enforcePreferredCodec: false,
+    //    // Provides a way to set the codec preference on desktop based endpoints.
+    //    codecPreferenceOrder: [ 'VP9', 'VP8', 'H264' ],
     //
     //    // Provides a way to configure the maximum bitrates that will be enforced on the simulcast streams for
     //    // video tracks. The keys in the object represent the type of the stream (LD, SD or HD) and the values
@@ -499,6 +468,24 @@ var config = {
     //        360: 'standard',
     //        720: 'high',
     //    },
+    //
+    //    // Provides a way to set the codec preference on mobile devices, both on RN and mobile browser based endpoint
+    //    mobileCodecPreferenceOrder: [ 'VP8', 'VP9', 'H264' ],
+    //
+    //    // DEPRECATED! Use `codecPreferenceOrder/mobileCodecPreferenceOrder` instead.
+    //    // Provides a way to prevent a video codec from being negotiated on the JVB connection. The codec specified
+    //    // here will be removed from the list of codecs present in the SDP answer generated by the client. If the
+    //    // same codec is specified for both the disabled and preferred option, the disable settings will prevail.
+    //    // Note that 'VP8' cannot be disabled since it's a mandatory codec, the setting will be ignored in this case.
+    //    disabledCodec: 'H264',
+    //
+    //    // DEPRECATED! Use `codecPreferenceOrder/mobileCodecPreferenceOrder` instead.
+    //    // Provides a way to set a preferred video codec for the JVB connection. If 'H264' is specified here,
+    //    // simulcast will be automatically disabled since JVB doesn't support H264 simulcast yet. This will only
+    //    // rearrange the the preference order of the codecs in the SDP answer generated by the browser only if the
+    //    // preferred codec specified here is present. Please ensure that the JVB offers the specified codec for this
+    //    // to take effect.
+    //    preferredCodec: 'VP8',
     //
     // },
 
@@ -564,12 +551,15 @@ var config = {
     // Disables responsive tiles.
     // disableResponsiveTiles: false,
 
-    // Hides lobby button
+    // DEPRECATED. Please use `securityUi?.hideLobbyButton` instead.
+    // Hides lobby button.
     // hideLobbyButton: false,
 
+    // DEPRECATED. Please use `lobby?.autoKnock` instead.
     // If Lobby is enabled starts knocking automatically.
     // autoKnockLobby: false,
 
+    // DEPRECATED. Please use `lobby?.enableChat` instead.
     // Enable lobby chat.
     // enableLobbyChat: true,
 
@@ -580,9 +570,38 @@ var config = {
     // Require users to always specify a display name.
     // requireDisplayName: true,
 
+    // Enables webhid functionality for Audio.
+    // enableWebHIDFeature: false,
+
+    // DEPRECATED! Use 'welcomePage.disabled' instead.
     // Whether to use a welcome page or not. In case it's false a random room
     // will be joined when no room is specified.
-    enableWelcomePage: true,
+    // enableWelcomePage: true,
+
+    // Configs for welcome page.
+    // welcomePage: {
+    //     // Whether to disable welcome page. In case it's disabled a random room
+    //     // will be joined when no room is specified.
+    //     disabled: false,
+    //     // If set,landing page will redirect to this URL.
+    //     customUrl: ''
+    // },
+
+    // Configs for the lobby screen.
+    // lobby: {
+    //     // If Lobby is enabled, it starts knocking automatically. Replaces `autoKnockLobby`.
+    //     autoKnock: false,
+    //     // Enables the lobby chat. Replaces `enableLobbyChat`.
+    //     enableChat: true,
+    // },
+
+    // Configs for the security related UI elements.
+    // securityUi: {
+    //     // Hides the lobby button. Replaces `hideLobbyButton`.
+    //     hideLobbyButton: false,
+    //     // Hides the possibility to set and enter a lobby password.
+    //     disableLobbyPassword: false,
+    // },
 
     // Disable app shortcuts that are registered upon joining a conference
     // disableShortcuts: false,
@@ -701,7 +720,6 @@ var config = {
     //    'chat',
     //    'closedcaptions',
     //    'desktop',
-    //    'dock-iframe',
     //    'download',
     //    'embedmeeting',
     //    'etherpad',
@@ -729,7 +747,6 @@ var config = {
     //    'stats',
     //    'tileview',
     //    'toggle-camera',
-    //    'undock-iframe',
     //    'videoquality',
     //    'whiteboard',
     // ],
@@ -809,9 +826,53 @@ var config = {
     //     'whiteboard',
     // ],
 
+    // Participant context menu buttons which have their click/tap event exposed through the API on
+    // `participantMenuButtonClick`. Passing a string for the button key will
+    // prevent execution of the click/tap routine; passing an object with `key` and
+    // `preventExecution` flag on false will not prevent execution of the click/tap
+    // routine. Below array with mixed mode for passing the buttons.
+    // participantMenuButtonsWithNotifyClick: [
+    //     'allow-video',
+    //     {
+    //         key: 'ask-unmute',
+    //         preventExecution: false
+    //     },
+    //     'conn-status',
+    //     'flip-local-video',
+    //     'grant-moderator',
+    //     {
+    //         key: 'kick',
+    //         preventExecution: true
+    //     },
+    //     {
+    //         key: 'hide-self-view',
+    //         preventExecution: false
+    //     },
+    //     'mute',
+    //     'mute-others',
+    //     'mute-others-video',
+    //     'mute-video',
+    //     'pinToStage',
+    //     'privateMessage',
+    //     {
+    //         key: 'remote-control',
+    //         preventExecution: false
+    //     },
+    //     'send-participant-to-room',
+    //     'verify',
+    // ],
+
     // List of pre meeting screens buttons to hide. The values must be one or more of the 5 allowed buttons:
     // 'microphone', 'camera', 'select-background', 'invite', 'settings'
     // hiddenPremeetingButtons: [],
+
+    // An array with custom option buttons for the participant context menu
+    // type:  Array<{ icon: string; id: string; text: string; }>
+    // customParticipantMenuButtons: [],
+
+    // An array with custom option buttons for the toolbar
+    // type:  Array<{ icon: string; id: string; text: string; backgroundColor?: string; }>
+    // customToolbarButtons: [],
 
     // Stats
     //
@@ -904,9 +965,6 @@ var config = {
         // connection.
         enabled: true,
 
-        // Enable unified plan implementation support on Chromium for p2p connection.
-        // enableUnifiedOnChrome: false,
-
         // Sets the ICE transport policy for the p2p connection. At the time
         // of this writing the list of possible values are 'all' and 'relay',
         // but that is subject to change in the future. The enum is defined in
@@ -915,20 +973,12 @@ var config = {
         // If not set, the effective value is 'all'.
         // iceTransportPolicy: 'all',
 
-        // If set to true, it will prefer to use H.264 for P2P calls (if H.264
-        // is supported). This setting is deprecated, use preferredCodec instead.
-        // preferH264: true,
-
-        // Provides a way to set the video codec preference on the p2p connection. Acceptable
-        // codec values are 'VP8', 'VP9' and 'H264'.
-        // preferredCodec: 'H264',
-
-        // If set to true, disable H.264 video codec by stripping it out of the
-        // SDP. This setting is deprecated, use disabledCodec instead.
-        // disableH264: false,
-
-        // Provides a way to prevent a video codec from being negotiated on the p2p connection.
-        // disabledCodec: '',
+        // Provides a way to set the codec preference on mobile devices, both on RN and mobile browser based
+        // endpoints.
+        // mobileCodecPreferenceOrder: [ 'H264', 'VP8', 'VP9' ],
+        //
+        // Provides a way to set the codec preference on desktop based endpoints.
+        // codecPreferenceOrder: [ 'VP9', 'VP8', 'H264 ],
 
         // How long we're going to wait, before going back to P2P after the 3rd
         // participant has left the conference (to filter out page reload).
@@ -940,6 +990,15 @@ var config = {
             // { urls: 'stun:jitsi-meet.example.com:3478' },
             { urls: 'stun:meet-jit-si-turnrelay.jitsi.net:443' },
         ],
+
+        // DEPRECATED! Use `codecPreferenceOrder/mobileCodecPreferenceOrder` instead.
+        // Provides a way to set the video codec preference on the p2p connection. Acceptable
+        // codec values are 'VP8', 'VP9' and 'H264'.
+        // preferredCodec: 'H264',
+
+        // DEPRECATED! Use `codecPreferenceOrder/mobileCodecPreferenceOrder` instead.
+        // Provides a way to prevent a video codec from being negotiated on the p2p connection.
+        // disabledCodec: '',
     },
 
     analytics: {
@@ -955,6 +1014,10 @@ var config = {
 
         // The Amplitude APP Key:
         // amplitudeAPPKey: '<APP_KEY>',
+
+        // Enables Amplitude UTM tracking:
+        // Default value is false.
+        // amplitudeIncludeUTM: false,
 
         // Obfuscates room name sent to analytics (amplitude, rtcstats)
         // Default value is false.
@@ -985,6 +1048,11 @@ var config = {
         //      "libs/analytics-ga.min.js", // google-analytics
         //      "https://example.com/my-custom-analytics.js",
         // ],
+
+        // By enabling watchRTCEnabled option you would want to use watchRTC feature
+        // This would also require to configure watchRTCConfigParams.
+        // Please remember to keep rtcstatsEnabled disabled for watchRTC to work.
+        // watchRTCEnabled: false,
     },
 
     // Logs that should go be passed through the 'log' event if a handler is defined for it
@@ -1056,7 +1124,12 @@ var config = {
     // },
 
     // e2ee: {
-    //   labels,
+    //   labels: {
+    //     description: '',
+    //     label: '',
+    //     tooltip: '',
+    //     warning: '',
+    //   },
     //   externallyManagedKey: false,
     // },
 
@@ -1083,9 +1156,70 @@ var config = {
     // use only.
     // _desktopSharingSourceDevice: 'sample-id-or-label',
 
+    // DEPRECATED! Use deeplinking.disabled instead.
     // If true, any checks to handoff to another application will be prevented
     // and instead the app will continue to display in the current browser.
     // disableDeepLinking: false,
+
+    // The deeplinking config.
+    // For information about the properties of
+    // deeplinking.[ios/android].dynamicLink check:
+    // https://firebase.google.com/docs/dynamic-links/create-manually
+    // deeplinking: {
+    //
+    //     // The desktop deeplinking config.
+    //     desktop: {
+    //         appName: 'Jitsi Meet'
+    //     },
+    //     // If true, any checks to handoff to another application will be prevented
+    //     // and instead the app will continue to display in the current browser.
+    //     disabled: false,
+
+    //     // whether to hide the logo on the deep linking pages.
+    //     hideLogo: false,
+
+    //     // The ios deeplinking config.
+    //     ios: {
+    //         appName: 'Jitsi Meet',
+    //         // Specify mobile app scheme for opening the app from the mobile browser.
+    //         appScheme: 'org.jitsi.meet',
+    //         // Custom URL for downloading ios mobile app.
+    //         downloadLink: 'https://itunes.apple.com/us/app/jitsi-meet/id1165103905',
+    //         dynamicLink: {
+    //             apn: 'org.jitsi.meet',
+    //             appCode: 'w2atb',
+    //             customDomain: undefined,
+    //             ibi: 'com.atlassian.JitsiMeet.ios',
+    //             isi: '1165103905'
+    //         }
+    //     },
+
+    //     // The android deeplinking config.
+    //     android: {
+    //         appName: 'Jitsi Meet',
+    //         // Specify mobile app scheme for opening the app from the mobile browser.
+    //         appScheme: 'org.jitsi.meet',
+    //         // Custom URL for downloading android mobile app.
+    //         downloadLink: 'https://play.google.com/store/apps/details?id=org.jitsi.meet',
+    //         // Android app package name.
+    //         appPackage: 'org.jitsi.meet',
+    //         fDroidUrl: 'https://f-droid.org/en/packages/org.jitsi.meet/',
+    //         dynamicLink: {
+    //             apn: 'org.jitsi.meet',
+    //             appCode: 'w2atb',
+    //             customDomain: undefined,
+    //             ibi: 'com.atlassian.JitsiMeet.ios',
+    //             isi: '1165103905'
+    //         }
+    //     }
+    // },
+
+    // // The terms, privacy and help centre URL's.
+    // legalUrls: {
+    //     helpCentre: 'https://web-cdn.jitsi.net/faq/meet-faq.html',
+    //     privacy: 'https://jitsi.org/meet/privacy',
+    //     terms: 'https://jitsi.org/meet/terms'
+    // },
 
     // A property to disable the right click context menu for localVideo
     // the menu has option to flip the locally seen video for local presentations
@@ -1164,6 +1298,16 @@ var config = {
         // A list of images that can be used as video backgrounds.
         // When this field is present, the default images will be replaced with those provided.
         virtualBackgrounds: ['https://example.com/img.jpg'],
+        // Object containing customized icons that should replace the default ones.
+        // The keys need to be the exact same icon names used in here:
+        // https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/icons/svg/index.ts
+        // To avoid having the icons trimmed or displayed in an unexpected way, please provide svg
+        // files containing svg xml icons in the size that the default icons come in.
+        customIcons: {
+            IconArrowUp: 'https://example.com/arrow-up.svg',
+            IconDownload: 'https://example.com/download.svg',
+            IconRemoteControlStart: 'https://example.com/remote-start.svg',
+        },
         // Object containing a theme's properties. It also supports partial overwrites of the main theme.
         // For a list of all possible theme tokens and their current defaults, please check:
         // https://github.com/jitsi/jitsi-meet/tree/master/resources/custom-theme/custom-theme.json
@@ -1179,7 +1323,6 @@ var config = {
                 ui03: "violet",
                 ui04: "magenta",
                 ui05: "blueviolet",
-                field02Hover: 'red',
                 action01: 'green',
                 action01Hover: 'lightgreen',
                 disabled01: 'beige',
@@ -1217,6 +1360,9 @@ var config = {
     //     // Hides the join breakout room button.
     //     hideJoinRoomButton: false,
     // },
+
+    // When true, virtual background feature will be disabled.
+    // disableVirtualBackground: false,
 
     // When true the user cannot add more images to be used as virtual background.
     // Only the default ones from will be available.
@@ -1303,10 +1449,9 @@ var config = {
      deploymentInfo
      dialOutAuthUrl
      dialOutCodesUrl
+     dialOutRegionUrl
      disableRemoteControl
      displayJids
-     externalConnectUrl
-     e2eeLabels
      firefox_fake_device
      googleApiApplicationClientID
      iAmRecorder
@@ -1316,6 +1461,8 @@ var config = {
      peopleSearchUrl
      requireDisplayName
      tokenAuthUrl
+     tokenAuthUrlAutoRedirect
+     tokenLogoutUrl
      */
 
     /**
@@ -1329,7 +1476,6 @@ var config = {
     /**
      _peerConnStatusOutOfLastNTimeout
      _peerConnStatusRtcMuteTimeout
-     abTesting
      avgRtpStatsN
      callStatsConfIDNamespace
      callStatsCustomScriptUrl
@@ -1338,6 +1484,7 @@ var config = {
      disableAGC
      disableAP
      disableHPF
+     disableLocalStats
      disableNS
      enableTalkWhileMuted
      forceJVB121Ratio
@@ -1378,6 +1525,7 @@ var config = {
     //     'dialog.sessTerminated', // shown when there is a failed conference session
     //     'dialog.sessionRestarted', // show when a client reload is initiated because of bridge migration
     //     'dialog.tokenAuthFailed', // show when an invalid jwt is used
+    //     'dialog.tokenAuthFailedWithReasons', // show when an invalid jwt is used with the reason behind the error
     //     'dialog.transcribing', // transcribing notifications (pending, off)
     //     'dialOut.statusMessage', // shown when dial out status is updated.
     //     'liveStreaming.busy', // shown when livestreaming service is busy
@@ -1438,6 +1586,8 @@ var config = {
     // disableFilmstripAutohiding: false,
 
     // filmstrip: {
+    //     // Disable the vertical/horizonal filmstrip.
+    //     disabled: false,
     //     // Disables user resizable filmstrip. Also, allows configuration of the filmstrip
     //     // (width, tiles aspect ratios) through the interfaceConfig options.
     //     disableResizable: false,
@@ -1460,6 +1610,8 @@ var config = {
 
     // Tile view related config options.
     // tileView: {
+    //     // Whether tileview should be disabled.
+    //     disabled: false,
     //     // The optimal number of tiles that are going to be shown in tile view. Depending on the screen size it may
     //     // not be possible to show the exact number of participants specified here.
     //     numberOfVisibleTiles: 25,
@@ -1483,6 +1635,8 @@ var config = {
     //     tileTime: 5000,
     //     // Limit results by rating: g, pg, pg-13, r. Default value: g.
     //     rating: 'pg',
+    //     // The proxy server url for giphy requests in the web app.
+    //     proxyUrl: 'https://giphy-proxy.example.com',
     // },
 
     // Logging
@@ -1510,7 +1664,47 @@ var config = {
     //     // https://github.com/jitsi/excalidraw-backend
     //     collabServerBaseUrl: 'https://excalidraw-backend.example.com',
     // },
+
+    // The watchRTC initialize config params as described :
+    // https://testrtc.com/docs/installing-the-watchrtc-javascript-sdk/#h-set-up-the-sdk
+    // https://www.npmjs.com/package/@testrtc/watchrtc-sdk
+    // watchRTCConfigParams: {
+    //         /** Watchrtc api key */
+    //         rtcApiKey: string;
+    //         /** Identifier for the session */
+    //         rtcRoomId?: string;
+    //         /** Identifier for the current peer */
+    //         rtcPeerId?: string;
+    //         /**
+    //          * ["tag1", "tag2", "tag3"]
+    //          * @deprecated use 'keys' instead
+    //          */
+    //         rtcTags?: string[];
+    //         /** { "key1": "value1", "key2": "value2"} */
+    //         keys?: any;
+    //         /** Enables additional logging */
+    //         debug?: boolean;
+    //         rtcToken?: string;
+    //         /**
+    //          * @deprecated No longer needed. Use "proxyUrl" instead.
+    //          */
+    //         wsUrl?: string;
+    //         proxyUrl?: string;
+    //         console?: {
+    //             level: string;
+    //             override: boolean;
+    //         };
+    //         allowBrowserLogCollection?: boolean;
+    //         collectionInterval?: number;
+    //         logGetStats?: boolean;
+    // },
 };
+
+// Temporary backwards compatibility with old mobile clients.
+config.flags = config.flags || {};
+config.flags.sourceNameSignaling = true;
+config.flags.sendMultipleVideoStreams = true;
+config.flags.receiveMultipleVideoStreams = true;
 
 // Set the default values for JaaS customers
 if (enableJaaS) {

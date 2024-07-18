@@ -1,17 +1,16 @@
-/* eslint-disable lines-around-comment */
 import { ExcalidrawApp } from '@jitsi/excalidraw';
 import clsx from 'clsx';
 import React, { useCallback, useEffect, useRef } from 'react';
+import { WithTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
 // @ts-expect-error
 import Filmstrip from '../../../../../modules/UI/videolayout/Filmstrip';
 import { IReduxState } from '../../../app/types';
+import { translate } from '../../../base/i18n/functions';
 import { getLocalParticipant } from '../../../base/participants/functions';
-// @ts-ignore
 import { getVerticalViewMaxWidth } from '../../../filmstrip/functions.web';
 import { getToolboxHeight } from '../../../toolbox/functions.web';
-// @ts-ignore
 import { shouldDisplayTileView } from '../../../video-layout/functions.any';
 import { WHITEBOARD_UI_OPTIONS } from '../../constants';
 import {
@@ -38,9 +37,10 @@ interface IDimensions {
 /**
  * The Whiteboard component.
  *
+ * @param {Props} props - The React props passed to this component.
  * @returns {JSX.Element} - The React component.
  */
-const Whiteboard: () => JSX.Element = () => {
+const Whiteboard = (props: WithTranslation): JSX.Element => {
     const excalidrawRef = useRef<any>(null);
     const collabAPIRef = useRef<any>(null);
 
@@ -116,11 +116,26 @@ const Whiteboard: () => JSX.Element = () => {
             {
                 isOpen && (
                     <div className = 'excalidraw-wrapper'>
+                        {/*
+                          * Excalidraw renders a few lvl 2 headings. This is
+                          * quite fortunate, because we actually use lvl 1
+                          * headings to mark the big sections of our app. So make
+                          * sure to mark the Excalidraw context with a lvl 1
+                          * heading before showing the whiteboard.
+                          */
+                            <span
+                                aria-level = { 1 }
+                                className = 'sr-only'
+                                role = 'heading'>
+                                { props.t('whiteboard.accessibilityLabel.heading') }
+                            </span>
+                        }
                         <ExcalidrawApp
                             collabDetails = { collabDetails }
                             collabServerUrl = { collabServerUrl }
                             excalidraw = {{
                                 isCollaborating: true,
+
                                 // @ts-ignore
                                 ref: excalidrawRef,
                                 theme: 'light',
@@ -134,4 +149,4 @@ const Whiteboard: () => JSX.Element = () => {
     );
 };
 
-export default Whiteboard;
+export default translate(Whiteboard);

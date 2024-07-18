@@ -120,7 +120,7 @@ export function sendMessage(message: string, ignorePrivacy = false) {
  *     type: SET_PRIVATE_MESSAGE_RECIPIENT
  * }}
  */
-export function setPrivateMessageRecipient(participant: Object) {
+export function setPrivateMessageRecipient(participant?: Object) {
     return {
         participant,
         type: SET_PRIVATE_MESSAGE_RECIPIENT
@@ -153,7 +153,7 @@ export function onLobbyChatInitialized(lobbyChatInitializedInfo: { attendee: IPa
         const state = getState();
         const conference = getCurrentConference(state);
 
-        const lobbyLocalId = conference.myLobbyUserId();
+        const lobbyLocalId = conference?.myLobbyUserId();
 
         if (!lobbyLocalId) {
             return;

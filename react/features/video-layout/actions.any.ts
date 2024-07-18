@@ -1,29 +1,11 @@
 import { IStore } from '../app/types';
+import { isTileViewModeDisabled } from '../filmstrip/functions.any';
 
 import {
-    SCREEN_SHARE_REMOTE_PARTICIPANTS_UPDATED,
     SET_TILE_VIEW,
     VIRTUAL_SCREENSHARE_REMOTE_PARTICIPANTS_UPDATED
 } from './actionTypes';
 import { shouldDisplayTileView } from './functions';
-
-/**
- * Creates a (redux) action which signals that the list of known remote participants
- * with screen shares has changed.
- *
- * @param {string} participantIds - The remote participants which currently have active
- * screen share streams.
- * @returns {{
- *     type: SCREEN_SHARE_REMOTE_PARTICIPANTS_UPDATED,
- *     participantId: string
- * }}
- */
-export function setRemoteParticipantsWithScreenShare(participantIds: Array<string>) {
-    return {
-        type: SCREEN_SHARE_REMOTE_PARTICIPANTS_UPDATED,
-        participantIds
-    };
-}
 
 /**
  * Creates a (redux) action which signals that the list of known remote virtual screen share participant ids has
@@ -53,9 +35,13 @@ export function virtualScreenshareParticipantsUpdated(participantIds: Array<stri
  * }}
  */
 export function setTileView(enabled?: boolean) {
-    return {
-        type: SET_TILE_VIEW,
-        enabled
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const tileViewDisabled = isTileViewModeDisabled(getState());
+
+        !tileViewDisabled && dispatch({
+            type: SET_TILE_VIEW,
+            enabled
+        });
     };
 }
 

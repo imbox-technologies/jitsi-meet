@@ -106,14 +106,10 @@ export const commonStyles = (theme: Theme) => {
             }
         },
 
-        '.participant-avatar': {
-            margin: `${theme.spacing(2)} ${theme.spacing(3)} ${theme.spacing(2)} 0`
-        },
-
         '.prejoin-dialog': {
-            background: '#1C2025',
+            backgroundColor: theme.palette.uiBackground,
             boxShadow: '0px 2px 20px rgba(0, 0, 0, 0.5)',
-            borderRadius: '5px',
+            borderRadius: theme.shape.borderRadius,
             color: '#fff',
             height: '400px',
             width: '375px',
@@ -165,15 +161,10 @@ export const commonStyles = (theme: Theme) => {
             },
 
             '.prejoin-dialog-icon': {
-                cursor: 'pointer',
-
-                '& > svg': {
-                    fill: '#A4B8D1'
-                }
+                cursor: 'pointer'
             },
 
             '.prejoin-dialog-btn': {
-                width: '309px',
                 marginBottom: '8px'
             },
 
@@ -182,7 +173,7 @@ export const commonStyles = (theme: Theme) => {
             },
 
             '.prejoin-dialog-delimiter': {
-                background: '#5f6266',
+                background: theme.palette.ui03,
                 border: '0',
                 height: '1px',
                 margin: '0',
@@ -191,7 +182,7 @@ export const commonStyles = (theme: Theme) => {
             },
 
             '.prejoin-dialog-delimiter-container': {
-                margin: `${theme.spacing(3)} 0 ${theme.spacing(4)} 0`,
+                margin: `${theme.spacing(4)} 0`,
                 position: 'relative' as const
             },
 
@@ -203,8 +194,8 @@ export const commonStyles = (theme: Theme) => {
             },
 
             '.prejoin-dialog-delimiter-txt': {
-                background: '#1C2025',
-                color: '#5f6266',
+                background: theme.palette.uiBackground,
+                color: theme.palette.text01,
                 fontSize: '11px',
                 textTransform: 'uppercase' as const,
                 padding: `0 ${theme.spacing(2)}`
@@ -228,7 +219,11 @@ export const commonStyles = (theme: Theme) => {
 
             '@media (hover: hover) and (pointer: fine)': {
                 '&:hover': {
-                    background: theme.palette.ui04
+                    backgroundColor: theme.palette.ui04
+                },
+
+                '&:active': {
+                    backgroundColor: theme.palette.ui03
                 }
             },
             [theme.breakpoints.down(320)]: {
@@ -237,7 +232,7 @@ export const commonStyles = (theme: Theme) => {
             },
 
             '&.toggled': {
-                background: theme.palette.ui03
+                backgroundColor: theme.palette.ui03
             },
 
             '&.disabled': {
@@ -265,33 +260,15 @@ export const commonStyles = (theme: Theme) => {
             padding: 6,
             textAlign: 'center' as const,
             pointerEvents: 'all' as const,
+            display: 'flex',
             boxShadow: '0px 2px 8px 4px rgba(0, 0, 0, 0.25), 0px 0px 0px 1px rgba(0, 0, 0, 0.15)',
 
             '& > div': {
-                marginLeft: 8,
+                marginRight: theme.spacing(2),
 
-                '&:first-child': {
-                    marginLeft: 0
+                '&:last-of-type': {
+                    marginRight: 0
                 }
-            }
-        }
-    };
-};
-
-/**
- * Returns the global styles.
- *
- * @param {Object} theme - The Jitsi theme.
- * @returns {Object}
- */
-export const getGlobalStyles = (theme: Theme) => {
-    return {
-        // @atlaskit/modal-dialog OVERRIDES
-        '.atlaskit-portal div[role=dialog]': {
-            // override dialog background
-            '& > div': {
-                background: theme.palette.ui02,
-                color: theme.palette.text01
             }
         }
     };

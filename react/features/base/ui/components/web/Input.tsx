@@ -10,17 +10,31 @@ import { IInputProps } from '../types';
 
 interface IProps extends IInputProps {
     accessibilityLabel?: string;
+    autoComplete?: string;
     autoFocus?: boolean;
     bottomLabel?: string;
     className?: string;
     iconClick?: () => void;
-    id?: string;
+
+    /**
+     * The id to set on the input element.
+     * This is required because we need it internally to tie the input to its
+     * info (label, error) so that screen reader users don't get lost.
+     */
+    id: string;
     maxLength?: number;
     maxRows?: number;
+    maxValue?: number;
     minRows?: number;
+    minValue?: number;
+    mode?: 'text' | 'none' | 'decimal' | 'numeric' | 'tel' | 'search' | ' email' | 'url';
     name?: string;
+    onBlur?: (e: any) => void;
+    onFocus?: (event: React.FocusEvent) => void;
     onKeyPress?: (e: React.KeyboardEvent) => void;
     readOnly?: boolean;
+    required?: boolean;
+    testId?: string;
     textarea?: boolean;
     type?: 'text' | 'email' | 'number' | 'password';
 }
@@ -87,6 +101,15 @@ const useStyles = makeStyles()(theme => {
             }
         },
 
+        'input::-webkit-outer-spin-button, input::-webkit-inner-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: 0
+        },
+
+        'input[type=number]': {
+            '-moz-appearance': 'textfield'
+        },
+
         icon: {
             position: 'absolute',
             top: '50%',
@@ -130,6 +153,7 @@ const useStyles = makeStyles()(theme => {
 
 const Input = React.forwardRef<any, IProps>(({
     accessibilityLabel,
+    autoComplete,
     autoFocus,
     bottomLabel,
     className,
@@ -140,14 +164,21 @@ const Input = React.forwardRef<any, IProps>(({
     iconClick,
     id,
     label,
+    maxValue,
     maxLength,
     maxRows,
+    minValue,
     minRows,
+    mode,
     name,
+    onBlur,
     onChange,
+    onFocus,
     onKeyPress,
     placeholder,
     readOnly = false,
+    required,
+    testId,
     textarea = false,
     type = 'text',
     value
@@ -162,7 +193,11 @@ const Input = React.forwardRef<any, IProps>(({
 
     return (
         <div className = { cx(styles.inputContainer, className) }>
-            {label && <span className = { cx(styles.label, isMobile && 'is-mobile') }>{label}</span>}
+            {label && <label
+                className = { cx(styles.label, isMobile && 'is-mobile') }
+                htmlFor = { id } >
+                {label}
+            </label>}
             <div className = { styles.fieldContainer }>
                 {icon && <Icon
                     { ...(iconClick ? { tabIndex: 0 } : {}) }
@@ -173,11 +208,13 @@ const Input = React.forwardRef<any, IProps>(({
                 {textarea ? (
                     <TextareaAutosize
                         aria-label = { accessibilityLabel }
+                        autoComplete = { autoComplete }
                         autoFocus = { autoFocus }
                         className = { cx(styles.input, isMobile && 'is-mobile',
                             error && 'error', clearable && styles.clearableInput, icon && 'icon-input') }
                         disabled = { disabled }
-                        { ...(id ? { id } : {}) }
+                        id = { id }
+                        maxLength = { maxLength }
                         maxRows = { maxRows }
                         minRows = { minRows }
                         name = { name }
@@ -186,22 +223,32 @@ const Input = React.forwardRef<any, IProps>(({
                         placeholder = { placeholder }
                         readOnly = { readOnly }
                         ref = { ref }
+                        required = { required }
                         value = { value } />
                 ) : (
                     <input
+                        aria-describedby = { bottomLabel ? `${id}-description` : undefined }
                         aria-label = { accessibilityLabel }
+                        autoComplete = { autoComplete }
                         autoFocus = { autoFocus }
                         className = { cx(styles.input, isMobile && 'is-mobile',
                             error && 'error', clearable && styles.clearableInput, icon && 'icon-input') }
+                        data-testid = { testId }
                         disabled = { disabled }
-                        { ...(id ? { id } : {}) }
+                        id = { id }
+                        { ...(mode ? { inputmode: mode } : {}) }
+                        { ...(type === 'number' ? { max: maxValue } : {}) }
                         maxLength = { maxLength }
+                        { ...(type === 'number' ? { min: minValue } : {}) }
                         name = { name }
+                        onBlur = { onBlur }
                         onChange = { handleChange }
+                        onFocus = { onFocus }
                         onKeyPress = { onKeyPress }
                         placeholder = { placeholder }
                         readOnly = { readOnly }
                         ref = { ref }
+                        required = { required }
                         type = { type }
                         value = { value } />
                 )}
@@ -213,7 +260,9 @@ const Input = React.forwardRef<any, IProps>(({
                 </button>}
             </div>
             {bottomLabel && (
-                <span className = { cx(styles.bottomLabel, isMobile && 'is-mobile', error && 'error') }>
+                <span
+                    className = { cx(styles.bottomLabel, isMobile && 'is-mobile', error && 'error') }
+                    id = { `${id}-description` }>
                     {bottomLabel}
                 </span>
             )}

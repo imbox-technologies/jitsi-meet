@@ -1,23 +1,21 @@
-/* eslint-disable lines-around-comment */
-
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
-// @ts-ignore
 import TogglePinToStageButton from '../../../../features/video-menu/components/web/TogglePinToStageButton';
-// @ts-ignore
-import { Avatar } from '../../../base/avatar';
+import Avatar from '../../../base/avatar/components/Avatar';
+import { getButtonNotifyMode, getParticipantMenuButtonsWithNotifyClick } from '../../../base/config/functions.web';
 import { IconPlay } from '../../../base/icons/svg';
 import { isWhiteboardParticipant } from '../../../base/participants/functions';
 import { IParticipant } from '../../../base/participants/types';
 import ContextMenu from '../../../base/ui/components/web/ContextMenu';
 import ContextMenuItemGroup from '../../../base/ui/components/web/ContextMenuItemGroup';
-// @ts-ignore
 import { stopSharedVideo } from '../../../shared-video/actions.any';
+import { NOTIFY_CLICK_MODE } from '../../../toolbox/constants';
 import { showOverflowDrawer } from '../../../toolbox/functions.web';
 import { setWhiteboardOpen } from '../../../whiteboard/actions';
 import { WHITEBOARD_ID } from '../../../whiteboard/constants';
+import { PARTICIPANT_MENU_BUTTONS as BUTTONS } from '../../constants';
 
 interface IProps {
 
@@ -91,6 +89,23 @@ const FakeParticipantContextMenu = ({
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const _overflowDrawer: boolean = useSelector(showOverflowDrawer);
+    const buttonsWithNotifyClick = useSelector(getParticipantMenuButtonsWithNotifyClick);
+
+    const notifyClick = useCallback(
+        (buttonKey: string, participantId?: string) => {
+            const notifyMode = getButtonNotifyMode(buttonKey, buttonsWithNotifyClick);
+
+            if (!notifyMode) {
+                return;
+            }
+
+            APP.API.notifyParticipantMenuButtonClicked(
+                buttonKey,
+                participantId,
+                notifyMode === NOTIFY_CLICK_MODE.PREVENT_AND_NOTIFY
+            );
+        }, [ buttonsWithNotifyClick, getButtonNotifyMode ]);
+
 
     const clickHandler = useCallback(() => onSelect(true), [ onSelect ]);
 
@@ -150,6 +165,9 @@ const FakeParticipantContextMenu = ({
                 {isWhiteboardParticipant(participant) && (
                     <TogglePinToStageButton
                         key = 'pinToStage'
+                        // eslint-disable-next-line react/jsx-no-bind
+                        notifyClick = { () => notifyClick(BUTTONS.PIN_TO_STAGE, WHITEBOARD_ID) }
+                        notifyMode = { getButtonNotifyMode(BUTTONS.PIN_TO_STAGE, buttonsWithNotifyClick) }
                         participantID = { WHITEBOARD_ID } />
                 )}
             </ContextMenuItemGroup>

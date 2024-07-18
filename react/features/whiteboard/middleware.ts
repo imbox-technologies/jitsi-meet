@@ -1,5 +1,5 @@
-/* eslint-disable lines-around-comment */
 import { generateCollaborationLinkData } from '@jitsi/excalidraw';
+import { AnyAction } from 'redux';
 
 import { IStore } from '../app/types';
 import { getCurrentConference } from '../base/conference/functions';
@@ -10,13 +10,13 @@ import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
 import StateListenerRegistry from '../base/redux/StateListenerRegistry';
 import { getCurrentRoomId } from '../breakout-rooms/functions';
 import { addStageParticipant } from '../filmstrip/actions.web';
-// @ts-ignore
-import { isStageFilmstripAvailable } from '../filmstrip/functions';
+import { isStageFilmstripAvailable } from '../filmstrip/functions.web';
 
 import { RESET_WHITEBOARD, SET_WHITEBOARD_OPEN } from './actionTypes';
 import { resetWhiteboard, setWhiteboardOpen, setupWhiteboard } from './actions';
 import { WHITEBOARD_ID, WHITEBOARD_PARTICIPANT_NAME } from './constants';
 import { getCollabDetails, getCollabServerUrl, isWhiteboardPresent } from './functions';
+import { WhiteboardStatus } from './types';
 
 const focusWhiteboard = (store: IStore) => {
     const { dispatch, getState } = store;
@@ -46,7 +46,7 @@ const focusWhiteboard = (store: IStore) => {
  * @param {Store} store - The redux store.
  * @returns {Function}
  */
-MiddlewareRegistry.register((store: IStore) => (next: Function) => async (action: any) => {
+MiddlewareRegistry.register((store: IStore) => (next: Function) => async (action: AnyAction) => {
     const { dispatch, getState } = store;
     const state = getState();
     const conference = getCurrentConference(state);
@@ -66,25 +66,31 @@ MiddlewareRegistry.register((store: IStore) => (next: Function) => async (action
 
             focusWhiteboard(store);
             dispatch(setupWhiteboard({ collabDetails }));
-            conference.getMetadataHandler().setMetadata(WHITEBOARD_ID, {
+            conference?.getMetadataHandler().setMetadata(WHITEBOARD_ID, {
                 collabServerUrl,
                 collabDetails
             });
+            raiseWhiteboardNotification(WhiteboardStatus.INSTANTIATED);
 
             return;
         }
 
         if (action.isOpen) {
             focusWhiteboard(store);
+            raiseWhiteboardNotification(WhiteboardStatus.SHOWN);
 
             return;
         }
 
         dispatch(participantLeft(WHITEBOARD_ID, conference, { fakeParticipant: FakeParticipant.Whiteboard }));
+        raiseWhiteboardNotification(WhiteboardStatus.HIDDEN);
+
         break;
     }
     case RESET_WHITEBOARD: {
         dispatch(participantLeft(WHITEBOARD_ID, conference, { fakeParticipant: FakeParticipant.Whiteboard }));
+        raiseWhiteboardNotification(WhiteboardStatus.RESET);
+
         break;
     }
     }
@@ -93,15 +99,23 @@ MiddlewareRegistry.register((store: IStore) => (next: Function) => async (action
 });
 
 /**
+ * Raises the whiteboard status notifications changes (if API is enabled).
+ *
+ * @param {WhiteboardStatus} status - The whiteboard changed status.
+ * @returns {Function}
+ */
+function raiseWhiteboardNotification(status: WhiteboardStatus) {
+    if (typeof APP !== 'undefined') {
+        APP.API.notifyWhiteboardStatusChanged(status);
+    }
+}
+
+/**
  * Set up state change listener to perform maintenance tasks when the conference
  * is left or failed, e.g. Disable the whiteboard if it's left open.
  */
 StateListenerRegistry.register(
-
-    // @ts-ignore
     state => getCurrentConference(state),
-
-    // @ts-ignore
     (conference, { dispatch }, previousConference): void => {
         if (conference !== previousConference) {
             dispatch(resetWhiteboard());

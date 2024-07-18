@@ -146,6 +146,7 @@ export interface IDynamicBrandingState {
     avatarBackgrounds: string[];
     backgroundColor: string;
     backgroundImageUrl: string;
+    brandedIcons?: Record<string, string>;
     customizationFailed: boolean;
     customizationReady: boolean;
     defaultBranding: boolean;
@@ -156,6 +157,7 @@ export interface IDynamicBrandingState {
     logoImageUrl: string;
     muiBrandedTheme?: boolean;
     premeetingBackground: string;
+    showGiphyIntegration?: boolean;
     useDynamicBrandingData: boolean;
     virtualBackgrounds: Array<Image>;
 }
@@ -170,6 +172,7 @@ ReducerRegistry.register<IDynamicBrandingState>(STORE_NAME, (state = DEFAULT_STA
             avatarBackgrounds,
             backgroundColor,
             backgroundImageUrl,
+            brandedIcons,
             defaultBranding,
             didPageUrl,
             inviteDomain,
@@ -178,6 +181,7 @@ ReducerRegistry.register<IDynamicBrandingState>(STORE_NAME, (state = DEFAULT_STA
             logoImageUrl,
             muiBrandedTheme,
             premeetingBackground,
+            showGiphyIntegration,
             virtualBackgrounds
         } = action.value;
 
@@ -185,6 +189,7 @@ ReducerRegistry.register<IDynamicBrandingState>(STORE_NAME, (state = DEFAULT_STA
             avatarBackgrounds,
             backgroundColor,
             backgroundImageUrl,
+            brandedIcons,
             defaultBranding,
             didPageUrl,
             inviteDomain,
@@ -193,6 +198,7 @@ ReducerRegistry.register<IDynamicBrandingState>(STORE_NAME, (state = DEFAULT_STA
             logoImageUrl,
             muiBrandedTheme,
             premeetingBackground,
+            showGiphyIntegration,
             customizationFailed: false,
             customizationReady: true,
             useDynamicBrandingData: true,
