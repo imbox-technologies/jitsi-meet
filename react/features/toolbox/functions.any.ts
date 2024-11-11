@@ -1,5 +1,4 @@
 import { IReduxState } from '../app/types';
-import { FEATURES_TO_BUTTONS_MAPPING } from '../base/jwt/constants';
 import { isJwtFeatureEnabledStateless } from '../base/jwt/functions';
 import { IGUMPendingState } from '../base/media/types';
 import { IParticipantFeatures } from '../base/participants/types';
@@ -19,22 +18,40 @@ export function isAudioMuteButtonDisabled(state: IReduxState) {
 
 /**
  * Returns the buttons corresponding to features disabled through jwt.
+ * This function is stateless as it returns a new array and may cause re-rendering.
  *
+ * @param {boolean} isTranscribing - Whether there is currently a transcriber in the meeting.
+ * @param {boolean} isModerator - Whether local participant is moderator.
  * @param {string | undefined} jwt - The jwt token.
  * @param {ILocalParticipant} localParticipantFeatures - The features of the local participant.
  * @returns {string[]} - The disabled by jwt buttons array.
  */
-export function getJwtDisabledButtons(jwt: string | undefined, localParticipantFeatures?: IParticipantFeatures) {
-    return Object.keys(FEATURES_TO_BUTTONS_MAPPING).reduce((acc: string[], current: string) => {
-        if (!isJwtFeatureEnabledStateless({
-            jwt,
-            localParticipantFeatures,
-            feature: current,
-            ifNoToken: true
-        })) {
-            acc.push(FEATURES_TO_BUTTONS_MAPPING[current as keyof typeof FEATURES_TO_BUTTONS_MAPPING]);
-        }
+export function getJwtDisabledButtons(
+        isTranscribing: boolean,
+        isModerator: boolean,
+        jwt: string | undefined,
+        localParticipantFeatures?: IParticipantFeatures) {
+    const acc = [];
 
-        return acc;
-    }, []);
+    if (!isJwtFeatureEnabledStateless({
+        jwt,
+        localParticipantFeatures,
+        feature: 'livestreaming',
+        ifNoToken: isModerator,
+        ifNotInFeatures: false
+    })) {
+        acc.push('livestreaming');
+    }
+
+    if (!isTranscribing && !isJwtFeatureEnabledStateless({
+        jwt,
+        localParticipantFeatures,
+        feature: 'transcription',
+        ifNoToken: isModerator,
+        ifNotInFeatures: false
+    })) {
+        acc.push('closedcaptions');
+    }
+
+    return acc;
 }

@@ -5,6 +5,7 @@ import { setTokenAuthUrlSuccess } from '../authentication/actions.web';
 import { isTokenAuthEnabled } from '../authentication/functions';
 import {
     setFollowMe,
+    setFollowMeRecorder,
     setStartMutedPolicy,
     setStartReactionsMuted
 } from '../base/conference/actions';
@@ -16,7 +17,7 @@ import { getNormalizedDisplayName } from '../base/participants/functions';
 import { updateSettings } from '../base/settings/actions';
 import { getLocalVideoTrack } from '../base/tracks/functions.web';
 import { appendURLHashParam } from '../base/util/uri';
-import { disableKeyboardShortcuts, enableKeyboardShortcuts } from '../keyboard-shortcuts/actions.web';
+import { disableKeyboardShortcuts, enableKeyboardShortcuts } from '../keyboard-shortcuts/actions';
 import { toggleBackgroundEffect } from '../virtual-background/actions';
 import virtualBackgroundLogger from '../virtual-background/logger';
 
@@ -163,6 +164,10 @@ export function submitModeratorTab(newState: any) {
 
         if (newState.followMeEnabled !== currentState.followMeEnabled) {
             dispatch(setFollowMe(newState.followMeEnabled));
+        }
+
+        if (newState.followMeRecorderEnabled !== currentState.followMeRecorderEnabled) {
+            dispatch(setFollowMeRecorder(newState.followMeRecorderEnabled));
         }
 
         if (newState.startReactionsMuted !== currentState.startReactionsMuted) {

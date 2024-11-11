@@ -34,9 +34,15 @@ import { ENDPOINT_REACTION_NAME } from '../reactions/constants';
 import { getReactionMessageFromBuffer, isReactionsEnabled } from '../reactions/functions.any';
 import { showToolbox } from '../toolbox/actions';
 
-
-import { ADD_MESSAGE, CLOSE_CHAT, OPEN_CHAT, SEND_MESSAGE, SET_IS_POLL_TAB_FOCUSED } from './actionTypes';
-import { addMessage, clearMessages, closeChat } from './actions.any';
+import {
+    ADD_MESSAGE,
+    CLOSE_CHAT,
+    OPEN_CHAT,
+    SEND_MESSAGE,
+    SEND_REACTION,
+    SET_IS_POLL_TAB_FOCUSED
+} from './actionTypes';
+import { addMessage, addMessageReaction, clearMessages, closeChat } from './actions.any';
 import { ChatPrivacyDialog } from './components';
 import {
     INCOMING_MSG_SOUND_ID,
@@ -121,11 +127,14 @@ MiddlewareRegistry.register(store => next => action => {
         const { participant, data } = action;
 
         if (data?.name === ENDPOINT_REACTION_NAME) {
-            store.dispatch(pushReactions(data.reactions));
+            // Skip duplicates, keep just 3.
+            const reactions = Array.from(new Set(data.reactions)).slice(0, 3) as string[];
+
+            store.dispatch(pushReactions(reactions));
 
             _handleReceivedMessage(store, {
                 participantId: participant.getId(),
-                message: getReactionMessageFromBuffer(data.reactions),
+                message: getReactionMessageFromBuffer(reactions),
                 privateMessage: false,
                 lobbyChat: false,
                 timestamp: data.timestamp
@@ -205,6 +214,18 @@ MiddlewareRegistry.register(store => next => action => {
                     conference.sendTextMessage(action.message);
                 }
             }
+        }
+        break;
+    }
+
+    case SEND_REACTION: {
+        const state = store.getState();
+        const conference = getCurrentConference(state);
+
+        if (conference) {
+            const { reaction, messageId, receiverId } = action;
+
+            conference.sendReaction(reaction, messageId, receiverId);
         }
         break;
     }
@@ -290,6 +311,17 @@ function _addChatMsgListener(conference: IJitsiConference, store: IStore) {
     );
 
     conference.on(
+        JitsiConferenceEvents.REACTION_RECEIVED,
+        (participantId: string, reactionList: string[], messageId: string) => {
+            _onReactionReceived(store, {
+                participantId,
+                reactionList,
+                messageId
+            });
+        }
+    );
+
+    conference.on(
         JitsiConferenceEvents.PRIVATE_MESSAGE_RECEIVED,
         (participantId: string, message: string, timestamp: number, messageId: string) => {
             _onConferenceMessageReceived(store, {
@@ -339,6 +371,27 @@ function _onConferenceMessageReceived(store: IStore,
         timestamp,
         messageId
     }, true, isGif);
+}
+
+/**
+ * Handles a received reaction.
+ *
+ * @param {Object} store - Redux store.
+ * @param {string} participantId - Id of the participant that sent the message.
+ * @param {string} reactionList - The list of received reactions.
+ * @param {string} messageId - The id of the message that the reaction is for.
+ * @returns {void}
+ */
+function _onReactionReceived(store: IStore, { participantId, reactionList, messageId }: {
+    messageId: string; participantId: string; reactionList: string[]; }) {
+
+    const reactionPayload = {
+        participantId,
+        reactionList,
+        messageId
+    };
+
+    store.dispatch(addMessageReaction(reactionPayload));
 }
 
 /**

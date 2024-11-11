@@ -1,6 +1,7 @@
 import { createStartMutedConfigurationEvent } from '../../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../../analytics/functions';
 import { IReduxState, IStore } from '../../app/types';
+import { transcriberJoined, transcriberLeft } from '../../transcribing/actions';
 import { setIAmVisitor } from '../../visitors/actions';
 import { iAmVisitor } from '../../visitors/functions';
 import { overwriteConfig } from '../config/actions';
@@ -8,7 +9,7 @@ import { getReplaceParticipant } from '../config/functions';
 import { connect, disconnect, hangup } from '../connection/actions';
 import { JITSI_CONNECTION_CONFERENCE_KEY } from '../connection/constants';
 import { hasAvailableDevices } from '../devices/functions.any';
-import { JitsiConferenceEvents, JitsiE2ePingEvents } from '../lib-jitsi-meet';
+import JitsiMeetJS, { JitsiConferenceEvents, JitsiE2ePingEvents } from '../lib-jitsi-meet';
 import {
     setAudioMuted,
     setAudioUnmutePermissions,
@@ -61,6 +62,7 @@ import {
     SEND_TONES,
     SET_ASSUMED_BANDWIDTH_BPS,
     SET_FOLLOW_ME,
+    SET_FOLLOW_ME_RECORDER,
     SET_OBFUSCATED_ROOM,
     SET_PASSWORD,
     SET_PASSWORD_FAILED,
@@ -274,6 +276,16 @@ function _addConferenceListeners(conference: IJitsiConference, dispatch: IStore[
             id,
             botType
         })));
+
+    conference.on(
+        JitsiConferenceEvents.TRANSCRIPTION_STATUS_CHANGED,
+        (status: string, id: string, abruptly: boolean) => {
+            if (status === JitsiMeetJS.constants.transcriptionStatus.ON) {
+                dispatch(transcriberJoined(id));
+            } else if (status === JitsiMeetJS.constants.transcriptionStatus.OFF) {
+                dispatch(transcriberLeft(id, abruptly));
+            }
+        });
 
     conference.addCommandListener(
         AVATAR_URL_COMMAND,
@@ -848,6 +860,22 @@ export function setFollowMe(enabled: boolean) {
 }
 
 /**
+ * Enables or disables the Follow Me feature used only for the recorder.
+ *
+ * @param {boolean} enabled - Whether Follow Me should be enabled and used only by the recorder.
+ * @returns {{
+ *     type: SET_FOLLOW_ME_RECORDER,
+ *     enabled: boolean
+ * }}
+ */
+export function setFollowMeRecorder(enabled: boolean) {
+    return {
+        type: SET_FOLLOW_ME_RECORDER,
+        enabled
+    };
+}
+
+/**
  * Enables or disables the Mute reaction sounds feature.
  *
  * @param {boolean} muted - Whether or not reaction sounds should be muted for all participants.
@@ -1076,6 +1104,7 @@ export function redirect(vnode: string, focusJid: string, username: string) {
             })
             .then(() => {
                 dispatch(conferenceWillInit());
+                logger.info(`Dispatching connect from redirect (visitor = ${Boolean(vnode)}).`);
 
                 return dispatch(connect());
             })
