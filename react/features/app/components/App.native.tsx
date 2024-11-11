@@ -7,7 +7,7 @@ import SplashScreen from 'react-native-splash-screen';
 import BottomSheetContainer from '../../base/dialog/components/native/BottomSheetContainer';
 import DialogContainer from '../../base/dialog/components/native/DialogContainer';
 import { updateFlags } from '../../base/flags/actions';
-import { CALL_INTEGRATION_ENABLED, SERVER_URL_CHANGE_ENABLED, SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK } from '../../base/flags/constants';
+import { CALL_INTEGRATION_ENABLED, SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK } from '../../base/flags/constants';
 import { getFeatureFlag } from '../../base/flags/functions';
 import { clientResized, setSafeAreaInsets } from '../../base/responsive-ui/actions';
 import DimensionsDetector from '../../base/responsive-ui/components/DimensionsDetector.native';
@@ -21,6 +21,7 @@ import { AbstractApp, IProps as AbstractAppProps } from './AbstractApp';
 // Register middlewares and reducers.
 import '../middlewares.native';
 import '../reducers.native';
+
 
 declare let __DEV__: any;
 
@@ -111,12 +112,20 @@ export class App extends AbstractApp<IProps> {
      */
     async _extraInit() {
         const { dispatch, getState } = this.state.store ?? {};
-        const { flags = {} } = this.props;
+        const { flags = {}, url, userInfo } = this.props;
+        let callIntegrationEnabled = flags[CALL_INTEGRATION_ENABLED as keyof typeof flags];
 
         // CallKit does not work on the simulator, make sure we disable it.
         if (Platform.OS === 'ios' && DeviceInfo.isEmulatorSync()) {
-            flags['call-integration.enabled'] = false;
+            flags[CALL_INTEGRATION_ENABLED] = false;
+            callIntegrationEnabled = false;
             logger.info('Disabling CallKit because this is a simulator');
+        }
+
+        // Disable Android ConnectionService by default.
+        if (Platform.OS === 'android' && typeof callIntegrationEnabled === 'undefined') {
+            flags[CALL_INTEGRATION_ENABLED] = false;
+            callIntegrationEnabled = false;
         }
 
         // We set these early enough so then we avoid any unnecessary re-renders.
@@ -144,32 +153,27 @@ export class App extends AbstractApp<IProps> {
         });
 
         // This hack is needed to allow a conference to start while the app is in background (iOS)
-        const skipAwaitRootNavigationReady = getFeatureFlag(getState(), SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK, false);
+        const skipAwaitRootNavigationReady = getState && getFeatureFlag(getState(), SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK, false);
 
         if (!skipAwaitRootNavigationReady) {
             await rootNavigationReady;
         }
 
-        // Check if serverURL is configured externally and not allowed to change.
-        const serverURLChangeEnabled = getState && getFeatureFlag(getState(), SERVER_URL_CHANGE_ENABLED, true);
+        // Update specified server URL.
+        if (typeof url !== 'undefined') {
 
-        if (!serverURLChangeEnabled) {
-            // As serverURL is provided externally, so we push it to settings.
-            if (typeof this.props.url !== 'undefined') {
-                // @ts-ignore
-                const { serverURL } = this.props.url;
+            // @ts-ignore
+            const { serverURL } = url;
 
-                if (typeof serverURL !== 'undefined') {
-                    dispatch?.(updateSettings({ serverURL }));
-                }
+            if (typeof serverURL !== 'undefined') {
+                dispatch?.(updateSettings({ serverURL }));
             }
         }
 
-        dispatch?.(updateSettings(this.props.userInfo || {}));
+        // @ts-ignore
+        dispatch?.(updateSettings(userInfo || {}));
 
         // Update settings with feature-flag.
-        const callIntegrationEnabled = flags[CALL_INTEGRATION_ENABLED as keyof typeof flags];
-
         if (typeof callIntegrationEnabled !== 'undefined') {
             dispatch?.(updateSettings({ disableCallIntegration: !callIntegrationEnabled }));
         }

@@ -99,6 +99,7 @@ tsconfig.json
 #
 react-native-sdk/*.tgz
 react-native-sdk/android/src
+!react-native-sdk/android/src/main/java/org/jitsi/meet/sdk/JitsiMeetReactNativePackage.java
 react-native-sdk/images
 react-native-sdk/ios
 react-native-sdk/lang
@@ -107,3 +108,4 @@ react-native-sdk/node_modules
 react-native-sdk/react
 react-native-sdk/service
 react-native-sdk/sounds
+tmp

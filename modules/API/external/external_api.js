@@ -108,6 +108,7 @@ const events = {
     'camera-error': 'cameraError',
     'chat-updated': 'chatUpdated',
     'compute-pressure-changed': 'computePressureChanged',
+    'conference-created-timestamp': 'conferenceCreatedTimestamp',
     'content-sharing-participants-changed': 'contentSharingParticipantsChanged',
     'data-channel-closed': 'dataChannelClosed',
     'data-channel-opened': 'dataChannelOpened',
@@ -145,6 +146,7 @@ const events = {
     'prejoin-screen-loaded': 'prejoinScreenLoaded',
     'proxy-connection-event': 'proxyConnectionEvent',
     'raise-hand-updated': 'raiseHandUpdated',
+    'ready': 'ready',
     'recording-link-available': 'recordingLinkAvailable',
     'recording-status-changed': 'recordingStatusChanged',
     'participant-menu-button-clicked': 'participantMenuButtonClick',
@@ -159,7 +161,13 @@ const events = {
     'suspend-detected': 'suspendDetected',
     'tile-view-changed': 'tileViewChanged',
     'toolbar-button-clicked': 'toolbarButtonClicked',
+    'transcribing-status-changed': 'transcribingStatusChanged',
+    'transcription-chunk-received': 'transcriptionChunkReceived',
     'whiteboard-status-changed': 'whiteboardStatusChanged'
+};
+
+const requests = {
+    '_request-desktop-sources': '_requestDesktopSources'
 };
 
 /**
@@ -269,10 +277,10 @@ function parseArguments(args) {
 function parseSizeParam(value) {
     let parsedValue;
 
-    // This regex parses values of the form 100px, 100em, 100pt or 100%.
+    // This regex parses values of the form 100px, 100em, 100pt, 100vh, 100vw or 100%.
     // Values like 100 or 100px are handled outside of the regex, and
     // invalid values will be ignored and the minimum will be used.
-    const re = /([0-9]*\.?[0-9]+)(em|pt|px|%)$/;
+    const re = /([0-9]*\.?[0-9]+)(em|pt|px|((d|l|s)?v)(h|w)|%)$/;
 
     if (typeof value === 'string' && String(value).match(re) !== null) {
         parsedValue = value;
@@ -361,7 +369,9 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
             },
             release
         });
-        this._createIFrame(height, width, onload, sandbox);
+
+        this._createIFrame(height, width, sandbox);
+
         this._transport = new Transport({
             backend: new PostMessageTransportBackend({
                 postisOptions: {
@@ -371,9 +381,12 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
                 }
             })
         });
+
         if (Array.isArray(invitees) && invitees.length > 0) {
             this.invite(invitees);
         }
+
+        this._onload = onload;
         this._tmpE2EEKey = e2eeKey;
         this._isLargeVideoVisible = false;
         this._isPrejoinVideoVisible = false;
@@ -392,18 +405,26 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
      * parseSizeParam for format details.
      * @param {number|string} width - The with of the iframe. Check
      * parseSizeParam for format details.
-     * @param {Function} onload - The function that will listen
-     * for onload event.
      * @param {string} sandbox - Sandbox directive for the created iframe, if desired.
      * @returns {void}
      *
      * @private
      */
-    _createIFrame(height, width, onload, sandbox) {
+    _createIFrame(height, width, sandbox) {
         const frameName = `jitsiConferenceFrame${id}`;
 
         this._frame = document.createElement('iframe');
-        this._frame.allow = 'camera; microphone; display-capture; autoplay; clipboard-write; hid; screen-wake-lock';
+        this._frame.allow = [
+            'autoplay',
+            'camera',
+            'clipboard-write',
+            'compute-pressure',
+            'display-capture',
+            'hid',
+            'microphone',
+            'screen-wake-lock',
+            'speaker-selection'
+        ].join('; ');
         this._frame.name = frameName;
         this._frame.id = frameName;
         this._setSize(height, width);
@@ -414,11 +435,6 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
             this._frame.sandbox = sandbox;
         }
 
-        if (onload) {
-            // waits for iframe resources to load
-            // and fires event when it is done
-            this._frame.onload = onload;
-        }
         this._frame.src = this._url;
 
         this._frame = this._parentNode.appendChild(this._frame);
@@ -567,6 +583,12 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
             const userID = data.id;
 
             switch (name) {
+            case 'ready': {
+                // Fake the iframe onload event because it's not reliable.
+                this._onload?.();
+
+                break;
+            }
             case 'video-conference-joined': {
                 if (typeof this._tmpE2EEKey !== 'undefined') {
 
@@ -677,6 +699,18 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
             }
 
             return false;
+        });
+
+        this._transport.on('request', (request, callback) => {
+            const requestName = requests[request.name];
+            const data = {
+                ...request,
+                name: requestName
+            };
+
+            if (requestName) {
+                this.emit(requestName, data, callback);
+            }
         });
     }
 
@@ -1197,6 +1231,17 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
     }
 
     /**
+     * Return the conference`s sessionId.
+     *
+     * @returns {Promise} - Resolves with the conference`s sessionId.
+     */
+    getSessionId() {
+        return this._transport.sendRequest({
+            name: 'session-id'
+        });
+    }
+
+    /**
      * Returns array of commands supported by executeCommand().
      *
      * @returns {Array<string>} Array of commands.
@@ -1246,6 +1291,17 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
     listBreakoutRooms() {
         return this._transport.sendRequest({
             name: 'list-breakout-rooms'
+        });
+    }
+
+    /**
+     * Returns the state of availability electron share screen via external api.
+     *
+     * @returns {Promise}
+     */
+    _isNewElectronScreensharingSupported() {
+        return this._transport.sendRequest({
+            name: '_new_electron_screensharing_supported'
         });
     }
 
@@ -1389,6 +1445,8 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
      * @param { string } options.rtmpBroadcastID - The RTMP broadcast ID.
      * @param { string } options.youtubeStreamKey - The youtube stream key.
      * @param { string } options.youtubeBroadcastID - The youtube broadcast ID.
+     * @param {Object } options.extraMetadata - Any extra metadata params for file recording.
+     * @param { boolean } arg.transcription - Whether a transcription should be started or not.
      * @returns {void}
      */
     startRecording(options) {
@@ -1399,10 +1457,11 @@ export default class JitsiMeetExternalAPI extends EventEmitter {
      * Stops a recording or streaming session that is in progress.
      *
      * @param {string} mode - `file` or `stream`.
+     * @param {boolean} transcription - Whether the transcription needs to be stopped.
      * @returns {void}
      */
-    stopRecording(mode) {
-        this.executeCommand('stopRecording', mode);
+    stopRecording(mode, transcription) {
+        this.executeCommand('stopRecording', mode, transcription);
     }
 
     /**

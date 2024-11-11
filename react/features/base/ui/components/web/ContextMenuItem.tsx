@@ -85,7 +85,7 @@ export interface IProps {
      * If no onClick handler is provided, we assume the context menu item is
      * not interactive and no role will be set.
      */
-    role?: 'tab' | 'button';
+    role?: 'tab' | 'button' | 'menuitem';
 
     /**
      * Whether the item is marked as selected.
@@ -143,6 +143,24 @@ const useStyles = makeStyles()(theme => {
 
         contextMenuItemDisabled: {
             pointerEvents: 'none'
+        },
+
+        contextMenuItemIconDisabled: {
+            '& svg': {
+                fill: `${theme.palette.text03} !important`
+            }
+        },
+
+        contextMenuItemLabelDisabled: {
+            color: theme.palette.text03,
+
+            '&:hover': {
+                background: 'none'
+            },
+
+            '& svg': {
+                fill: theme.palette.text03
+            }
         },
 
         contextMenuItemDrawer: {
@@ -233,13 +251,15 @@ const ContextMenuItem = ({
             tabIndex = { onClick ? tabIndex : undefined }>
             {customIcon ? customIcon
                 : icon && <Icon
-                    className = { styles.contextMenuItemIcon }
+                    className = { cx(styles.contextMenuItemIcon,
+                        disabled && styles.contextMenuItemIconDisabled) }
                     size = { 20 }
                     src = { icon } />}
             {text && (
                 <TextWithOverflow
                     className = { cx(styles.text,
                     _overflowDrawer && styles.drawerText,
+                    disabled && styles.contextMenuItemLabelDisabled,
                     textClassName) }
                     overflowType = { overflowType } >
                     {text}

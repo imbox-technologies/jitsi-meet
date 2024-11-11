@@ -26,7 +26,7 @@ import { RoomList } from '../breakout-rooms/components/web/RoomList';
 import { FooterContextMenu } from './FooterContextMenu';
 import LobbyParticipants from './LobbyParticipants';
 import MeetingParticipants from './MeetingParticipants';
-
+import VisitorsList from './VisitorsList';
 
 const useStyles = makeStyles()(theme => {
     return {
@@ -48,7 +48,7 @@ const useStyles = makeStyles()(theme => {
             },
 
             '@media (max-width: 580px)': {
-                height: '100vh',
+                height: '100dvh',
                 position: 'fixed',
                 left: 0,
                 right: 0,
@@ -171,6 +171,8 @@ const ParticipantsPane = () => {
                     onClick = { onClosePane } />
             </div>
             <div className = { classes.container }>
+                <VisitorsList />
+                <br className = { classes.antiCollapse } />
                 <LobbyParticipants />
                 <br className = { classes.antiCollapse } />
                 <MeetingParticipants

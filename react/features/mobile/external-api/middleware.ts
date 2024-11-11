@@ -1,6 +1,6 @@
 /* eslint-disable lines-around-comment */
 
-import debounce from 'lodash/debounce';
+import { debounce } from 'lodash-es';
 import { NativeEventEmitter, NativeModules } from 'react-native';
 import { AnyAction } from 'redux';
 
@@ -16,6 +16,7 @@ import {
     CONFERENCE_JOINED,
     CONFERENCE_LEFT,
     CONFERENCE_WILL_JOIN,
+    ENDPOINT_MESSAGE_RECEIVED,
     SET_ROOM
 } from '../../base/conference/actionTypes';
 import { JITSI_CONFERENCE_URL_KEY } from '../../base/conference/constants';
@@ -52,6 +53,7 @@ import { ITrack } from '../../base/tracks/types';
 import { CLOSE_CHAT, OPEN_CHAT } from '../../chat/actionTypes';
 import { closeChat, openChat, sendMessage, setPrivateMessageRecipient } from '../../chat/actions.native';
 import { setRequestingSubtitles } from '../../subtitles/actions.any';
+import { CUSTOM_OVERFLOW_MENU_BUTTON_PRESSED } from '../../toolbox/actionTypes';
 import { muteLocal } from '../../video-menu/actions.native';
 import { ENTER_PICTURE_IN_PICTURE } from '../picture-in-picture/actionTypes';
 // @ts-ignore
@@ -88,7 +90,7 @@ const CONFERENCE_TERMINATED = 'CONFERENCE_TERMINATED';
 const ENDPOINT_TEXT_MESSAGE_RECEIVED = 'ENDPOINT_TEXT_MESSAGE_RECEIVED';
 
 /**
- * Event which will be emitted on the native side to indicate a participant togggles
+ * Event which will be emitted on the native side to indicate a participant toggles
  * the screen share.
  */
 const SCREEN_SHARE_TOGGLED = 'SCREEN_SHARE_TOGGLED';
@@ -187,9 +189,39 @@ externalAPIEnabled && MiddlewareRegistry.register(store => next => action => {
             break;
         }
 
-        case ENTER_PICTURE_IN_PICTURE:
-            sendEvent(store, type, /* data */ {});
-            break;
+    case CUSTOM_OVERFLOW_MENU_BUTTON_PRESSED: {
+        const { id, text } = action;
+
+        sendEvent(
+            store,
+            CUSTOM_OVERFLOW_MENU_BUTTON_PRESSED,
+            {
+                id,
+                text
+            });
+
+        break;
+    }
+
+    case ENDPOINT_MESSAGE_RECEIVED: {
+        const { participant, data } = action;
+
+        if (data?.name === ENDPOINT_TEXT_MESSAGE_NAME) {
+            sendEvent(
+                store,
+                ENDPOINT_TEXT_MESSAGE_RECEIVED,
+                /* data */ {
+                    message: data.text,
+                    senderId: participant.getId()
+                });
+        }
+
+        break;
+    }
+
+    case ENTER_PICTURE_IN_PICTURE:
+        sendEvent(store, type, /* data */ {});
+        break;
 
         case OPEN_CHAT:
         case CLOSE_CHAT: {
@@ -387,9 +419,10 @@ function _registerForNativeEvents(store: IStore) {
         dispatch(sendMessage(message));
     });
 
-    eventEmitter.addListener(ExternalAPI.SET_CLOSED_CAPTIONS_ENABLED, ({ enabled }: any) => {
-        dispatch(setRequestingSubtitles(enabled));
-    });
+    eventEmitter.addListener(ExternalAPI.SET_CLOSED_CAPTIONS_ENABLED,
+        ({ enabled, displaySubtitles, language }: any) => {
+            dispatch(setRequestingSubtitles(enabled, displaySubtitles, language));
+        });
 
     eventEmitter.addListener(ExternalAPI.TOGGLE_CAMERA, () => {
         dispatch(toggleCameraFacingMode());
@@ -426,24 +459,6 @@ function _unregisterForNativeEvents() {
  */
 function _registerForEndpointTextMessages(store: IStore) {
     const conference = getCurrentConference(store.getState());
-
-    conference?.on(
-        JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED,
-        (...args: any[]) => {
-            if (args && args.length >= 2) {
-                const [sender, eventData] = args;
-
-                if (eventData.name === ENDPOINT_TEXT_MESSAGE_NAME) {
-                    sendEvent(
-                        store,
-                        ENDPOINT_TEXT_MESSAGE_RECEIVED,
-                        /* data */ {
-                            message: eventData.text,
-                            senderId: sender._id
-                        });
-                }
-            }
-        });
 
     conference?.on(
         JitsiConferenceEvents.MESSAGE_RECEIVED,

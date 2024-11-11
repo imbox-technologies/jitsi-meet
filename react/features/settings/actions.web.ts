@@ -12,6 +12,7 @@ import { hangup } from '../base/connection/actions.web';
 import { openDialog } from '../base/dialog/actions';
 import i18next from '../base/i18n/i18next';
 import { browser } from '../base/lib-jitsi-meet';
+import { getNormalizedDisplayName } from '../base/participants/functions';
 import { updateSettings } from '../base/settings/actions';
 import { getLocalVideoTrack } from '../base/tracks/functions.web';
 import { appendURLHashParam } from '../base/util/uri';
@@ -191,7 +192,7 @@ export function submitProfileTab(newState: any) {
         const currentState = getProfileTabProps(getState());
 
         if (newState.displayName !== currentState.displayName) {
-            APP.conference.changeLocalDisplayName(newState.displayName);
+            dispatch(updateSettings({ displayName: getNormalizedDisplayName(newState.displayName) }));
         }
 
         if (newState.email !== currentState.email) {
@@ -303,6 +304,7 @@ export function submitVirtualBackgroundTab(newState: any, isCancel = false) {
     return async (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
         const state = getState();
         const track = getLocalVideoTrack(state['features/base/tracks'])?.jitsiTrack;
+        const { localFlipX } = state['features/base/settings'];
 
         if (newState.options?.selectedThumbnail) {
             await dispatch(toggleBackgroundEffect(newState.options, track));
@@ -310,7 +312,7 @@ export function submitVirtualBackgroundTab(newState: any, isCancel = false) {
             if (!isCancel) {
                 // Set x scale to default value.
                 dispatch(updateSettings({
-                    localFlipX: true
+                    localFlipX
                 }));
 
                 virtualBackgroundLogger.info(`Virtual background type: '${

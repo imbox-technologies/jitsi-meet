@@ -105,11 +105,12 @@ export function getVideoDeviceSelectionDialogProps(stateful: IStateful, isDispla
     const inputDeviceChangeSupported = JitsiMeetJS.mediaDevices.isDeviceChangeAvailable('input');
     const userSelectedCamera = getUserSelectedCameraDeviceId(state);
     const { localFlipX } = state['features/base/settings'];
+    const { disableLocalVideoFlip } = state['features/base/config'];
     const hideAdditionalSettings = isPrejoinPageVisible(state) || isDisplayedOnWelcomePage;
     const framerate = state['features/screen-share'].captureFrameRate ?? SS_DEFAULT_FRAME_RATE;
 
     let disableVideoInputSelect = !inputDeviceChangeSupported;
-    let selectedVideoInputId = settings.cameraDeviceId;
+    let selectedVideoInputId = settings.cameraDeviceId || userSelectedCamera;
 
     // audio input change will be a problem only when we are in a
     // conference and this is not supported, when we open device selection on
@@ -127,6 +128,7 @@ export function getVideoDeviceSelectionDialogProps(stateful: IStateful, isDispla
         desktopShareFramerates: SS_SUPPORTED_FRAMERATES,
         disableDeviceChange: !JitsiMeetJS.mediaDevices.isDeviceChangeAvailable(),
         disableVideoInputSelect,
+        disableLocalVideoFlip,
         hasVideoPermission: permissions.video,
         hideAdditionalSettings,
         hideVideoInputPreview: !inputDeviceChangeSupported || disablePreviews,
@@ -180,8 +182,8 @@ export function processExternalDeviceRequest( // eslint-disable-line max-params
                 };
                 const currentlyUsedDeviceIds = new Set([
                     getAudioOutputDeviceId(),
-                    settings.micDeviceId,
-                    settings.cameraDeviceId
+                    settings.micDeviceId ?? getUserSelectedMicDeviceId(state),
+                    settings.cameraDeviceId ?? getUserSelectedCameraDeviceId(state)
                 ]);
 
                 devices.forEach(device => {

@@ -41,6 +41,7 @@ import {
 import { LOCAL_PARTICIPANT_DEFAULT_ID } from '../../react/features/base/participants/constants';
 import {
     getLocalParticipant,
+    getNormalizedDisplayName,
     getParticipantById,
     getScreenshareParticipantIds,
     getVirtualScreenshareParticipantByOwnerId,
@@ -76,6 +77,7 @@ import { setMediaEncryptionKey, toggleE2EE } from '../../react/features/e2ee/act
 import {
     addStageParticipant,
     resizeFilmStrip,
+    setFilmstripVisible,
     setVolume,
     togglePinStageParticipant
 } from '../../react/features/filmstrip/actions.web';
@@ -98,7 +100,7 @@ import {
 } from '../../react/features/participants-pane/actions';
 import { getParticipantsPaneOpen, isForceMuted } from '../../react/features/participants-pane/functions';
 import { startLocalVideoRecording, stopLocalVideoRecording } from '../../react/features/recording/actions.any';
-import { RECORDING_TYPES } from '../../react/features/recording/constants';
+import { RECORDING_METADATA_ID, RECORDING_TYPES } from '../../react/features/recording/constants';
 import { getActiveSession, supportsLocalRecording } from '../../react/features/recording/functions';
 import { startAudioScreenShareFlow, startScreenShareFlow } from '../../react/features/screen-share/actions';
 import { isScreenAudioSupported } from '../../react/features/screen-share/functions';
@@ -113,7 +115,7 @@ import { isAudioMuteButtonDisabled } from '../../react/features/toolbox/function
 import { setTileView, toggleTileView } from '../../react/features/video-layout/actions.any';
 import { muteAllParticipants } from '../../react/features/video-menu/actions';
 import { setVideoQuality } from '../../react/features/video-quality/actions';
-import { toggleWhiteboard } from '../../react/features/whiteboard/actions.any';
+import { toggleWhiteboard } from '../../react/features/whiteboard/actions.web';
 import { getJitsiMeetTransport } from '../transport';
 
 import {
@@ -199,7 +201,7 @@ function initCommands() {
         },
         'display-name': displayName => {
             sendAnalytics(createApiEvent('display.name.changed'));
-            APP.conference.changeLocalDisplayName(displayName);
+            APP.store.dispatch(updateSettings({ displayName: getNormalizedDisplayName(displayName) }));
         },
         'local-subject': localSubject => {
             sendAnalytics(createApiEvent('local.subject.changed'));
@@ -244,8 +246,6 @@ function initCommands() {
             }
         },
         'pin-participant': (id, videoType) => {
-            logger.debug('Pin participant command received');
-
             const state = APP.store.getState();
 
             // if id not provided, unpin everybody.
@@ -303,7 +303,6 @@ function initCommands() {
             APP.store.dispatch(removeBreakoutRoom(breakoutRoomJid));
         },
         'resize-large-video': (width, height) => {
-            logger.debug('Resize large video command received');
             sendAnalytics(createApiEvent('largevideo.resized'));
             APP.store.dispatch(resizeLargeVideo(width, height));
         },
@@ -324,7 +323,6 @@ function initCommands() {
             APP.store.dispatch(setAssumedBandwidthBps(value));
         },
         'set-follow-me': value => {
-            logger.debug('Set follow me command received');
 
             if (value) {
                 sendAnalytics(createApiEvent('follow.me.set'));
@@ -335,7 +333,6 @@ function initCommands() {
             APP.store.dispatch(setFollowMe(value));
         },
         'set-large-video-participant': (participantId, videoType) => {
-            logger.debug('Set large video participant command received');
             const { getState, dispatch } = APP.store;
 
             if (!participantId) {
@@ -373,17 +370,17 @@ function initCommands() {
         },
         'toggle-audio': () => {
             sendAnalytics(createApiEvent('toggle-audio'));
-            logger.log('Audio toggle: API command received');
             APP.conference.toggleAudioMuted(false /* no UI */);
         },
         'toggle-video': () => {
             sendAnalytics(createApiEvent('toggle-video'));
-            logger.log('Video toggle: API command received');
             APP.conference.toggleVideoMuted(false /* no UI */, true /* ensure track */);
         },
         'toggle-film-strip': () => {
             sendAnalytics(createApiEvent('film.strip.toggled'));
-            APP.UI.toggleFilmstrip();
+            const { visible } = APP.store.getState()['features/filmstrip'];
+
+            APP.store.dispatch(setFilmstripVisible(!visible));
         },
 
         /*
@@ -473,8 +470,8 @@ function initCommands() {
         'toggle-subtitles': () => {
             APP.store.dispatch(toggleRequestingSubtitles());
         },
-        'set-subtitles': enabled => {
-            APP.store.dispatch(setRequestingSubtitles(enabled));
+        'set-subtitles': (enabled, displaySubtitles, language) => {
+            APP.store.dispatch(setRequestingSubtitles(enabled, displaySubtitles, language));
         },
         'toggle-tile-view': () => {
             sendAnalytics(createApiEvent('tile-view.toggled'));
@@ -492,12 +489,13 @@ function initCommands() {
             sendAnalytics(createApiEvent('email.changed'));
             APP.conference.changeLocalEmail(email);
         },
-        'avatar-url': avatarUrl => {
+        'avatar-url': avatarUrl => { // @deprecated
+            console.warn('Using command avatarUrl is deprecated. Use context.user.avatar in the jwt.');
+
             sendAnalytics(createApiEvent('avatar.url.changed'));
             APP.conference.changeLocalAvatarUrl(avatarUrl);
         },
         'send-chat-message': (message, to, ignorePrivacy = false) => {
-            logger.debug('Send chat message command received');
             if (to) {
                 const participant = getParticipantById(APP.store.getState(), to);
 
@@ -515,7 +513,6 @@ function initCommands() {
             APP.store.dispatch(sendMessage(message, ignorePrivacy));
         },
         'send-endpoint-text-message': (to, text) => {
-            logger.debug('Send endpoint message command received');
             try {
                 APP.conference.sendEndpointMessage(to, {
                     name: ENDPOINT_TEXT_MESSAGE_NAME,
@@ -538,25 +535,19 @@ function initCommands() {
             });
         },
         'overwrite-names': participantList => {
-            logger.debug('Overwrite names command received');
-
             APP.store.dispatch(overwriteParticipantsNames(participantList));
         },
         'toggle-e2ee': enabled => {
-            logger.debug('Toggle E2EE key command received');
             APP.store.dispatch(toggleE2EE(enabled));
         },
         'set-media-encryption-key': keyInfo => {
             APP.store.dispatch(setMediaEncryptionKey(JSON.parse(keyInfo)));
         },
         'set-video-quality': frameHeight => {
-            logger.debug('Set video quality command received');
             sendAnalytics(createApiEvent('set.video.quality'));
             APP.store.dispatch(setVideoQuality(frameHeight));
         },
-
         'start-share-video': url => {
-            logger.debug('Share video command received');
             sendAnalytics(createApiEvent('share.video.start'));
             const id = extractYoutubeIdOrURL(url);
 
@@ -564,9 +555,7 @@ function initCommands() {
                 APP.store.dispatch(playSharedVideo(id));
             }
         },
-
         'stop-share-video': () => {
-            logger.debug('Share video command received');
             sendAnalytics(createApiEvent('share.video.stop'));
             APP.store.dispatch(stopSharedVideo());
         },
@@ -641,6 +630,8 @@ function initCommands() {
          * Only applies to certain jitsi meet deploys.
          * @param { string } arg.youtubeStreamKey - The youtube stream key.
          * @param { string } arg.youtubeBroadcastID - The youtube broadcast ID.
+         * @param { Object } arg.extraMetadata - Any extra metadata params for file recording.
+         * @param { boolean } arg.transcription - Whether a transcription should be started or not.
          * @returns {void}
          */
         'start-recording': ({
@@ -651,7 +642,9 @@ function initCommands() {
             rtmpStreamKey,
             rtmpBroadcastID,
             youtubeStreamKey,
-            youtubeBroadcastID
+            youtubeBroadcastID,
+            extraMetadata = {},
+            transcription
         }) => {
             const state = APP.store.getState();
             const conference = getCurrentConference(state);
@@ -701,6 +694,7 @@ function initCommands() {
                         mode: JitsiRecordingConstants.mode.FILE,
                         appData: JSON.stringify({
                             'file_recording_metadata': {
+                                ...extraMetadata,
                                 'upload_credentials': {
                                     'service_name': RECORDING_TYPES.DROPBOX,
                                     'token': dropboxToken
@@ -713,6 +707,7 @@ function initCommands() {
                         mode: JitsiRecordingConstants.mode.FILE,
                         appData: JSON.stringify({
                             'file_recording_metadata': {
+                                ...extraMetadata,
                                 'share': shouldShare
                             }
                         })
@@ -724,25 +719,33 @@ function initCommands() {
                     mode: JitsiRecordingConstants.mode.STREAM,
                     streamId: youtubeStreamKey || rtmpStreamKey
                 };
-            } else {
-                logger.error('Invalid recording mode provided');
-
-                return;
             }
 
             if (isScreenshotCaptureEnabled(state, true, false)) {
                 APP.store.dispatch(toggleScreenshotCaptureSummary(true));
             }
-            conference.startRecording(recordingConfig);
+
+            // Start audio / video recording, if requested.
+            if (typeof recordingConfig !== 'undefined') {
+                conference.startRecording(recordingConfig);
+            }
+
+            if (transcription) {
+                APP.store.dispatch(setRequestingSubtitles(true, false, null));
+                conference.getMetadataHandler().setMetadata(RECORDING_METADATA_ID, {
+                    isTranscribingEnabled: true
+                });
+            }
         },
 
         /**
          * Stops a recording or streaming in progress.
          *
          * @param {string} mode - `local`, `file` or `stream`.
+         * @param {boolean} transcription - Whether the transcription needs to be stopped.
          * @returns {void}
          */
-        'stop-recording': mode => {
+        'stop-recording': (mode, transcription) => {
             const state = APP.store.getState();
             const conference = getCurrentConference(state);
 
@@ -750,6 +753,13 @@ function initCommands() {
                 logger.error('Conference is not defined');
 
                 return;
+            }
+
+            if (transcription) {
+                APP.store.dispatch(setRequestingSubtitles(false, false, null));
+                conference.getMetadataHandler().setMetadata(RECORDING_METADATA_ID, {
+                    isTranscribingEnabled: false
+                });
             }
 
             if (mode === 'local') {
@@ -842,6 +852,7 @@ function initCommands() {
     };
     transport.on('event', ({ data, name }) => {
         if (name && commands[name]) {
+            logger.info(`API command received: ${name}`);
             commands[name](...data);
 
             return true;
@@ -993,7 +1004,19 @@ function initCommands() {
             callback(isP2pActive(APP.store.getState()));
             break;
         }
+        case 'session-id': {
+            const { conference } = APP.store.getState()['features/base/conference'];
+
+            callback(conference?.getMeetingUniqueId() || '');
+            break;
+        }
+        case '_new_electron_screensharing_supported': {
+            callback(true);
+            break;
+        }
         default:
+            callback({ error: new Error('UnknownRequestError') });
+
             return false;
         }
 
@@ -1101,7 +1124,11 @@ class API {
         this._enabled = true;
 
         initCommands();
+
         this.notifyBrowserSupport(isSupportedBrowser());
+
+        // Let the embedder know we are ready.
+        this._sendEvent({ name: 'ready' });
     }
 
     /**
@@ -1280,6 +1307,19 @@ class API {
     }
 
     /**
+     * Notify request desktop sources.
+     *
+     * @param {Object} options - Object with the options for desktop sources.
+     * @returns {void}
+     */
+    requestDesktopSources(options) {
+        return transport.sendRequest({
+            name: '_request-desktop-sources',
+            options
+        });
+    }
+
+    /**
      * Notify external application that the video quality setting has changed.
      *
      * @param {number} videoQuality - The video quality. The number represents the maximum height of the video streams.
@@ -1300,14 +1340,14 @@ class API {
      * @returns {void}
      */
     notifyReceivedChatMessage(
-            { body, id, nick, privateMessage, ts } = {}) {
-        if (APP.conference.isLocalId(id)) {
+            { body, from, nick, privateMessage, ts } = {}) {
+        if (APP.conference.isLocalId(from)) {
             return;
         }
 
         this._sendEvent({
             name: 'incoming-message',
-            from: id,
+            from,
             message: body,
             nick,
             privateMessage,
@@ -1776,9 +1816,9 @@ class API {
      * Notify external application of a participant, remote or local, being
      * removed from the conference by another participant.
      *
-     * @param {string} kicked - The ID of the participant removed from the
+     * @param {Object} kicked - The participant removed from the
      * conference.
-     * @param {string} kicker - The ID of the participant that removed the
+     * @param {Object} kicker - The participant that removed the
      * other participant.
      * @returns {void}
      */
@@ -1896,14 +1936,16 @@ class API {
      * @param {boolean} on - True if recording is on, false otherwise.
      * @param {string} mode - Stream or file or local.
      * @param {string} error - Error type or null if success.
+     * @param {boolean} transcription - True if a transcription is being recorded, false otherwise.
      * @returns {void}
      */
-    notifyRecordingStatusChanged(on, mode, error) {
+    notifyRecordingStatusChanged(on, mode, error, transcription) {
         this._sendEvent({
             name: 'recording-status-changed',
             on,
             mode,
-            error
+            error,
+            transcription
         });
     }
 
@@ -1961,6 +2003,33 @@ class API {
             name: 'toolbar-button-clicked',
             key,
             preventExecution
+        });
+    }
+
+    /**
+     * Notify external application (if API is enabled) that transcribing has started or stopped.
+     *
+     * @param {boolean} on - True if transcribing is on, false otherwise.
+     * @returns {void}
+     */
+    notifyTranscribingStatusChanged(on) {
+        this._sendEvent({
+            name: 'transcribing-status-changed',
+            on
+        });
+    }
+
+    /**
+     * Notify external application (if API is enabled) that the user received
+     * a transcription chunk.
+     *
+     * @param {Object} data - The event data.
+     * @returns {void}
+     */
+    notifyTranscriptionChunkReceived(data) {
+        this._sendEvent({
+            name: 'transcription-chunk-received',
+            data
         });
     }
 
@@ -2086,6 +2155,21 @@ class API {
             name: 'non-participant-message-received',
             id,
             message: json
+        });
+    }
+
+
+    /**
+     * Notify external application (if API is enabled) the conference
+     * start time.
+     *
+     * @param {number} timestamp - Timestamp conference was created.
+     * @returns {void}
+     */
+    notifyConferenceCreatedTimestamp(timestamp) {
+        this._sendEvent({
+            name: 'conference-created-timestamp',
+            timestamp
         });
     }
 
