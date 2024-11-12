@@ -76,7 +76,7 @@ export function appNavigate(uri?: string, options: IReloadNowOptions = {}) {
         const locationURL = new URL(location.toString());
 
         if (room) {
-            navigateRoot(screen.connecting);
+            //navigateRoot(screen.connecting);
         }
 
         dispatch(disconnect());
