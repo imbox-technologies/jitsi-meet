@@ -26,7 +26,7 @@
 #import "RNSplashScreen.h"
 #import "ScheenshareEventEmiter.h"
 
-#import <react-native-webrtc/WebRTCModuleOptions.h>
+#import "WebRTCModuleOptions.h"
 
 #if !defined(JITSI_MEET_SDK_LITE)
 #import <RNGoogleSignin/RNGoogleSignin.h>
