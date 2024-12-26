@@ -46,6 +46,12 @@ class AudioDeviceHandlerGeneric implements
     private AudioModeModule module;
 
     /**
+     * Constant defining a Hearing Aid. Only available on API level >= 28.
+     * The value of: AudioDeviceInfo.TYPE_HEARING_AID
+     */
+    private static final int TYPE_HEARING_AID = 23;
+
+    /**
      * Constant defining a USB headset. Only available on API level >= 26.
      * The value of: AudioDeviceInfo.TYPE_USB_HEADSET
      */
@@ -81,10 +87,12 @@ class AudioDeviceHandlerGeneric implements
                         devices.add(AudioModeModule.DEVICE_EARPIECE);
                         break;
                     case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
+                    case AudioDeviceInfo.TYPE_HDMI:
                         devices.add(AudioModeModule.DEVICE_SPEAKER);
                         break;
                     case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
                     case AudioDeviceInfo.TYPE_WIRED_HEADSET:
+                    case TYPE_HEARING_AID:
                     case TYPE_USB_HEADSET:
                         devices.add(AudioModeModule.DEVICE_HEADPHONES);
                         break;
