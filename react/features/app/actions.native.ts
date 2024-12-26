@@ -92,7 +92,7 @@ export function appNavigate(uri?: string, options: IReloadNowOptions = {}) {
                     return;
                 }
             } else {
-                navigateRoot(screen.connecting);
+                //navigateRoot(screen.connecting);
             }
         }
 
