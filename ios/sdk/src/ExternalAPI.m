@@ -27,11 +27,8 @@ static NSString * const closeChatAction = @"org.jitsi.meet.CLOSE_CHAT";
 static NSString * const sendChatMessageAction = @"org.jitsi.meet.SEND_CHAT_MESSAGE";
 static NSString * const setVideoMutedAction = @"org.jitsi.meet.SET_VIDEO_MUTED";
 static NSString * const setClosedCaptionsEnabledAction = @"org.jitsi.meet.SET_CLOSED_CAPTIONS_ENABLED";
-<<<<<<< HEAD
 static NSString * const setAudioDeviceAction = @"org.jitsi.meet.SET_AUDIO_DEVICE";
-=======
 static NSString * const toggleCameraAction = @"org.jitsi.meet.TOGGLE_CAMERA";
->>>>>>> 18606a4c3c6cf13109fa9772ddd64dad05b11305
 
 @implementation ExternalAPI
 
