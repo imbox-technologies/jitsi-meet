@@ -23,7 +23,6 @@
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		2681BB562C7A0B42CFBA6719 /* libPods-JitsiMeet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D6152FF9E9F7B0E86F70A21D /* libPods-JitsiMeet.a */; };
 		361974E2A13624D7735D619D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5C1BE20ECD5DEEB48FED90B5 /* PrivacyInfo.xcprivacy */; };
 		4E90F9402632D1AB001102D4 /* Atomic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E90F93F2632D1AB001102D4 /* Atomic.swift */; };
 		4EB06024260E026600F524C5 /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4EC49B8625BED71300E76218 /* ReplayKit.framework */; };
@@ -39,6 +38,7 @@
 		DED016F228ECBC9D009D5E8D /* WebRTC.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DED016F028ECBC9D009D5E8D /* WebRTC.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E588011722789D43008B0561 /* JitsiMeetContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58801132278944E008B0561 /* JitsiMeetContext.swift */; };
 		E5C97B63227A1EB400199214 /* JitsiMeetCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5C97B62227A1EB400199214 /* JitsiMeetCommands.swift */; };
+		F0E5B7D07F3C048BB8F06588 /* Pods_JitsiMeet.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DC63CB98C6FB1879646CDCD /* Pods_JitsiMeet.framework */; };
 		FD572B9827EDF32300A800FB /* GiphyUISDK.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = FD572B9727EDF32300A800FB /* GiphyUISDK.xcframework */; };
 		FD572B9927EDF32300A800FB /* GiphyUISDK.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FD572B9727EDF32300A800FB /* GiphyUISDK.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -154,9 +154,9 @@
 		4EC49B8625BED71300E76218 /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
 		5C1BE20ECD5DEEB48FED90B5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6132EF172BDFF13200BBE14D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = ../PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		6DC63CB98C6FB1879646CDCD /* Pods_JitsiMeet.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_JitsiMeet.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		756FCE06C08D9B947653C98A /* Pods-JitsiMeet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JitsiMeet.debug.xcconfig"; path = "Target Support Files/Pods-JitsiMeet/Pods-JitsiMeet.debug.xcconfig"; sourceTree = "<group>"; };
 		B3B083EB1D4955FF0069CEE7 /* app.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = app.entitlements; sourceTree = "<group>"; };
-		D6152FF9E9F7B0E86F70A21D /* libPods-JitsiMeet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-JitsiMeet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE050388256E904600DEE3A5 /* WebRTC.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = WebRTC.xcframework; path = "../../node_modules/react-native-webrtc/apple/WebRTC.xcframework"; sourceTree = "<group>"; };
 		DE4C455F21DE1E4E00EA0709 /* FIRUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FIRUtilities.m; sourceTree = "<group>"; };
 		DE4C456021DE1E4E00EA0709 /* FIRUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FIRUtilities.h; sourceTree = "<group>"; };
@@ -183,7 +183,7 @@
 				DED016F128ECBC9D009D5E8D /* WebRTC.xcframework in Frameworks */,
 				DEA9F289258A6EA800D4CD74 /* JitsiMeetSDK.framework in Frameworks */,
 				FD572B9827EDF32300A800FB /* GiphyUISDK.xcframework in Frameworks */,
-				2681BB562C7A0B42CFBA6719 /* libPods-JitsiMeet.a in Frameworks */,
+				F0E5B7D07F3C048BB8F06588 /* Pods_JitsiMeet.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,7 +216,7 @@
 				DEFDBBDB25656E3B00344B23 /* WebRTC.xcframework */,
 				0BD6B4361EF82A6B00D1F4CD /* WebRTC.framework */,
 				4EC49B8625BED71300E76218 /* ReplayKit.framework */,
-				D6152FF9E9F7B0E86F70A21D /* libPods-JitsiMeet.a */,
+				6DC63CB98C6FB1879646CDCD /* Pods_JitsiMeet.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -510,7 +510,7 @@
 			files = (
 			);
 			inputPaths = (
-				"$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH",
+				$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH,
 			);
 			name = "Adjust ATS";
 			outputPaths = (
@@ -543,7 +543,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$PROJECT_DIR/app.entitlements",
+				$PROJECT_DIR/app.entitlements,
 			);
 			name = "Update App Entitlements";
 			outputFileListPaths = (
@@ -585,7 +585,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH",
+				$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH,
 			);
 			name = "Setup Google reverse URL handler";
 			outputFileListPaths = (
@@ -605,7 +605,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH",
+				$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH,
 			);
 			name = "Setup Dropbox";
 			outputFileListPaths = (
@@ -1055,6 +1055,14 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD = "";
@@ -1122,6 +1130,14 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					" ${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD = "";
