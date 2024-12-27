@@ -8,6 +8,7 @@
 -- This module depends on mod_persistent_lobby.
 local um_is_admin = require 'core.usermanager'.is_admin;
 local jid = require 'util.jid';
+local is_healthcheck_room = module:require 'util'.is_healthcheck_room;
 
 local disable_auto_owners = module:get_option_boolean('wait_for_host_disable_auto_owners', false);
 
@@ -47,7 +48,7 @@ module:hook('muc-occupant-pre-join', function (event)
 
     -- we ignore jicofo as we want it to join the room or if the room has already seen its
     -- authenticated host
-    if is_admin(occupant.bare_jid) or room.has_host then
+    if is_admin(occupant.bare_jid) or is_healthcheck_room(room.jid) or room.has_host then
         return;
     end
 
@@ -70,6 +71,7 @@ module:hook('muc-occupant-pre-join', function (event)
             module:log('info', 'Host %s arrived in %s.', occupant.bare_jid, room.jid);
             audit_logger('room_jid:%s created_by:%s', room.jid,
                 session.jitsi_meet_context_user and session.jitsi_meet_context_user.id or 'nil');
+            module:fire_event('room_host_arrived', room.jid, session);
             lobby_host:fire_event('destroy-lobby-room', {
                 room = room,
                 newjid = room.jid,

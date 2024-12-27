@@ -503,7 +503,6 @@ DEPENDENCIES:
   - Firebase/DynamicLinks (~> 8.0)
   - "giphy-react-native-sdk (from `../node_modules/@giphy/react-native-sdk`)"
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
-  - JitsiWebRTC (~> 111.0.0)
   - ObjectiveDropboxOfficial (= 6.2.3)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
@@ -722,7 +721,7 @@ SPEC CHECKSUMS:
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
   Giphy: 6b5f6986c8df4f71e01a8ef86595f426b3439fb5
   giphy-react-native-sdk: fcda9639f8ca2cc47e0517b6ef11c19359db5f5a
-  glog: 3d02b25ca00c2d456734d0bcff864cbc62f6ae1a
+  glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   GoogleAppMeasurement: 4c19f031220c72464d460c9daa1fb5d1acce958e
   GoogleDataTransport: 54dee9d48d14580407f8f5fbf2f496e92437a2f2
   GoogleSignIn: b232380cf495a429b8095d3178a8d5855b42e842
@@ -787,6 +786,6 @@ SPEC CHECKSUMS:
   RNWatch: fd30ca40a5b5ef58dcbc195638e68219bc455236
   Yoga: 7f5ad94937ba3fc58c151ad1b7bbada2c275b28e
 
-PODFILE CHECKSUM: e3579df5272b8b697c9fdc0e55aa0845b189c4dd
+PODFILE CHECKSUM: 90720aee51cf2cab2e12611a28dbf55a688e969c
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.16.2

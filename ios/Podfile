@@ -4,8 +4,6 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 platform :ios, '12.4'
 workspace 'jitsi-meet'
 
-use_frameworks! :linkage => :static
-
 install! 'cocoapods', :deterministic_uuids => false
 
 production = ENV["PRODUCTION"] == "1"
@@ -48,7 +46,6 @@ target 'JitsiMeetSDK' do
 
   pod 'CocoaLumberjack', '3.7.2'
   pod 'ObjectiveDropboxOfficial', '6.2.3'
-  pod 'JitsiWebRTC', '~> 111.0.0'
 end
 
 target 'JitsiMeetSDKLite' do
@@ -88,6 +85,7 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['SUPPORTS_MACCATALYST'] = 'NO'
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.4'
+      config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -no-verify-emitted-module-interface'
     end
   end
 end
