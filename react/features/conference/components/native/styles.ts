@@ -3,7 +3,7 @@ import BaseTheme from '../../../base/ui/components/BaseTheme.native';
 export const INSECURE_ROOM_NAME_LABEL_COLOR = BaseTheme.palette.actionDanger;
 
 const TITLE_BAR_BUTTON_SIZE = 24;
-
+const ICON_BUTTON_PIP_SIZE = 32;
 
 /**
  * The styles of the safe area view that contains the title bar.
@@ -68,7 +68,7 @@ export default {
         iconStyle: {
             color: BaseTheme.palette.icon01,
             padding: 12,
-            fontSize: TITLE_BAR_BUTTON_SIZE
+            fontSize: TITLE_BAR_BUTTON_SIZE,
         },
         underlayColor: 'transparent'
     },
