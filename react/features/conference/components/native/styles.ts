@@ -99,7 +99,7 @@ export default {
         iconStyle: {
             color: BaseTheme.palette.icon01,
             padding: 12,
-            fontSize: TITLE_BAR_BUTTON_SIZE
+            fontSize: ICON_BUTTON_PIP_SIZE
         },
         underlayColor: 'transparent'
     },
