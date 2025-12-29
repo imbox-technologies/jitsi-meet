@@ -31,6 +31,12 @@ package org.jitsi.meet.sdk;
  */
 public interface TelecomAudioRouteHandler {
     
+    // Device type constants (matching AudioModeModule)
+    String DEVICE_BLUETOOTH = "BLUETOOTH";
+    String DEVICE_EARPIECE = "EARPIECE";
+    String DEVICE_HEADPHONES = "HEADPHONES";
+    String DEVICE_SPEAKER = "SPEAKER";
+    
     /**
      * Checks if Telecom is currently controlling audio routing.
      * This should return true when there's an active Telecom Connection
@@ -44,9 +50,9 @@ public interface TelecomAudioRouteHandler {
      * Sets the audio route through Telecom.
      * This should call Connection.setAudioRoute() on the active connection.
      *
-     * @param useSpeaker true to route audio to speaker, false for earpiece
+     * @param device the device type: DEVICE_SPEAKER, DEVICE_EARPIECE, DEVICE_BLUETOOTH, or DEVICE_HEADPHONES
      * @return true if the route was changed successfully, false otherwise
      */
-    boolean setAudioRoute(boolean useSpeaker);
+    boolean setAudioRoute(String device);
 }
 
