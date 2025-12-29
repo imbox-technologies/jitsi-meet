@@ -96,6 +96,45 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
     }
 
     /**
+     * Static method to enable or disable ConnectionService usage for audio routing.
+     * This is useful when the host app has its own ConnectionService integration
+     * and doesn't want Jitsi to manage audio routing through Telecom.
+     *
+     * Call this before joining a conference to ensure correct audio handler is used.
+     *
+     * @param use true to use ConnectionService for audio routing (default on Android 8+),
+     *            false to use generic AudioManager-based routing.
+     */
+    public static void setUseConnectionServiceStatic(boolean use) {
+        JitsiMeetLogger.i(TAG + " setUseConnectionServiceStatic: " + use);
+        useConnectionService_ = use;
+    }
+
+    /**
+     * Handler for routing audio through host app's Telecom Connection.
+     */
+    private static TelecomAudioRouteHandler telecomAudioRouteHandler;
+
+    /**
+     * Sets a handler for routing audio through Telecom.
+     * Use this when your app has its own ConnectionService and Telecom controls audio routing.
+     *
+     * @param handler the handler to use, or null to disable
+     */
+    public static void setTelecomAudioRouteHandler(TelecomAudioRouteHandler handler) {
+        telecomAudioRouteHandler = handler;
+        JitsiMeetLogger.i(TAG + " TelecomAudioRouteHandler set: " + (handler != null));
+    }
+
+    /**
+     * Gets the current Telecom audio route handler.
+     * @return the handler, or null if not set
+     */
+    static TelecomAudioRouteHandler getTelecomAudioRouteHandler() {
+        return telecomAudioRouteHandler;
+    }
+
+    /**
      * {@link AudioManager} instance used to interact with the Android audio
      * subsystem.
      */

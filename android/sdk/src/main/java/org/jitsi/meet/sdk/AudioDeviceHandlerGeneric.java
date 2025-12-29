@@ -206,12 +206,34 @@ public class AudioDeviceHandlerGeneric implements
     @Override
     public void setAudioRoute(String device) {
         JitsiMeetLogger.i(TAG + " Set audio route: " + device);
+        boolean isSpeaker = device.equals(AudioModeModule.DEVICE_SPEAKER);
 
-        // Turn speaker on / off
-        audioManager.setSpeakerphoneOn(device.equals(AudioModeModule.DEVICE_SPEAKER));
+        // Try to use host app's Telecom-based audio routing if available.
+        // This is needed because when Telecom has an active connection, AudioManager.setSpeakerphoneOn() is ignored.
+        boolean usedTelecom = trySetAudioRouteViaTelecom(isSpeaker);
+        
+        if (!usedTelecom) {
+            // Fall back to standard AudioManager-based routing
+            audioManager.setSpeakerphoneOn(isSpeaker);
+        }
 
         // Turn bluetooth on / off
         setBluetoothAudioRoute(device.equals(AudioModeModule.DEVICE_BLUETOOTH));
+    }
+
+    /**
+     * Tries to set audio route via host app's Telecom Connection.
+     * This is needed when the host app has its own ConnectionService and Telecom controls audio.
+     *
+     * @param useSpeaker true to route to speaker, false for earpiece
+     * @return true if Telecom was used, false otherwise
+     */
+    private boolean trySetAudioRouteViaTelecom(boolean useSpeaker) {
+        TelecomAudioRouteHandler handler = AudioModeModule.getTelecomAudioRouteHandler();
+        if (handler != null && handler.isTelecomControllingAudio()) {
+            return handler.setAudioRoute(useSpeaker);
+        }
+        return false;
     }
 
     @Override
