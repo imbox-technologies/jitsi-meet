@@ -299,7 +299,10 @@ function _visitNode(node, callback) {
     //
     // React Native's timers won't run while the app is in the background, this
     // is a known limitation. Replace them with a background-friendly alternative.
-    if (Platform.OS === 'android') {
+    // On iOS, the proximity sensor also triggers RCTTiming's "background" mode
+    // (see RCTTiming.mm proximityChanged), freezing setTimeout/setInterval.
+    // BackgroundTimer uses dispatch_after which fires regardless of screen state.
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
         global.clearTimeout = BackgroundTimer.clearTimeout.bind(BackgroundTimer);
         global.clearInterval = BackgroundTimer.clearInterval.bind(BackgroundTimer);
         global.setInterval = BackgroundTimer.setInterval.bind(BackgroundTimer);

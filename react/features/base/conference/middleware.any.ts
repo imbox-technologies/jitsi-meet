@@ -24,6 +24,8 @@ import { CONNECTION_ESTABLISHED, CONNECTION_FAILED } from '../connection/actionT
 import { connect, connectionDisconnected, disconnect } from '../connection/actions';
 import { validateJwt } from '../jwt/functions';
 import { JitsiConferenceErrors, JitsiConnectionErrors } from '../lib-jitsi-meet';
+import { SET_NETWORK_INFO } from '../net-info/actionTypes';
+import { STORE_NAME as NET_INFO_STORE } from '../net-info/constants';
 import { PARTICIPANT_UPDATED, PIN_PARTICIPANT } from '../participants/actionTypes';
 import { PARTICIPANT_ROLE } from '../participants/constants';
 import {
@@ -117,6 +119,9 @@ MiddlewareRegistry.register(store => next => action => {
 
     case SET_ASSUMED_BANDWIDTH_BPS:
         return _setAssumedBandwidthBps(store, next, action);
+
+    case SET_NETWORK_INFO:
+        return _oNetworkTypeChanged(store, next, action);
     }
 
     return next(action);
@@ -712,4 +717,80 @@ function _setAssumedBandwidthBps({ getState }: IStore, next: Function, action: A
     }
 
     return next(action);
+}
+
+/**
+ * Triggers a proactive session restart when the network interface switches
+ * away from WiFi (e.g. WiFi → cellular) while the device stays online.
+ * Without this, the JVB ICE agent reaches Terminated state and never accepts
+ * the new candidates that GATHER_CONTINUALLY produces on the new interface.
+ *
+ * Only triggers on WiFi → non-WiFi transitions because:
+ * - WiFi→cellular: IP changes completely, NAT mapping dies, audio breaks
+ * - cellular→WiFi: the cellular session keeps working, no restart needed
+ *
+ * Uses session-terminate with requestRestart instead of sendIceFailedNotification
+ * because Jicofo 1.0.1122 has a race condition in the ice-failed handler that
+ * causes "participant already exists" when trying to re-allocate Colibri channels.
+ */
+
+// Debounce timer for network change restart (cancels pending restart if network changes again)
+let _networkRestartTimer: ReturnType<typeof setTimeout> | null = null;
+const RESTART_DEBOUNCE_MS = 2000;
+
+function _oNetworkTypeChanged({ getState }: IStore, next: Function, action: AnyAction) {
+    const prevNetInfo = getState()[NET_INFO_STORE];
+    const prevNetworkType = prevNetInfo?.networkType;
+    const result = next(action);
+
+    const { networkType: newNetworkType, isOnline } = action;
+
+    // Cancel any pending restart from a previous network change (debounce)
+    if (_networkRestartTimer) {
+        clearTimeout(_networkRestartTimer);
+        _networkRestartTimer = null;
+    }
+
+    // Only restart when leaving WiFi — the transition that breaks ICE
+    if (isOnline
+        && prevNetworkType === 'wifi'
+        && newNetworkType
+        && newNetworkType !== 'wifi'
+        && newNetworkType !== 'none') {
+
+        const conference = getCurrentConference(getState());
+        const jvbSession = conference?.jvbJingleSession;
+
+        if (jvbSession) {
+            logger.info(`Network type changed: ${prevNetworkType} → ${newNetworkType}. `
+                + 'Scheduling proactive session restart.');
+
+            _networkRestartTimer = setTimeout(() => {
+                _networkRestartTimer = null;
+                const currentSession = conference?.jvbJingleSession;
+
+                if (currentSession) {
+                    logger.info('Terminating JVB session with requestRestart due to network change.');
+                    currentSession.terminate(
+                        () => {
+                            logger.info('Session-terminate for network change restart sent successfully.');
+                        },
+                        (error: any) => {
+                            logger.error('Session-terminate for network change restart failed:', error);
+                        },
+                        {
+                            reason: 'connectivity-error',
+                            reasonDescription: 'Network interface changed',
+                            requestRestart: true,
+                            sendSessionTerminate: true
+                        }
+                    );
+                }
+            }, RESTART_DEBOUNCE_MS);
+        }
+    } else if (prevNetworkType && newNetworkType && prevNetworkType !== newNetworkType) {
+        logger.info(`Network changed: ${prevNetworkType} → ${newNetworkType} (no restart needed).`);
+    }
+
+    return result;
 }

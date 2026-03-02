@@ -1,0 +1,11 @@
+diff --git a/node_modules/react-native-webrtc/ios/RCTWebRTC/RCTConvert+WebRTC.m b/node_modules/react-native-webrtc/ios/RCTWebRTC/RCTConvert+WebRTC.m
+--- a/node_modules/react-native-webrtc/ios/RCTWebRTC/RCTConvert+WebRTC.m
++++ b/node_modules/react-native-webrtc/ios/RCTWebRTC/RCTConvert+WebRTC.m
+@@ -84,6 +84,7 @@
+ + (nonnull RTCConfiguration *)RTCConfiguration:(id)json {
+     RTCConfiguration *config = [[RTCConfiguration alloc] init];
+     config.sdpSemantics = RTCSdpSemanticsUnifiedPlan;
++    config.continualGatheringPolicy = RTCContinualGatheringPolicyGatherContinually;
+ 
+     // Required for perfect negotiation.
+     config.enableImplicitRollback = YES;
