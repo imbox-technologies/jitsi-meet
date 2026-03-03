@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java
+index 1234567..abcdefg 100644
+--- a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java
++++ b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java
+@@ -182,6 +182,10 @@
+         PeerConnection.RTCConfiguration conf = new PeerConnection.RTCConfiguration(iceServers);
+         conf.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+
++        // Always gather ICE candidates continuously so that when the network
++        // interface changes (e.g. WiFi -> cellular) new candidates are discovered.
++        conf.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
++
+         // Required for perfect negotiation.
+         conf.enableImplicitRollback = true;
+

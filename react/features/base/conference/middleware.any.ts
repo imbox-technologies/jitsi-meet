@@ -36,6 +36,8 @@ import {
 } from '../participants/functions';
 import MiddlewareRegistry from '../redux/MiddlewareRegistry';
 import StateListenerRegistry from '../redux/StateListenerRegistry';
+import { SET_NETWORK_INFO } from '../net-info/actionTypes';
+import { STORE_NAME as NET_INFO_STORE } from '../net-info/constants';
 import { TRACK_ADDED, TRACK_REMOVED } from '../tracks/actionTypes';
 
 import {
@@ -86,6 +88,8 @@ MiddlewareRegistry.register(store => next => action => {
         return _conferenceFailed(store, next, action);
 
     case CONFERENCE_JOINED:
+        _activeConference = action.conference;
+
         return _conferenceJoined(store, next, action);
 
     case CONNECTION_ESTABLISHED:
@@ -98,6 +102,12 @@ MiddlewareRegistry.register(store => next => action => {
         return _conferenceSubjectChanged(store, next, action);
 
     case CONFERENCE_WILL_LEAVE:
+        _activeConference = null;
+        _lastOnlineNetworkType = null;
+        if (_networkRestartTimer) {
+            clearTimeout(_networkRestartTimer);
+            _networkRestartTimer = null;
+        }
         _conferenceWillLeave(store);
         break;
 
@@ -122,6 +132,9 @@ MiddlewareRegistry.register(store => next => action => {
 
     case SET_ASSUMED_BANDWIDTH_BPS:
         return _setAssumedBandwidthBps(store, next, action);
+
+    case SET_NETWORK_INFO:
+        return _oNetworkTypeChanged(store, next, action);
     }
 
     return next(action);
@@ -763,4 +776,214 @@ function _setAssumedBandwidthBps({ getState }: IStore, next: Function, action: A
     }
 
     return next(action);
+}
+
+/**
+ * Triggers a proactive session restart when the network interface crosses
+ * the WiFi/cellular boundary in either direction.
+ *
+ * Both directions need a restart because:
+ * - WiFi->cellular: IP changes completely, NAT mapping dies, audio breaks.
+ *   BOSH also accumulates errors during the offline gap and needs reset.
+ * - cellular->WiFi: The session restarted on cellular uses cellular ICE
+ *   candidates. Android drops the cellular interface ~8s after WiFi connects,
+ *   making those candidates unreachable. A restart negotiates new WiFi candidates.
+ *
+ * Uses _lastOnlineNetworkType to track the effective network interface rather
+ * than comparing with the immediate Redux state. This is necessary because
+ * on Android, a WiFi->cellular switch fires rapid intermediate events:
+ *   wifi(online) -> wifi(OFFLINE) -> none(OFFLINE) -> cellular(OFFLINE) -> cellular(online)
+ * The Redux state sees wifi->none->cellular, never a direct wifi->cellular.
+ * By remembering the last type seen while online, we correctly detect the
+ * effective wifi->cellular transition on both iOS and Android.
+ *
+ * Uses session-terminate with requestRestart so Jicofo cleanly removes the
+ * participant before re-inviting, avoiding endpoint conflicts on the bridge.
+ */
+
+// Cached reference to the active JitsiConference. We cannot rely on
+// getCurrentConference(getState()) during network transitions because
+// brief offline events on Android trigger CONFERENCE_WILL_LEAVE which
+// moves the conference to the 'leaving' state, making getCurrentConference()
+// return undefined even though the session is still alive.
+let _activeConference: any = null;
+
+// Debounce timer for network change restart
+let _networkRestartTimer: ReturnType<typeof setTimeout> | null = null;
+const RESTART_DEBOUNCE_MS = 1000;
+
+// Last network type observed while the device was online. Used to detect
+// effective interface changes across platforms (iOS fires a single event,
+// Android fires a burst of intermediate offline events).
+let _lastOnlineNetworkType: string | null = null;
+
+/**
+ * Resets the Strophe BOSH backoff state after a network change.
+ *
+ * When Android goes offline during WiFi→cellular, BOSH accumulates errors
+ * and Strophe enters cubic backoff (sends^3 * 1000ms). This means the 2nd
+ * retry waits 8 seconds, 3rd waits 27 seconds, etc. Nobody resets this
+ * when the network comes back, so our session-terminate gets stuck behind
+ * the backoff even though the network is already usable.
+ *
+ * This function resets the error counter, aborts in-flight XHRs bound to
+ * the old network interface, and resets retry counts so that Strophe
+ * immediately creates fresh HTTP connections over the new interface.
+ */
+function _resetBoshBackoff() {
+    try {
+        const bosh = _activeConference?.xmpp?.connection?._stropheConn?._proto;
+
+        if (!bosh || typeof bosh.errors !== 'number') {
+            return;
+        }
+
+        const oldErrors = bosh.errors;
+        let requestsAborted = 0;
+
+        // 1. Reset error counter to prevent premature disconnect (Strophe
+        //    disconnects after 5 errors — bosh.js _hitError line 449)
+        bosh.errors = 0;
+
+        // 2. Abort in-flight XHRs and reset retry counts.
+        //    After a network change, existing HTTP connections are bound to the
+        //    old interface (WiFi) and their responses will never arrive. Strophe
+        //    would wait SECONDARY_TIMEOUT (6s) before retrying. By aborting now,
+        //    we force Strophe to immediately create new requests over the new
+        //    interface (cellular).
+        if (Array.isArray(bosh._requests)) {
+            for (let i = 0; i < bosh._requests.length; i++) {
+                const req = bosh._requests[i];
+
+                if (req) {
+                    // Abort the XHR to kill the stale TCP connection
+                    if (req.xhr && typeof req.xhr.abort === 'function') {
+                        req.xhr.abort();
+                    }
+
+                    // Reset retry count so the recreated request has no backoff
+                    if (typeof req.sends === 'number') {
+                        req.sends = 0;
+                    }
+
+                    requestsAborted++;
+                }
+            }
+        }
+
+        if (oldErrors > 0 || requestsAborted > 0) {
+            logger.info(`Reset BOSH: errors ${oldErrors}→0, `
+                + `requests aborted: ${requestsAborted}`);
+        }
+
+        // 3. Force immediate processing — Strophe will recreate the aborted
+        //    requests with fresh TCP connections over the new network interface
+        if (typeof bosh._throttledRequestHandler === 'function') {
+            bosh._throttledRequestHandler();
+        }
+    } catch (e) {
+        logger.warn('Failed to reset BOSH backoff:', e);
+    }
+}
+
+function _oNetworkTypeChanged(_store: IStore, next: Function, action: AnyAction) {
+    const result = next(action);
+
+    const { networkType: newNetworkType, isOnline } = action;
+
+    // If offline, cancel any pending restart (can't restart without network)
+    if (!isOnline || !newNetworkType || newNetworkType === 'none') {
+        if (_networkRestartTimer) {
+            logger.info('Device went offline, cancelling pending network restart.');
+            clearTimeout(_networkRestartTimer);
+            _networkRestartTimer = null;
+        }
+
+        return result;
+    }
+
+    const previousOnlineType = _lastOnlineNetworkType;
+
+    // Skip duplicate events — Android fires multiple identical netinfo events
+    // within milliseconds. Without this guard, the second event cancels the
+    // restart timer set by the first.
+    if (previousOnlineType === newNetworkType) {
+        return result;
+    }
+
+    _lastOnlineNetworkType = newNetworkType;
+
+    // If returning to WiFi while a wifi→cellular restart is still PENDING
+    // (within debounce window), cancel it — the user switched back before the
+    // restart fired, so the original WiFi ICE session is probably still alive.
+    if (newNetworkType === 'wifi' && _networkRestartTimer) {
+        logger.info(`Network changed: ${previousOnlineType} -> wifi. Cancelling pending restart.`);
+        clearTimeout(_networkRestartTimer);
+        _networkRestartTimer = null;
+
+        return result;
+    }
+
+    // Restart when crossing the wifi/cellular boundary in either direction:
+    // - wifi→cellular: Android goes offline during the switch. BOSH accumulates
+    //   errors and enters cubic backoff. Reset BOSH and restart the session.
+    // - cellular→wifi: The JVB session (re-established on cellular after the
+    //   previous restart) uses cellular ICE candidates. When Android drops the
+    //   cellular interface (~8s after WiFi connects), those candidates become
+    //   unreachable and ICE fails. Restart the session so new ICE candidates
+    //   are negotiated on WiFi.
+    const needsRestart = previousOnlineType === 'wifi'
+        || (previousOnlineType !== null && newNetworkType === 'wifi');
+
+    if (needsRestart) {
+        // Only reset BOSH on wifi→non-wifi. During that transition, BOSH
+        // accumulates errors in the offline gap and enters cubic backoff.
+        // On cellular→wifi, BOSH is healthy — do NOT touch it.
+        if (previousOnlineType === 'wifi') {
+            _resetBoshBackoff();
+        }
+
+        const jvbSession = _activeConference?.jvbJingleSession;
+
+        logger.info(`Network type changed: ${previousOnlineType} -> ${newNetworkType}. `
+            + `activeConference=${!!_activeConference}, jvbSession=${!!jvbSession}`);
+
+        if (jvbSession) {
+            logger.info('Scheduling proactive session restart.');
+
+            // Cancel any previous timer before setting a new one
+            if (_networkRestartTimer) {
+                clearTimeout(_networkRestartTimer);
+            }
+
+            _networkRestartTimer = setTimeout(() => {
+                _networkRestartTimer = null;
+                const currentSession = _activeConference?.jvbJingleSession;
+
+                if (currentSession) {
+                    logger.info('Terminating JVB session with requestRestart due to network change.');
+                    currentSession.terminate(
+                        () => {
+                            logger.info('Session-terminate for network change restart sent successfully.');
+                        },
+                        (error: any) => {
+                            logger.error('Session-terminate for network change restart failed:', error);
+                        },
+                        {
+                            reason: 'connectivity-error',
+                            reasonDescription: 'Network interface changed',
+                            requestRestart: true,
+                            sendSessionTerminate: true
+                        }
+                    );
+                } else {
+                    logger.warn('JVB session no longer available when restart timer fired.');
+                }
+            }, RESTART_DEBOUNCE_MS);
+        }
+    } else if (previousOnlineType) {
+        logger.info(`Network changed: ${previousOnlineType} -> ${newNetworkType} (no restart needed).`);
+    }
+
+    return result;
 }
