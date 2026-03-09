@@ -1,4 +1,7 @@
+import { reloadNow } from '../app/actions.native';
 import { IStore } from '../app/types';
+import { SILENT_RELOAD_ON_ERROR } from '../base/flags/constants';
+import { getFeatureFlag } from '../base/flags/functions';
 import { JitsiConferenceErrors } from '../base/lib-jitsi-meet';
 import {
     isFatalJitsiConferenceError,
@@ -107,8 +110,14 @@ StateListenerRegistry.register(
                 ...getErrorExtraInfo(state, error)
             });
         } else if (RN_NO_RELOAD_DIALOG_ERRORS.indexOf(error.name) === -1 && typeof error.recoverable === 'undefined') {
+            const silentReload = getFeatureFlag(state, SILENT_RELOAD_ON_ERROR, false);
+
             setTimeout(() => {
-                store.dispatch(openPageReloadDialog());
+                if (silentReload) {
+                    store.dispatch(reloadNow());
+                } else {
+                    store.dispatch(openPageReloadDialog());
+                }
             }, 500);
         }
     }

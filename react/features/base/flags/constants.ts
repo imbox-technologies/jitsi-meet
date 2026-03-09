@@ -291,3 +291,10 @@ export const SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK = 'skip-root-navigation-r
  * Default: disabled (false).
  */
 export const PROXIMITY_DISABLED = 'proximity.disabled';
+
+/**
+ * Flag indicating if the SDK should automatically reload the conference
+ * on fatal errors without showing a dialog to the user.
+ * Default: disabled (false).
+ */
+export const SILENT_RELOAD_ON_ERROR = 'silent-reload-on-error.enabled';
