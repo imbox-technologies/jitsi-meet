@@ -484,13 +484,15 @@ Esto evita tener que navegar/resolver cientos de hunks de whitespace, preservand
 
 ---
 
-## 4.5. Fixes post-merge (bugs encontrados en upstream + ajustes en AndroidClient)
+## 4.5. Fixes post-merge y ajustes en AndroidClient
 
-Tras completar el merge y probar en runtime, aparecieron varios errores. Se documentan aquí porque forman parte del trabajo necesario para que el upgrade sea usable.
+Tras completar el merge y probar en runtime, aparecieron varios errores y divergencias a resolver. Se documentan aquí porque forman parte del trabajo necesario para que el upgrade sea usable.
 
-### 4.5.1. Bug upstream: `Conference.tsx` lee el reducer con clave errónea (🚨 crítico)
+> **Nota sobre procedencia de los errores**: el primero (§4.5.1) parecía inicialmente un bug de upstream pero tras investigación resultó ser un mal auto-merge de git que retuvo código obsoleto. Los demás son ajustes mandatorios en AndroidClient causados por cambios de API en el salto de RN 0.73.8 a 0.77.2 y en las deps que trae Jitsi 11.5.1.
 
-**Síntoma**: al entrar a una sala Jitsi, pantalla completamente negra. El JS de Jitsi crashea con:
+### 4.5.1. Pantalla negra al entrar a conferencia — mal auto-merge de git + divergencia consciente vs upstream
+
+**Síntoma inicial**: al entrar a una sala Jitsi, pantalla completamente negra. El JS crashea con:
 
 ```
 TypeError: Cannot read property 'appState' of undefined
@@ -498,32 +500,79 @@ TypeError: Cannot read property 'appState' of undefined
     at Connect(Component)
 ```
 
-**Causa**: `react/features/conference/components/native/Conference.tsx:576` hace destructuring de un reducer que no existe:
+**Primer diagnóstico (erróneo)**: pensé que era un typo en upstream `Conference.tsx:576` (`state['features/background']` en vez de `state['features/mobile/background']`) y que upstream tenía el bug. Estuve a punto de abrir issue a upstream con este diagnóstico.
+
+**Verificación tras las dudas del mantenedor del fork**: al comprobar `git show mobile-sdk-11.5.1:react/features/conference/components/native/Conference.tsx`, la realidad es distinta:
+
+> **En upstream `mobile-sdk-11.5.1` esa línea NO EXISTE**. La función `_mapStateToProps` no lee `appState` en absoluto.
+
+### Historia real del código upstream
+
+| Commit | Fecha | Qué hizo |
+|---|---|---|
+| Pre-oct-2024 | — | Reducer registrado como `features/background`. `Conference.tsx` lee `state['features/background']`. Consistente. |
+| `939a9a45d` (PR #15167) | 2024-10-22 | Renombra ambos lados a `features/mobile/background`. Sigue consistente. Añade uso `_reducedUI: reducedUI \|\| appState !== 'active'`. |
+| `d45c10805` (PR #15308) | 2024-11-15 | **Revierte el uso de `appState` en Conference.tsx** — elimina la lectura del reducer **y** la condición del render. Motivo explícito en el commit: *"Transitioning the app from background to foreground triggers re-renders that affect the visible remote participants, at least in tile view, by sometimes removing them from the list. There seems to be an issue related to FlatList."* El reducer se mantiene registrado (lo usan otros módulos) pero Conference.tsx deja de leerlo. |
+
+A partir de `d45c10805`, upstream `Conference.tsx` quedó (y sigue en 11.5.1 y 12.0.0):
 
 ```ts
-const { appState } = state['features/background'];  // ← typo, no existe
+function _mapStateToProps(state: IReduxState, _ownProps: any) {
+    const { isOpen } = state['features/participants-pane'];
+    // ...
+    return {
+        // ...
+        _reducedUI: reducedUI,   // ← sin modificador por appState
+        // ...
+    };
+}
 ```
 
-El reducer real está registrado como `features/mobile/background` (ver `react/features/mobile/background/reducer.ts:20`). Otros ficheros del propio Jitsi lo leen correctamente (`features/mobile/full-screen/middleware.ts:63`, `features/base/lastn/middleware.ts:36`). El typo deja `state['features/background']` como `undefined`, el destructuring lanza `TypeError`, y React renderiza el fallback (pantalla negra).
+### Cómo nuestro fork llegó al crash
 
-**Verificación**:
-- `grep -rn "'features/background'" react/` → única ocurrencia es la línea 576 de `Conference.tsx`.
-- `grep -rn "ReducerRegistry.register.*background" react/` → sólo `features/mobile/background`.
-- Bug presente también en `mobile-sdk-12.0.0`.
-- Historia en `git log` muestra que upstream ha ido y venido varias veces con esta línea (`features/background` ↔ `features/mobile/background`), el último commit la rompió.
-
-**Fix aplicado en el fork**:
+Base común del merge (mobile-sdk-10.2.1, commit `aca89c2e4`) tenía:
 
 ```ts
-// Antes (upstream buggy):
 const { appState } = state['features/background'];
-// Después:
-const { appState } = state['features/mobile/background'];
+// ...
+_reducedUI: reducedUI || appState === 'background',
 ```
 
-**Impacto en futuros merges**: el fix debe preservarse en el paso 2 (merge a `mobile-sdk-12.0.0`) porque 12.0.0 tiene el mismo bug. Añadir a la lista de customizaciones a auditar.
+Nuestro fork no tocó estas líneas. Upstream las eliminó (commit `d45c10805`, nov-2024).
 
-**Acción upstream**: reportar el issue a `jitsi/jitsi-meet` con un PR de una sola línea. Esto afecta a toda la comunidad Jitsi Meet SDK ≥ 11.5.1.
+Durante el 3-way merge de `mobile-sdk-11.5.1`, **git auto-merge retuvo las líneas obsoletas** en vez de aplicar la eliminación upstream. No las marcó como conflicto — silenciosamente las dejó en nuestro árbol. Probablemente por cambios adyacentes que confundieron el heurístico de merge.
+
+Resultado: en nuestro árbol post-merge, `Conference.tsx` leía `state['features/background']`, que tras el renombre del reducer en oct-2024 (`features/background` → `features/mobile/background`) **ya no existe** como clave de reducer. Destructuring de `undefined` → `TypeError` → pantalla negra.
+
+### Fix aplicado
+
+Cambio la clave a la actual del reducer:
+
+```ts
+-    const { appState } = state['features/background'];
++    const { appState } = state['features/mobile/background'];
+```
+
+Tras el cambio, el crash desaparece y la lógica original funciona: si la app está en background, `appState === 'background'`, y `_reducedUI` pasa a `true` → la UI de la conferencia se simplifica.
+
+### Trade-off: mantener la feature vs alinear con upstream
+
+Con el fix, nuestro fork **diverge intencionadamente de upstream** — ellos eliminaron la feature completa, nosotros la conservamos.
+
+**Por qué upstream la eliminó**: bug reproducible en tile view cuando el usuario vuelve de background a foreground — el re-render de `Conference` provoca que `FlatList` elimine algunos participantes del mosaico. Ver PR #15308.
+
+**Por qué la mantenemos**: se probó el escenario concreto (4 participantes, tile view, background 15-20 seg, vuelta a foreground) y no se reprodujo el bug de `FlatList` en nuestro entorno (React Native 0.77.2 podría haberlo mitigado; o el caso de uso imbox no lo dispara). La feature de "reducedUI en background" es marginal pero inofensiva, y conservarla mantiene el comportamiento histórico del fork (estaba en 10.2.1 y funcionaba).
+
+**Riesgo asumido**: si en producción con más participantes o en condiciones no cubiertas por el test reaparece el bug de `FlatList` (participantes desaparecen del tile view tras volver de background), la solución es eliminar la línea y el modificador del `_reducedUI`, alineándonos con upstream.
+
+### Impacto en merges futuros
+
+Al ser una divergencia consciente vs upstream, hay que **vigilar esto en el paso 2** (merge a `mobile-sdk-12.0.0`). 12.0.0 tampoco tiene la línea. El 3-way merge:
+- Base común: `mobile-sdk-11.5.1` sin la línea.
+- Nuestro fork: con la línea (fix manual aplicado).
+- Upstream 12.0.0: sin la línea.
+
+Git debería mantener nuestra versión automáticamente (solo nosotros modificamos respecto a la base). Pero conviene verificar el diff tras el merge para que no se vuelva a escurrir algo raro.
 
 ### 4.5.2. AndroidClient: `MainActivityV2.kt` firma de `requestPermissions`
 
@@ -649,7 +698,7 @@ Todas las customizaciones identificadas del fork fueron verificadas post-merge:
 | `react-native-webrtc+124.0.4.patch` | `patches/` | ✅ (misma versión webrtc, patch válido) |
 | `@giphy+js-brand+2.2.2.patch` (upstream) | `patches/` (mismo blob que 10.2.1) | ✅ |
 | `@giphy+js-analytics+4.2.0.patch` (upstream) | eliminado en 11.5.1 | ✅ (upstream lo retiró, correcto) |
-| **Fix upstream bug** `Conference.tsx:576` (post-merge) | `features/background` → `features/mobile/background` | ✅ (nuevo fix del fork) |
+| **Divergencia consciente** `Conference.tsx:576` — `appState` lectura + `reducedUI \|\| appState === 'background'` | preservado; clave del reducer corregida a `features/mobile/background`. Upstream eliminó esta feature en `d45c10805` (PR #15308) por un bug de FlatList; en nuestro entorno no se reproduce y mantenemos el comportamiento histórico del fork. Ver §4.5.1. | ⚠️ diverge vs upstream |
 
 ---
 
