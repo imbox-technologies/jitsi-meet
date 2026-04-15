@@ -21,6 +21,7 @@
 #import <WebRTC/WebRTC.h>
 
 #import "JitsiAudioSession+Private.h"
+#import "callkit/JMCallKitProxy.h"
 
 
 // Audio mode
@@ -55,6 +56,7 @@ static NSString * const kDeviceTypeUnknown    = @"UNKNOWN";
     RTCAudioSessionConfiguration *audioCallConfig;
     RTCAudioSessionConfiguration *videoCallConfig;
     RTCAudioSessionConfiguration *earpieceConfig;
+    BOOL audioDisabled;
     BOOL forceSpeaker;
     BOOL forceEarpiece;
     BOOL isSpeakerOn;
@@ -148,9 +150,36 @@ RCT_EXPORT_MODULE();
 
 #pragma mark - Exported methods
 
+RCT_EXPORT_METHOD(setDisabled:(BOOL)disabled
+                  resolve:(RCTPromiseResolveBlock)resolve
+                   reject:(RCTPromiseRejectBlock)reject) {
+    if (audioDisabled == disabled) {
+        resolve(nil);
+        return;
+    }
+
+    RCTLogInfo(@"[AudioMode] audio disabled: %d", disabled);
+
+    audioDisabled = disabled;
+    JMCallKitProxy.enabled = !disabled;
+
+    RTCAudioSession *session = JitsiAudioSession.rtcAudioSession;
+    if (disabled) {
+        [session removeDelegate:self];
+    } else {
+        [session addDelegate:self];
+    }
+    session.useManualAudio = disabled;
+}
+
 RCT_EXPORT_METHOD(setMode:(int)mode
                   resolve:(RCTPromiseResolveBlock)resolve
                    reject:(RCTPromiseRejectBlock)reject) {
+    if (audioDisabled) {
+        resolve(nil);
+        return;
+    }
+
     RCTLogInfo(@"[AudioMode] Set mode: %d", mode);
     RTCAudioSessionConfiguration *config = [self configForMode:mode];
     NSError *error;
@@ -180,6 +209,11 @@ RCT_EXPORT_METHOD(setMode:(int)mode
 RCT_EXPORT_METHOD(setAudioDevice:(NSString *)device
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
+    if (audioDisabled) {
+        resolve(nil);
+        return;
+    }
+
     RCTLogInfo(@"[AudioMode] Selected device: %@", device);
     
     RTCAudioSession *session = JitsiAudioSession.rtcAudioSession;
@@ -242,6 +276,10 @@ RCT_EXPORT_METHOD(setAudioDevice:(NSString *)device
 }
 
 RCT_EXPORT_METHOD(updateDeviceList) {
+    if (audioDisabled) {
+        return;
+    }
+
     [self notifyDevicesChanged];
 }
 

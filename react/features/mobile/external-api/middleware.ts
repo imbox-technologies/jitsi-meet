@@ -4,7 +4,7 @@ import { debounce } from 'lodash-es';
 import { NativeEventEmitter, NativeModules } from 'react-native';
 import { AnyAction } from 'redux';
 
-// @ts-expect-error
+// @ts-ignore
 import { ENDPOINT_TEXT_MESSAGE_NAME } from '../../../../modules/API/constants';
 import { appNavigate } from '../../app/actions.native';
 import { IStore } from '../../app/types';
@@ -15,6 +15,7 @@ import {
     CONFERENCE_FOCUSED,
     CONFERENCE_JOINED,
     CONFERENCE_LEFT,
+    CONFERENCE_UNIQUE_ID_SET,
     CONFERENCE_WILL_JOIN,
     ENDPOINT_MESSAGE_RECEIVED,
     SET_ROOM
@@ -26,15 +27,15 @@ import {
     isRoomValid
 } from '../../base/conference/functions';
 import { IJitsiConference } from '../../base/conference/reducer';
+import { overwriteConfig } from '../../base/config/actions';
+import { getWhitelistedJSON } from '../../base/config/functions.native';
 import { CONNECTION_DISCONNECTED } from '../../base/connection/actionTypes';
 import {
     JITSI_CONNECTION_CONFERENCE_KEY,
     JITSI_CONNECTION_URL_KEY
 } from '../../base/connection/constants';
 import { getURLWithoutParams } from '../../base/connection/utils';
-import {
-    JitsiConferenceEvents
-} from '../../base/lib-jitsi-meet';
+import { JitsiConferenceEvents, JitsiRecordingConstants } from '../../base/lib-jitsi-meet';
 import { SET_AUDIO_MUTED, SET_VIDEO_MUTED } from '../../base/media/actionTypes';
 import { toggleCameraFacingMode } from '../../base/media/actions';
 import { MEDIA_TYPE, VIDEO_TYPE } from '../../base/media/constants';
@@ -48,12 +49,19 @@ import {
 import MiddlewareRegistry from '../../base/redux/MiddlewareRegistry';
 import StateListenerRegistry from '../../base/redux/StateListenerRegistry';
 import { toggleScreensharing } from '../../base/tracks/actions.native';
+import { CAMERA_FACING_MODE_MESSAGE } from '../../base/tracks/constants';
 import { getLocalTracks, isLocalTrackMuted } from '../../base/tracks/functions.native';
 import { ITrack } from '../../base/tracks/types';
 import { CLOSE_CHAT, OPEN_CHAT } from '../../chat/actionTypes';
 import { closeChat, openChat, sendMessage, setPrivateMessageRecipient } from '../../chat/actions.native';
+import { isEnabled as isDropboxEnabled } from '../../dropbox/functions.native';
+import { hideNotification, showNotification } from '../../notifications/actions';
+import { NOTIFICATION_TIMEOUT_TYPE, NOTIFICATION_TYPE } from '../../notifications/constants';
+import { RECORDING_SESSION_UPDATED } from '../../recording/actionTypes';
+import { RECORDING_METADATA_ID, RECORDING_TYPES } from '../../recording/constants';
+import { getActiveSession } from '../../recording/functions';
 import { setRequestingSubtitles } from '../../subtitles/actions.any';
-import { CUSTOM_OVERFLOW_MENU_BUTTON_PRESSED } from '../../toolbox/actionTypes';
+import { CUSTOM_BUTTON_PRESSED } from '../../toolbox/actionTypes';
 import { muteLocal } from '../../video-menu/actions.native';
 import { ENTER_PICTURE_IN_PICTURE } from '../picture-in-picture/actionTypes';
 // @ts-ignore
@@ -63,8 +71,6 @@ import { READY_TO_CLOSE } from './actionTypes';
 import { setParticipantsWithScreenShare } from './actions';
 import { participantToParticipantInfo, sendEvent } from './functions';
 import logger from './logger';
-
-const { AudioMode } = NativeModules;
 
 /**
  * Event which will be emitted on the native side when a chat message is received
@@ -100,11 +106,16 @@ const SCREEN_SHARE_TOGGLED = 'SCREEN_SHARE_TOGGLED';
  */
 const PARTICIPANTS_INFO_RETRIEVED = 'PARTICIPANTS_INFO_RETRIEVED';
 
+/**
+ * Event which will be emitted on the native side to indicate the recording status has changed.
+ */
+const RECORDING_STATUS_CHANGED = 'RECORDING_STATUS_CHANGED';
+
 const externalAPIEnabled = isExternalAPIAvailable();
 
 let eventEmitter: any;
 
-const { ExternalAPI } = NativeModules;
+const { AudioMode, ExternalAPI } = NativeModules;
 
 if (externalAPIEnabled) {
     eventEmitter = new NativeEventEmitter(ExternalAPI);
@@ -123,79 +134,91 @@ externalAPIEnabled && MiddlewareRegistry.register(store => next => action => {
     const { type } = action;
 
     switch (type) {
-        case APP_WILL_MOUNT:
-            _registerForNativeEvents(store);
-            break;
-        case APP_WILL_UNMOUNT:
-            _unregisterForNativeEvents();
-            break;
-        case CONFERENCE_FAILED: {
-            const { error, ...data } = action;
+    case APP_WILL_MOUNT:
+        _registerForNativeEvents(store);
+        break;
+    case APP_WILL_UNMOUNT:
+        _unregisterForNativeEvents();
+        break;
+    case CONFERENCE_FAILED: {
+        const { error, ...data } = action;
 
-            // XXX Certain CONFERENCE_FAILED errors are recoverable i.e. they have
-            // prevented the user from joining a specific conference but the app may
-            // be able to eventually join the conference. For example, the app will
-            // ask the user for a password upon
-            // JitsiConferenceErrors.PASSWORD_REQUIRED and will retry joining the
-            // conference afterwards. Such errors are to not reach the native
-            // counterpart of the External API (or at least not in the
-            // fatality/finality semantics attributed to
-            // conferenceFailed:/onConferenceFailed).
-            if (!error.recoverable) {
-                _sendConferenceEvent(store, /* action */ {
-                    error: _toErrorString(error),
-                    ...data
-                });
-            }
-            break;
+        // XXX Certain CONFERENCE_FAILED errors are recoverable i.e. they have
+        // prevented the user from joining a specific conference but the app may
+        // be able to eventually join the conference. For example, the app will
+        // ask the user for a password upon
+        // JitsiConferenceErrors.PASSWORD_REQUIRED and will retry joining the
+        // conference afterwards. Such errors are to not reach the native
+        // counterpart of the External API (or at least not in the
+        // fatality/finality semantics attributed to
+        // conferenceFailed:/onConferenceFailed).
+        if (!error.recoverable) {
+            _sendConferenceEvent(store, /* action */ {
+                error: _toErrorString(error),
+                ...data
+            });
         }
+        break;
+    }
 
-        case CONFERENCE_LEFT:
-            _sendConferenceEvent(store, action);
-            break;
+    case CONFERENCE_LEFT:
+        _sendConferenceEvent(store, action);
+        break;
 
-        case CONFERENCE_JOINED:
-            _sendConferenceEvent(store, action);
-            _registerForEndpointTextMessages(store);
-            break;
+    case CONFERENCE_JOINED:
+        _sendConferenceEvent(store, action);
+        _registerForEndpointTextMessages(store);
+        break;
 
-        case CONFERENCE_BLURRED:
-            sendEvent(store, CONFERENCE_BLURRED, {});
-            break;
+    case CONFERENCE_BLURRED:
+        sendEvent(store, CONFERENCE_BLURRED, {});
+        break;
 
-        case CONFERENCE_FOCUSED:
-            sendEvent(store, CONFERENCE_FOCUSED, {});
-            break;
+    case CONFERENCE_FOCUSED:
+        sendEvent(store, CONFERENCE_FOCUSED, {});
+        break;
 
-        case CONNECTION_DISCONNECTED: {
-            // FIXME: This is a hack. See the description in the JITSI_CONNECTION_CONFERENCE_KEY constant definition.
-            // Check if this connection was attached to any conference.
-            // If it wasn't, fake a CONFERENCE_TERMINATED event.
-            const { connection } = action;
-            const conference = connection[JITSI_CONNECTION_CONFERENCE_KEY];
+    case CONFERENCE_UNIQUE_ID_SET: {
+        const { conference } = action;
 
-            if (!conference) {
-                // This action will arrive late, so the locationURL stored on the state is no longer valid.
-                const locationURL = connection[JITSI_CONNECTION_URL_KEY];
+        sendEvent(
+            store,
+            CONFERENCE_UNIQUE_ID_SET,
+            /* data */ {
+                sessionId: conference.getMeetingUniqueId()
+            });
+        break;
+    }
 
-                sendEvent(
-                    store,
-                    CONFERENCE_TERMINATED,
+    case CONNECTION_DISCONNECTED: {
+        // FIXME: This is a hack. See the description in the JITSI_CONNECTION_CONFERENCE_KEY constant definition.
+        // Check if this connection was attached to any conference.
+        // If it wasn't, fake a CONFERENCE_TERMINATED event.
+        const { connection } = action;
+        const conference = connection[JITSI_CONNECTION_CONFERENCE_KEY];
+
+        if (!conference) {
+            // This action will arrive late, so the locationURL stored on the state is no longer valid.
+            const locationURL = connection[JITSI_CONNECTION_URL_KEY];
+
+            sendEvent(
+                store,
+                CONFERENCE_TERMINATED,
                 /* data */ {
-                        url: _normalizeUrl(locationURL)
-                    });
-            }
-
-            break;
+                    url: _normalizeUrl(locationURL)
+                });
         }
 
-    case CUSTOM_OVERFLOW_MENU_BUTTON_PRESSED: {
+        break;
+    }
+
+    case CUSTOM_BUTTON_PRESSED: {
         const { id, text } = action;
 
         sendEvent(
             store,
-            CUSTOM_OVERFLOW_MENU_BUTTON_PRESSED,
-            {
+            CUSTOM_BUTTON_PRESSED,
+            /* data */ {
                 id,
                 text
             });
@@ -223,69 +246,100 @@ externalAPIEnabled && MiddlewareRegistry.register(store => next => action => {
         sendEvent(store, type, /* data */ {});
         break;
 
-        case OPEN_CHAT:
-        case CLOSE_CHAT: {
-            sendEvent(
-                store,
-                CHAT_TOGGLED,
+    case OPEN_CHAT:
+    case CLOSE_CHAT: {
+        sendEvent(
+            store,
+            CHAT_TOGGLED,
             /* data */ {
-                    isOpen: action.type === OPEN_CHAT
-                });
+                isOpen: action.type === OPEN_CHAT
+            });
+        break;
+    }
+
+    case PARTICIPANT_JOINED:
+    case PARTICIPANT_LEFT: {
+        // Skip these events while not in a conference. SDK users can still retrieve them.
+        const { conference } = store.getState()['features/base/conference'];
+
+        if (!conference) {
             break;
         }
 
-        case PARTICIPANT_JOINED:
-        case PARTICIPANT_LEFT: {
-            // Skip these events while not in a conference. SDK users can still retrieve them.
-            const { conference } = store.getState()['features/base/conference'];
+        const { participant } = action;
 
-            if (!conference) {
-                break;
-            }
+        const isVirtualScreenshareParticipant = isScreenShareParticipantById(store.getState(), participant.id);
 
-            const { participant } = action;
+        if (isVirtualScreenshareParticipant) {
+            break;
+        }
 
-            const isVirtualScreenshareParticipant = isScreenShareParticipantById(store.getState(), participant.id);
+        sendEvent(
+            store,
+            action.type,
+            participantToParticipantInfo(participant) /* data */
+        );
+        break;
+    }
 
-            if (isVirtualScreenshareParticipant) {
-                break;
-            }
+    case READY_TO_CLOSE:
+        sendEvent(store, type, /* data */ {});
+        break;
 
+    case RECORDING_SESSION_UPDATED: {
+        const {
+            error,
+            id,
+            initiator,
+            liveStreamViewURL,
+            mode,
+            status,
+            terminator,
+            timestamp
+        } = action.sessionData;
+
+        const getId = (obj: any) => typeof obj === 'object' ? obj.getId() : obj;
+        const getError = (err: any) => typeof err === 'object' ? String(err) : err;
+
+        sendEvent(
+            store,
+            RECORDING_STATUS_CHANGED,
+            /* data */ {
+                error: getError(error),
+                id,
+                initiator: getId(initiator),
+                liveStreamViewURL,
+                mode,
+                status,
+                terminator: getId(terminator),
+                timestamp
+            });
+        break;
+    }
+
+    case SET_ROOM:
+        _maybeTriggerEarlyConferenceWillJoin(store, action);
+        break;
+
+    case SET_AUDIO_MUTED:
+        if (action.muted !== oldAudioMuted) {
             sendEvent(
                 store,
-                action.type,
-                participantToParticipantInfo(participant) /* data */
-            );
-            break;
-        }
-
-        case READY_TO_CLOSE:
-            sendEvent(store, type, /* data */ {});
-            break;
-
-        case SET_ROOM:
-            _maybeTriggerEarlyConferenceWillJoin(store, action);
-            break;
-
-        case SET_AUDIO_MUTED:
-            if (action.muted !== oldAudioMuted) {
-                sendEvent(
-                    store,
-                    'AUDIO_MUTED_CHANGED',
+                'AUDIO_MUTED_CHANGED',
                 /* data */ {
-                        muted: action.muted
-                    });
-            }
-            break;
-
-        case SET_VIDEO_MUTED:
-            sendEvent(
-                store,
-                'VIDEO_MUTED_CHANGED',
-            /* data */ {
                     muted: action.muted
                 });
-            break;
+        }
+        break;
+
+    case SET_VIDEO_MUTED:
+        sendEvent(
+            store,
+            'VIDEO_MUTED_CHANGED',
+            /* data */ {
+                muted: action.muted
+            });
+        break;
     }
 
     return result;
@@ -300,38 +354,38 @@ externalAPIEnabled && MiddlewareRegistry.register(store => next => action => {
 externalAPIEnabled && StateListenerRegistry.register(
     /* selector */ state => state['features/base/tracks'],
     /* listener */ debounce((tracks: ITrack[], store: IStore) => {
-    const oldScreenShares = store.getState()['features/mobile/external-api'].screenShares || [];
-    const newScreenShares = tracks
-        .filter(track => track.mediaType === MEDIA_TYPE.SCREENSHARE || track.videoType === VIDEO_TYPE.DESKTOP)
-        .map(track => track.participantId);
+        const oldScreenShares = store.getState()['features/mobile/external-api'].screenShares || [];
+        const newScreenShares = tracks
+            .filter(track => track.mediaType === MEDIA_TYPE.SCREENSHARE || track.videoType === VIDEO_TYPE.DESKTOP)
+            .map(track => track.participantId);
 
-    oldScreenShares.forEach(participantId => {
-        if (!newScreenShares.includes(participantId)) {
-            sendEvent(
-                store,
-                SCREEN_SHARE_TOGGLED,
+        oldScreenShares.forEach(participantId => {
+            if (!newScreenShares.includes(participantId)) {
+                sendEvent(
+                    store,
+                    SCREEN_SHARE_TOGGLED,
                     /* data */ {
-                    participantId,
-                    sharing: false
-                });
-        }
-    });
+                        participantId,
+                        sharing: false
+                    });
+            }
+        });
 
-    newScreenShares.forEach(participantId => {
-        if (!oldScreenShares.includes(participantId)) {
-            sendEvent(
-                store,
-                SCREEN_SHARE_TOGGLED,
+        newScreenShares.forEach(participantId => {
+            if (!oldScreenShares.includes(participantId)) {
+                sendEvent(
+                    store,
+                    SCREEN_SHARE_TOGGLED,
                     /* data */ {
-                    participantId,
-                    sharing: true
-                });
-        }
-    });
+                        participantId,
+                        sharing: true
+                    });
+            }
+        });
 
-    store.dispatch(setParticipantsWithScreenShare(newScreenShares));
+        store.dispatch(setParticipantsWithScreenShare(newScreenShares));
 
-}, 100));
+    }, 100));
 
 /**
  * Registers for events sent from the native side via NativeEventEmitter.
@@ -353,11 +407,6 @@ function _registerForNativeEvents(store: IStore) {
 
     eventEmitter.addListener(ExternalAPI.SET_VIDEO_MUTED, ({ muted }: any) => {
         dispatch(muteLocal(muted, MEDIA_TYPE.VIDEO));
-    });
-
-    eventEmitter.addListener(ExternalAPI.SET_AUDIO_DEVICE, ({ device }: any) => {
-        logger.log('SET_AUDIO_DEVICE ' + device);
-        AudioMode.setAudioDevice(device);
     });
 
     eventEmitter.addListener(ExternalAPI.SEND_ENDPOINT_TEXT_MESSAGE, ({ to, message }: any) => {
@@ -424,8 +473,188 @@ function _registerForNativeEvents(store: IStore) {
             dispatch(setRequestingSubtitles(enabled, displaySubtitles, language));
         });
 
+    eventEmitter.addListener(ExternalAPI.SET_AUDIO_DEVICE, ({ device }: any) => {
+        logger.log('SET_AUDIO_DEVICE ' + device);
+        AudioMode.setAudioDevice(device);
+    });
+
     eventEmitter.addListener(ExternalAPI.TOGGLE_CAMERA, () => {
         dispatch(toggleCameraFacingMode());
+    });
+
+    eventEmitter.addListener(ExternalAPI.SHOW_NOTIFICATION,
+        ({ appearance, description, timeout, title, uid }: any) => {
+            const validTypes = Object.values(NOTIFICATION_TYPE);
+            const validTimeouts = Object.values(NOTIFICATION_TIMEOUT_TYPE);
+
+            if (!validTypes.includes(appearance)) {
+                logger.error(`Invalid notification type "${appearance}". Expecting one of ${validTypes}`);
+
+                return;
+            }
+
+            if (!validTimeouts.includes(timeout)) {
+                logger.error(`Invalid notification timeout "${timeout}". Expecting one of ${validTimeouts}`);
+
+                return;
+            }
+
+            dispatch(showNotification({
+                appearance,
+                description,
+                title,
+                uid
+            }, timeout));
+        });
+
+    eventEmitter.addListener(ExternalAPI.HIDE_NOTIFICATION, ({ uid }: any) => {
+        dispatch(hideNotification(uid));
+    });
+
+    eventEmitter.addListener(ExternalAPI.START_RECORDING, (
+            {
+                mode,
+                dropboxToken,
+                shouldShare,
+                rtmpStreamKey,
+                rtmpBroadcastID,
+                youtubeStreamKey,
+                youtubeBroadcastID,
+                extraMetadata = {},
+                transcription
+            }: any) => {
+        const state = store.getState();
+        const conference = getCurrentConference(state);
+
+        if (!conference) {
+            logger.error('Conference is not defined');
+
+            return;
+        }
+
+        if (dropboxToken && !isDropboxEnabled(state)) {
+            logger.error('Failed starting recording: dropbox is not enabled on this deployment');
+
+            return;
+        }
+
+        if (mode === JitsiRecordingConstants.mode.STREAM && !(youtubeStreamKey || rtmpStreamKey)) {
+            logger.error('Failed starting recording: missing youtube or RTMP stream key');
+
+            return;
+        }
+
+        let recordingConfig;
+
+        if (mode === JitsiRecordingConstants.mode.FILE) {
+            const { recordingService } = state['features/base/config'];
+
+            if (!recordingService?.enabled && !dropboxToken) {
+                logger.error('Failed starting recording: the recording service is not enabled');
+
+                return;
+            }
+
+            if (dropboxToken) {
+                recordingConfig = {
+                    mode: JitsiRecordingConstants.mode.FILE,
+                    appData: JSON.stringify({
+                        'file_recording_metadata': {
+                            ...extraMetadata,
+                            'upload_credentials': {
+                                'service_name': RECORDING_TYPES.DROPBOX,
+                                'token': dropboxToken
+                            }
+                        }
+                    })
+                };
+            } else {
+                recordingConfig = {
+                    mode: JitsiRecordingConstants.mode.FILE,
+                    appData: JSON.stringify({
+                        'file_recording_metadata': {
+                            ...extraMetadata,
+                            'share': shouldShare
+                        }
+                    })
+                };
+            }
+        } else if (mode === JitsiRecordingConstants.mode.STREAM) {
+            recordingConfig = {
+                broadcastId: youtubeBroadcastID || rtmpBroadcastID,
+                mode: JitsiRecordingConstants.mode.STREAM,
+                streamId: youtubeStreamKey || rtmpStreamKey
+            };
+        }
+
+        // Start audio / video recording, if requested.
+        if (typeof recordingConfig !== 'undefined') {
+            conference.startRecording(recordingConfig);
+        }
+
+        if (transcription) {
+            store.dispatch(setRequestingSubtitles(true, false, null, true));
+            conference.getMetadataHandler().setMetadata(RECORDING_METADATA_ID, {
+                isTranscribingEnabled: true
+            });
+        }
+    });
+
+    eventEmitter.addListener(ExternalAPI.STOP_RECORDING, ({ mode, transcription }: any) => {
+        const state = store.getState();
+        const conference = getCurrentConference(state);
+
+        if (!conference) {
+            logger.error('Conference is not defined');
+
+            return;
+        }
+
+        if (transcription) {
+            store.dispatch(setRequestingSubtitles(false, false, null));
+            conference.getMetadataHandler().setMetadata(RECORDING_METADATA_ID, {
+                isTranscribingEnabled: false
+            });
+        }
+
+        if (![ JitsiRecordingConstants.mode.FILE, JitsiRecordingConstants.mode.STREAM ].includes(mode)) {
+            logger.error('Invalid recording mode provided!');
+
+            return;
+        }
+
+        const activeSession = getActiveSession(state, mode);
+
+        if (!activeSession?.id) {
+            logger.error('No recording or streaming session found');
+
+            return;
+        }
+
+        conference.stopRecording(activeSession.id);
+    });
+
+    eventEmitter.addListener(ExternalAPI.OVERWRITE_CONFIG, ({ config }: any) => {
+        const whitelistedConfig = getWhitelistedJSON('config', config);
+
+        logger.info(`Overwriting config with: ${JSON.stringify(whitelistedConfig)}`);
+
+        dispatch(overwriteConfig(whitelistedConfig));
+    });
+
+    eventEmitter.addListener(ExternalAPI.SEND_CAMERA_FACING_MODE_MESSAGE, ({ to, facingMode }: any) => {
+        const conference = getCurrentConference(getState());
+
+        if (!to) {
+            logger.warn('Participant id not set');
+
+            return;
+        }
+
+        conference?.sendEndpointMessage(to, {
+            name: CAMERA_FACING_MODE_MESSAGE,
+            facingMode
+        });
     });
 }
 
@@ -448,6 +677,12 @@ function _unregisterForNativeEvents() {
     eventEmitter.removeAllListeners(ExternalAPI.SET_CLOSED_CAPTIONS_ENABLED);
     eventEmitter.removeAllListeners(ExternalAPI.SET_AUDIO_DEVICE);
     eventEmitter.removeAllListeners(ExternalAPI.TOGGLE_CAMERA);
+    eventEmitter.removeAllListeners(ExternalAPI.SHOW_NOTIFICATION);
+    eventEmitter.removeAllListeners(ExternalAPI.HIDE_NOTIFICATION);
+    eventEmitter.removeAllListeners(ExternalAPI.START_RECORDING);
+    eventEmitter.removeAllListeners(ExternalAPI.STOP_RECORDING);
+    eventEmitter.removeAllListeners(ExternalAPI.OVERWRITE_CONFIG);
+    eventEmitter.removeAllListeners(ExternalAPI.SEND_CAMERA_FACING_MODE_MESSAGE);
 }
 
 /**
@@ -462,31 +697,31 @@ function _registerForEndpointTextMessages(store: IStore) {
 
     conference?.on(
         JitsiConferenceEvents.MESSAGE_RECEIVED,
-        (id: string, message: string, timestamp: number) => {
-            sendEvent(
-                store,
-                CHAT_MESSAGE_RECEIVED,
+            (id: string, message: string, timestamp: number) => {
+                sendEvent(
+                    store,
+                    CHAT_MESSAGE_RECEIVED,
                     /* data */ {
-                    senderId: id,
-                    message,
-                    isPrivate: false,
-                    timestamp
-                });
-        }
+                        senderId: id,
+                        message,
+                        isPrivate: false,
+                        timestamp
+                    });
+            }
     );
 
     conference?.on(
         JitsiConferenceEvents.PRIVATE_MESSAGE_RECEIVED,
         (id: string, message: string, timestamp: number) => {
             sendEvent(
-                store,
-                CHAT_MESSAGE_RECEIVED,
+                    store,
+                    CHAT_MESSAGE_RECEIVED,
                     /* data */ {
-                    senderId: id,
-                    message,
-                    isPrivate: true,
-                    timestamp
-                });
+                        senderId: id,
+                        message,
+                        isPrivate: true,
+                        timestamp
+                    });
         }
     );
 }
@@ -500,7 +735,7 @@ function _registerForEndpointTextMessages(store: IStore) {
  * {@code error}.
  */
 function _toErrorString(
-    error: Error | { message?: string; name?: string; } | string) {
+        error: Error | { message?: string; name?: string; } | string) {
     // XXX In lib-jitsi-meet and jitsi-meet we utilize errors in the form of
     // strings, Error instances, and plain objects which resemble Error.
     return (
@@ -556,13 +791,13 @@ function _normalizeUrl(url: URL) {
  * @returns {void}
  */
 function _sendConferenceEvent(
-    store: IStore,
-    action: {
-        conference: IJitsiConference;
-        isAudioMuted?: boolean;
-        type: string;
-        url?: string;
-    }) {
+        store: IStore,
+        action: {
+            conference: IJitsiConference;
+            isAudioMuted?: boolean;
+            type: string;
+            url?: string;
+        }) {
     const { conference, type, ...data } = action;
 
     // For these (redux) actions, conference identifies a JitsiConference
@@ -584,13 +819,13 @@ function _sendConferenceEvent(
     let type_;
 
     switch (type) {
-        case CONFERENCE_FAILED:
-        case CONFERENCE_LEFT:
-            type_ = CONFERENCE_TERMINATED;
-            break;
-        default:
-            type_ = type;
-            break;
+    case CONFERENCE_FAILED:
+    case CONFERENCE_LEFT:
+        type_ = CONFERENCE_TERMINATED;
+        break;
+    default:
+        type_ = type;
+        break;
     }
 
     sendEvent(store, type_, data);
@@ -643,10 +878,10 @@ function _swallowConferenceLeft({ getState }: IStore, action: AnyAction, { url }
  */
 function _swallowEvent(store: IStore, action: AnyAction, data: any) {
     switch (action.type) {
-        case CONFERENCE_LEFT:
-            return _swallowConferenceLeft(store, action, data);
+    case CONFERENCE_LEFT:
+        return _swallowConferenceLeft(store, action, data);
 
-        default:
-            return false;
+    default:
+        return false;
     }
 }

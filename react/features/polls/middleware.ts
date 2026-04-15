@@ -4,7 +4,7 @@ import { getCurrentConference } from '../base/conference/functions';
 import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
 import StateListenerRegistry from '../base/redux/StateListenerRegistry';
 import { playSound } from '../base/sounds/actions';
-import { INCOMING_MSG_SOUND_ID } from '../chat/constants';
+import { ChatTabs, INCOMING_MSG_SOUND_ID } from '../chat/constants';
 import { arePollsDisabled } from '../conference/functions.any';
 import { showNotification } from '../notifications/actions';
 import { NOTIFICATION_TIMEOUT_TYPE, NOTIFICATION_TYPE } from '../notifications/constants';
@@ -16,7 +16,13 @@ import {
     COMMAND_NEW_POLL,
     COMMAND_OLD_POLLS
 } from './constants';
+import logger from './logger';
 import { IAnswer, IPoll, IPollData } from './types';
+
+/**
+ * The maximum number of answers a poll can have.
+ */
+const MAX_ANSWERS = 32;
 
 /**
  * Set up state change listener to perform maintenance tasks when the conference
@@ -31,14 +37,23 @@ StateListenerRegistry.register(
         }
     });
 
-const parsePollData = (pollData: IPollData): IPoll | null => {
+const parsePollData = (pollData: Partial<IPollData>): IPoll | null => {
     if (typeof pollData !== 'object' || pollData === null) {
         return null;
     }
     const { id, senderId, question, answers } = pollData;
 
     if (typeof id !== 'string' || typeof senderId !== 'string'
-        || typeof question !== 'string' || !(answers instanceof Array)) {
+            || typeof question !== 'string' || !(answers instanceof Array)) {
+        logger.error('Malformed poll data received:', pollData);
+
+        return null;
+    }
+
+    // Validate answers.
+    if (answers.some(answer => typeof answer !== 'string')) {
+        logger.error('Malformed answers data received:', answers);
+
         return null;
     }
 
@@ -91,7 +106,7 @@ MiddlewareRegistry.register(({ dispatch, getState }) => next => action => {
         }
 
         const isChatOpen: boolean = state['features/chat'].isOpen;
-        const isPollsTabFocused: boolean = state['features/chat'].isPollsTabFocused;
+        const isPollsTabFocused: boolean = state['features/chat'].focusedTab === ChatTabs.POLLS;
 
         // Finally, we notify user they received a new poll if their pane is not opened
         if (action.notify && (!isChatOpen || !isPollsTabFocused)) {
@@ -122,6 +137,19 @@ function _handleReceivePollsMessage(data: any, dispatch: IStore['dispatch'], get
 
     case COMMAND_NEW_POLL: {
         const { pollId, answers, senderId, question } = data;
+        const tmp = {
+            id: pollId,
+            answers,
+            question,
+            senderId
+        };
+
+        // Check integrity of the poll data.
+        // TODO(saghul): we should move this to the server side, likely by storing the
+        // poll data in the room metadata.
+        if (parsePollData(tmp) === null) {
+            return;
+        }
 
         const poll = {
             changingVote: false,
@@ -134,7 +162,7 @@ function _handleReceivePollsMessage(data: any, dispatch: IStore['dispatch'], get
                     name: answer,
                     voters: []
                 };
-            }),
+            }).slice(0, MAX_ANSWERS),
             saved: false,
             editing: false
         };
@@ -155,7 +183,7 @@ function _handleReceivePollsMessage(data: any, dispatch: IStore['dispatch'], get
         const receivedAnswer: IAnswer = {
             voterId,
             pollId,
-            answers
+            answers: answers.slice(0, MAX_ANSWERS).map(Boolean)
         };
 
         dispatch(receiveAnswer(pollId, receivedAnswer));
@@ -170,7 +198,7 @@ function _handleReceivePollsMessage(data: any, dispatch: IStore['dispatch'], get
             const poll = parsePollData(pollData);
 
             if (poll === null) {
-                console.warn('[features/polls] Invalid old poll data');
+                logger.warn('Malformed old poll data', pollData);
             } else {
                 dispatch(receivePoll(pollData.id, poll, false));
             }

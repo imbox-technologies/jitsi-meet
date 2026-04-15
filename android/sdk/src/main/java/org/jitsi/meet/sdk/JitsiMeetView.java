@@ -53,10 +53,9 @@ import org.jitsi.meet.sdk.log.JitsiMeetLogger;
 public class JitsiMeetView extends FrameLayout {
 
     /**
-     * Background color used by {@code BaseReactView} and the React Native root
-     * view.
+     * Background color. Should match the background color set in JS.
      */
-    private static final int BACKGROUND_COLOR = 0xFF111111;
+    public static final int BACKGROUND_COLOR = 0xFF040404;
 
     /**
      * React Native root view.
@@ -239,6 +238,11 @@ public class JitsiMeetView extends FrameLayout {
 
         setBackgroundColor(BACKGROUND_COLOR);
 
+        // Defensive fallback: JitsiInitializer normally initializes the ReactInstanceManager at
+        // application startup via androidx.startup. These calls are no-ops in that case because
+        // of the null-check guard inside initReactInstanceManager, but we keep them to support
+        // embedders that haven't wired JitsiInitializer or construct the view from an Application
+        // context.
         if (context instanceof Activity) {
             ReactInstanceManagerHolder.initReactInstanceManager((Activity) context, ((Activity) context).getApplication());
         } else if (context instanceof Application) {

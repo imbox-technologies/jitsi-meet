@@ -70,8 +70,6 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
     const showDisplayNameInput = useMemo(
         () => isDisplayNameVisible && (displayName || !isDisplayNameReadonly),
         [ displayName, isDisplayNameReadonly, isDisplayNameVisible ]);
-    const [ isJoining, setIsJoining ]
-        = useState(false);
     const onChangeDisplayName = useCallback(event => {
         const fieldValue = getFieldValue(event);
 
@@ -82,7 +80,6 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
     }, [ displayName ]);
 
     const onJoin = useCallback(() => {
-        setIsJoining(true);
         dispatch(connect());
         navigateRoot(screen.conference.root);
     }, [ dispatch ]);
@@ -112,15 +109,14 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
     const { PRIMARY, TERTIARY } = BUTTON_TYPES;
 
     useEffect(() => {
-        BackHandler.addEventListener('hardwareBackPress', goBack);
+        const hardwareBackPressSubscription = BackHandler.addEventListener('hardwareBackPress', goBack);
 
         dispatch(setPermanentProperty({
             wasPrejoinDisplayed: true
         }));
 
-        return () => BackHandler.removeEventListener('hardwareBackPress', goBack);
-
-    }, []); // dispatch is not in the dependancy list because we want the action to be dispatched only once when
+        return () => hardwareBackPressSubscription.remove();
+    }, []); // dispatch is not in the dependency list because we want the action to be dispatched only once when
     // the component is mounted.
 
     const headerLeft = () => {
@@ -212,14 +208,14 @@ const Prejoin: React.FC<IPrejoinProps> = ({ navigation }: IPrejoinProps) => {
                     accessibilityLabel = 'prejoin.joinMeeting'
                     disabled = { showDisplayNameError }
                     labelKey = 'prejoin.joinMeeting'
-                    onClick = { isJoining ? undefined : maybeJoin }
+                    onClick = { maybeJoin }
                     style = { styles.joinButton }
                     type = { PRIMARY } />
                 <Button
                     accessibilityLabel = 'prejoin.joinMeetingInLowBandwidthMode'
                     disabled = { showDisplayNameError }
                     labelKey = 'prejoin.joinMeetingInLowBandwidthMode'
-                    onClick = { isJoining ? undefined : onJoinLowBandwidth }
+                    onClick = { onJoinLowBandwidth }
                     style = { styles.joinButton }
                     type = { TERTIARY } />
             </View>

@@ -64,6 +64,11 @@ export const ACTION_SHORTCUT_TRIGGERED = 'triggered';
 export const AUDIO_MUTE = 'audio.mute';
 
 /**
+ * The name of the keyboard shortcut or toolbar button for muting desktop sharing.
+ */
+export const DESKTOP_MUTE = 'desktop.mute';
+
+/**
  * The name of the keyboard shortcut or toolbar button for muting video.
  */
 export const VIDEO_MUTE = 'video.mute';
@@ -311,7 +316,7 @@ export function createInviteDialogEvent(
  * @returns {Object}
  */
 export function createNetworkInfoEvent({ isOnline, networkType, details }:
-    { details?: Object; isOnline: boolean; networkType?: string; }) {
+{ details?: Object; isOnline: boolean; networkType?: string; }) {
     const attributes: {
         details?: Object;
         isOnline: boolean;

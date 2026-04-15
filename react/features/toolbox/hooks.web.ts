@@ -20,8 +20,8 @@ import { useFeedbackButton } from '../feedback/hooks.web';
 import { setGifMenuVisibility } from '../gifs/actions';
 import { isGifEnabled } from '../gifs/function.any';
 import InviteButton from '../invite/components/add-people-dialog/web/InviteButton';
-import { registerShortcut, unregisterShortcut } from '../keyboard-shortcuts/actions.web';
-import { useKeyboardShortcutsButton } from '../keyboard-shortcuts/hooks.web';
+import { registerShortcut, unregisterShortcut } from '../keyboard-shortcuts/actions';
+import { useKeyboardShortcutsButton } from '../keyboard-shortcuts/hooks';
 import NoiseSuppressionButton from '../noise-suppression/components/NoiseSuppressionButton';
 import {
     close as closeParticipantsPane,
@@ -270,7 +270,7 @@ function useHelpButton() {
 */
 export function useToolboxButtons(
         _customToolbarButtons?: ICustomToolbarButton[]): { [key: string]: IToolboxButton; } {
-    const dekstopSharing = getDesktopSharingButton();
+    const desktopSharing = getDesktopSharingButton();
     const toggleCameraButton = useToggleCameraButton();
     const _fullscreen = getFullscreenButton();
     const security = useSecurityDialogButton();
@@ -297,7 +297,7 @@ export function useToolboxButtons(
         microphone,
         camera,
         profile,
-        desktop: dekstopSharing,
+        desktop: desktopSharing,
         chat,
         raisehand,
         reactions,

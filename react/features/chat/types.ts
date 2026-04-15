@@ -5,6 +5,8 @@ import { IStore } from '../app/types';
 export interface IMessage {
     displayName: string;
     error?: Object;
+    isFromGuest?: boolean;
+    isFromVisitor?: boolean;
     isReaction: boolean;
     lobbyChat: boolean;
     message: string;
@@ -12,7 +14,9 @@ export interface IMessage {
     messageType: string;
     participantId: string;
     privateMessage: boolean;
+    reactions: Map<string, Set<string>>;
     recipient: string;
+    sentToVisitor?: boolean;
     timestamp: number;
 }
 
