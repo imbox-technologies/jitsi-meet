@@ -52,20 +52,24 @@ class Chat extends Component<IProps> {
      *
      * @inheritdoc
      */
-    render() {
+    override render() {
         const { _messages, route } = this.props;
         const privateMessageRecipient = route?.params?.privateMessageRecipient;
 
         return (
             <JitsiScreen
                 disableForcedKeyboardDismiss = { true }
+
+                /* eslint-disable react/jsx-no-bind */
+                footerComponent = { () =>
+                    <ChatInputBar onSend = { this._onSendMessage } />
+                }
                 hasBottomTextInput = { true }
-                hasTabNavigator = { true }
+                hasExtraHeaderHeight = { true }
                 style = { styles.chatContainer }>
                 {/* @ts-ignore */}
                 <MessageContainer messages = { _messages } />
                 <MessageRecipient privateMessageRecipient = { privateMessageRecipient } />
-                <ChatInputBar onSend = { this._onSendMessage } />
             </JitsiScreen>
         );
     }

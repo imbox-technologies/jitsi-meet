@@ -29,12 +29,14 @@ class DisplayNamePrompt extends Component<IProps> {
      *
      * @inheritdoc
      */
-    render() {
+    override render() {
         return (
             <InputDialog
                 descriptionKey = 'dialog.enterDisplayName'
+                disableCancel = { true }
                 onSubmit = { this._onSetDisplayName }
-                titleKey = 'dialog.displayNameRequired' />
+                titleKey = 'dialog.displayNameRequired'
+                validateInput = { this.props.validateInput } />
         );
     }
 }

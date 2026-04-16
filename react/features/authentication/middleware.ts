@@ -13,7 +13,9 @@ import {
     JitsiConferenceErrors,
     JitsiConnectionErrors
 } from '../base/lib-jitsi-meet';
+import { MEDIA_TYPE } from '../base/media/constants';
 import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
+import { isLocalTrackMuted } from '../base/tracks/functions.any';
 import { parseURIString } from '../base/util/uri';
 import { openLogoutDialog } from '../settings/actions';
 
@@ -119,7 +121,7 @@ MiddlewareRegistry.register(store => next => action => {
         if (isTokenAuthEnabled(config)
             && config.tokenAuthUrlAutoRedirect
             && state['features/base/jwt'].jwt) {
-            // auto redirect is turned on and we have succesfully logged in
+            // auto redirect is turned on and we have successfully logged in
             // let's mark that
             dispatch(setTokenAuthUrlSuccess(true));
         }
@@ -141,7 +143,8 @@ MiddlewareRegistry.register(store => next => action => {
 
     case CONNECTION_FAILED: {
         const { error } = action;
-        const state = store.getState();
+        const { getState } = store;
+        const state = getState();
         const { jwt } = state['features/base/jwt'];
 
         if (error
@@ -255,8 +258,11 @@ function _handleLogin({ dispatch, getState }: IStore) {
     const state = getState();
     const config = state['features/base/config'];
     const room = state['features/base/conference'].room;
-    const { locationURL = { href: '' } } = state['features/base/connection'];
+    const { locationURL = { href: '' } as URL } = state['features/base/connection'];
     const { tenant } = parseURIString(locationURL.href) || {};
+    const { enabled: audioOnlyEnabled } = state['features/base/audio-only'];
+    const audioMuted = isLocalTrackMuted(state['features/base/tracks'], MEDIA_TYPE.AUDIO);
+    const videoMuted = isLocalTrackMuted(state['features/base/tracks'], MEDIA_TYPE.VIDEO);
 
     if (!room) {
         logger.warn('Cannot handle login, room is undefined!');
@@ -270,7 +276,18 @@ function _handleLogin({ dispatch, getState }: IStore) {
         return;
     }
 
-    getTokenAuthUrl(config, room, tenant, true)
+    getTokenAuthUrl(
+        config,
+        locationURL,
+        {
+            audioMuted,
+            audioOnlyEnabled,
+            skipPrejoin: true,
+            videoMuted
+        },
+        room,
+        tenant
+    )
         .then((tokenAuthServiceUrl: string | undefined) => {
             if (!tokenAuthServiceUrl) {
                 logger.warn('Cannot handle login, token service URL is not set');

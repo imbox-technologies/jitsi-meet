@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 // We need to reference these files directly to avoid loading things that are not available
 // in this environment (e.g. JitsiMeetJS or interfaceConfig)
-import { IconVideo, IconVideoOff } from '../base/icons/svg';
+import { DEFAULT_ICON } from '../base/icons/svg/constants';
 import { IProps } from '../base/toolbox/components/AbstractButton';
 
 import ToolbarButton from './ToolbarButton';
@@ -32,8 +32,8 @@ type State = {
  */
 export default class VideoMuteButton extends Component<Props, State> {
 
-    icon = IconVideo;
-    toggledIcon = IconVideoOff;
+    icon = DEFAULT_ICON.IconVideo;
+    toggledIcon = DEFAULT_ICON.IconVideoOff;
     accessibilityLabel = 'Video mute';
 
     /**
@@ -63,7 +63,7 @@ export default class VideoMuteButton extends Component<Props, State> {
      * @inheritdoc
      * @returns {void}
      */
-    componentDidMount() {
+    override componentDidMount() {
         api.on('videoAvailabilityChanged', this._videoAvailabilityListener);
         api.on('videoMuteStatusChanged', this._videoMutedListener);
 
@@ -85,7 +85,7 @@ export default class VideoMuteButton extends Component<Props, State> {
      * @inheritdoc
      * @returns {void}
      */
-    componentWillUnmount() {
+    override componentWillUnmount() {
         api.removeListener(
             'videoAvailabilityChanged',
             this._videoAvailabilityListener);
@@ -165,7 +165,7 @@ export default class VideoMuteButton extends Component<Props, State> {
      * @inheritdoc
      * @returns {ReactElement}
      */
-    render() {
+    override render() {
         const toggled = this._isVideoMuted();
 
         return (

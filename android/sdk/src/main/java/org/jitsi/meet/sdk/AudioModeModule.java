@@ -20,7 +20,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -61,7 +60,6 @@ import java.util.concurrent.Executors;
  * Before a call has started and after it has ended the
  * {@code AudioModeModule.DEFAULT} mode should be used.
  */
-@SuppressLint("AnnotateVersionCheck")
 @ReactModule(name = AudioModeModule.NAME)
 public class AudioModeModule extends ReactContextBaseJavaModule {
     public static final String NAME = "AudioMode";
@@ -88,11 +86,49 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
     /**
      * Whether or not the ConnectionService is used for selecting audio devices.
      */
-    private static final boolean supportsConnectionService = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
-    private static boolean useConnectionService_ = supportsConnectionService;
+    private static boolean useConnectionService_ = true;
 
     static boolean useConnectionService() {
-        return supportsConnectionService && useConnectionService_;
+        return useConnectionService_;
+    }
+
+    /**
+     * Static method to enable or disable ConnectionService usage for audio routing.
+     * This is useful when the host app has its own ConnectionService integration
+     * and doesn't want Jitsi to manage audio routing through Telecom.
+     *
+     * Call this before joining a conference to ensure correct audio handler is used.
+     *
+     * @param use true to use ConnectionService for audio routing (default on Android 8+),
+     *            false to use generic AudioManager-based routing.
+     */
+    public static void setUseConnectionServiceStatic(boolean use) {
+        JitsiMeetLogger.i(TAG + " setUseConnectionServiceStatic: " + use);
+        useConnectionService_ = use;
+    }
+
+    /**
+     * Handler for routing audio through host app's Telecom Connection.
+     */
+    private static TelecomAudioRouteHandler telecomAudioRouteHandler;
+
+    /**
+     * Sets a handler for routing audio through Telecom.
+     * Use this when your app has its own ConnectionService and Telecom controls audio routing.
+     *
+     * @param handler the handler to use, or null to disable
+     */
+    public static void setTelecomAudioRouteHandler(TelecomAudioRouteHandler handler) {
+        telecomAudioRouteHandler = handler;
+        JitsiMeetLogger.i(TAG + " TelecomAudioRouteHandler set: " + (handler != null));
+    }
+
+    /**
+     * Gets the current Telecom audio route handler.
+     * @return the handler, or null if not set
+     */
+    static TelecomAudioRouteHandler getTelecomAudioRouteHandler() {
+        return telecomAudioRouteHandler;
     }
 
     /**
@@ -147,6 +183,11 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
      * Module singleton instance.
      */
     private static AudioModeModule instance;
+
+    /**
+     * Whether or not audio is disabled.
+     */
+    private boolean audioDisabled;
 
     /**
      * Initializes a new module instance. There shall be a single instance of
@@ -269,6 +310,12 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
             audioDeviceHandler.stop();
         }
 
+        audioDeviceHandler = null;
+
+        if (audioDisabled) {
+            return;
+        }
+
         if (useConnectionService()) {
             audioDeviceHandler = new AudioDeviceHandlerConnectionService(audioManager);
         } else {
@@ -311,6 +358,27 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
         });
     }
 
+    @ReactMethod
+    public void setDisabled(final boolean disabled, final Promise promise) {
+        if (audioDisabled == disabled) {
+            promise.resolve(null);
+            return;
+        }
+
+        JitsiMeetLogger.i(TAG + "  audio disabled: " + disabled);
+
+        audioDisabled = disabled;
+        setAudioDeviceHandler();
+
+        if (disabled) {
+            mode = -1;
+            availableDevices.clear();
+            resetSelectedDevice();
+        }
+
+        promise.resolve(null);
+    }
+
     /**
      * Public method to set the current audio mode.
      *
@@ -320,8 +388,13 @@ public class AudioModeModule extends ReactContextBaseJavaModule {
      */
     @ReactMethod
     public void setMode(final int mode, final Promise promise) {
+        if (audioDisabled) {
+            promise.resolve(null);
+            return;
+        }
+
         JitsiMeetLogger.i(TAG + " Set audio mode: " + mode);
-        if (mode != DEFAULT && mode != AUDIO_CALL && mode != VIDEO_CALL && mode != EARPIECE_CALL) {
+        if (mode < DEFAULT || mode > EARPIECE_CALL) {
             promise.reject("setMode", "Invalid audio mode " + mode);
             return;
         }

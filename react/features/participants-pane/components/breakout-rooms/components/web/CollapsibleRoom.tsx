@@ -7,7 +7,6 @@ import { IReduxState } from '../../../../../app/types';
 import Icon from '../../../../../base/icons/components/Icon';
 import { IconArrowDown, IconArrowUp } from '../../../../../base/icons/svg';
 import { isLocalParticipantModerator } from '../../../../../base/participants/functions';
-import { withPixelLineHeight } from '../../../../../base/styles/functions.web';
 import ListItem from '../../../../../base/ui/components/web/ListItem';
 import { IRoom } from '../../../../../breakout-rooms/types';
 import { showOverflowDrawer } from '../../../../../toolbox/functions.web';
@@ -92,7 +91,7 @@ const useStyles = makeStyles()(theme => {
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            ...withPixelLineHeight(theme.typography.bodyLongBold)
+            ...theme.typography.bodyLongBold
         },
 
         arrowContainer: {
@@ -103,7 +102,8 @@ const useStyles = makeStyles()(theme => {
             marginRight: '16px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            border: 'none'
         }
     };
 });
@@ -133,11 +133,15 @@ export const CollapsibleRoom = ({
     const overflowDrawer: boolean = useSelector(showOverflowDrawer);
     const moderator = useSelector(isLocalParticipantModerator);
 
-    const arrow = (<div className = { styles.arrowContainer }>
+    const arrow = (<button
+        aria-label = { collapsed ? t('breakoutRooms.hideParticipantList', 'Hide participant list')
+            : t('breakoutRooms.showParticipantList', 'Show participant list')
+        }
+        className = { styles.arrowContainer }>
         <Icon
             size = { 14 }
             src = { collapsed ? IconArrowDown : IconArrowUp } />
-    </div>);
+    </button>);
 
     const roomName = (<span className = { styles.roomName }>
         {`${room.name || t('breakoutRooms.mainRoom')} (${Object.keys(room?.participants
@@ -155,6 +159,8 @@ export const CollapsibleRoom = ({
         <ListItem
             actions = { children }
             className = { cx(styles.container, 'breakout-room-container') }
+            defaultName = { `${room.name || t('breakoutRooms.mainRoom')} (${Object.keys(room?.participants
+                || {}).length})` }
             icon = { arrow }
             isHighlighted = { isHighlighted }
             onClick = { toggleCollapsed }

@@ -2,7 +2,7 @@ import { reloadNow } from '../app/actions.native';
 import { IStore } from '../app/types';
 import { SILENT_RELOAD_ON_ERROR } from '../base/flags/constants';
 import { getFeatureFlag } from '../base/flags/functions';
-import { JitsiConferenceErrors } from '../base/lib-jitsi-meet';
+import { JitsiConferenceErrors, JitsiConnectionErrors } from '../base/lib-jitsi-meet';
 import {
     isFatalJitsiConferenceError,
     isFatalJitsiConnectionError
@@ -10,7 +10,7 @@ import {
 import StateListenerRegistry from '../base/redux/StateListenerRegistry';
 
 import { openPageReloadDialog } from './actions';
-
+import logger from './logger';
 
 /**
  * Error type. Basically like Error, but augmented with a recoverable property.
@@ -37,6 +37,8 @@ type ErrorType = {
  * List of errors that are not fatal (or handled differently) so then the page reload dialog won't kick in.
  */
 const RN_NO_RELOAD_DIALOG_ERRORS = [
+    JitsiConnectionErrors.NOT_LIVE_ERROR,
+    JitsiConnectionErrors.SHARD_CHANGED_ERROR,
     JitsiConferenceErrors.CONFERENCE_ACCESS_DENIED,
     JitsiConferenceErrors.CONFERENCE_DESTROYED,
     JitsiConferenceErrors.CONNECTION_ERROR,
@@ -97,11 +99,11 @@ StateListenerRegistry.register(
         return configError || connectionError || conferenceError;
     },
     /* listener */ (error: ErrorType, store: IStore) => {
-        const state = store.getState();
-
         if (!error) {
             return;
         }
+
+        const state = store.getState();
 
         // eslint-disable-next-line no-negated-condition
         if (typeof APP !== 'undefined') {
@@ -110,13 +112,26 @@ StateListenerRegistry.register(
                 ...getErrorExtraInfo(state, error)
             });
         } else if (RN_NO_RELOAD_DIALOG_ERRORS.indexOf(error.name) === -1 && typeof error.recoverable === 'undefined') {
+            const { error: conferenceError } = state['features/base/conference'];
+            const { error: configError } = state['features/base/config'];
+            const { error: connectionError } = state['features/base/connection'];
+            const conferenceState = state['features/base/conference'];
+
+            if (conferenceState.leaving) {
+                logger.info(`Ignoring ${error.name} while leaving conference`);
+
+                return;
+            }
+
             const silentReload = getFeatureFlag(state, SILENT_RELOAD_ON_ERROR, false);
 
             setTimeout(() => {
+                logger.info(`Reloading due to error: ${error.name}`, error);
+
                 if (silentReload) {
                     store.dispatch(reloadNow());
                 } else {
-                    store.dispatch(openPageReloadDialog());
+                    store.dispatch(openPageReloadDialog(conferenceError, configError, connectionError));
                 }
             }, 500);
         }

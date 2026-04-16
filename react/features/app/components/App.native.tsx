@@ -2,17 +2,19 @@ import React, { ComponentType } from 'react';
 import { NativeModules, Platform, StyleSheet, View } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import SplashScreen from 'react-native-splash-screen';
+// @ts-ignore
+import { hideSplash } from 'react-native-splash-view';
 
 import BottomSheetContainer from '../../base/dialog/components/native/BottomSheetContainer';
 import DialogContainer from '../../base/dialog/components/native/DialogContainer';
 import { updateFlags } from '../../base/flags/actions';
-import { CALL_INTEGRATION_ENABLED, SERVER_URL_CHANGE_ENABLED, SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK } from '../../base/flags/constants';
+import { CALL_INTEGRATION_ENABLED, SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK } from '../../base/flags/constants';
 import { getFeatureFlag } from '../../base/flags/functions';
 import { clientResized, setSafeAreaInsets } from '../../base/responsive-ui/actions';
 import DimensionsDetector from '../../base/responsive-ui/components/DimensionsDetector.native';
 import { updateSettings } from '../../base/settings/actions';
 import JitsiThemePaperProvider from '../../base/ui/components/JitsiThemeProvider.native';
+import { isEmbedded } from '../../base/util/embedUtils.native';
 import { _getRouteToRender } from '../getRouteToRender.native';
 import logger from '../logger';
 
@@ -21,6 +23,7 @@ import { AbstractApp, IProps as AbstractAppProps } from './AbstractApp';
 // Register middlewares and reducers.
 import '../middlewares.native';
 import '../reducers.native';
+
 
 declare let __DEV__: any;
 
@@ -80,14 +83,14 @@ export class App extends AbstractApp<IProps> {
      *
      * @returns {void}
      */
-    async componentDidMount() {
+    override async componentDidMount() {
         await super.componentDidMount();
 
-        SplashScreen.hide();
+        hideSplash();
 
         const liteTxt = AppInfo.isLiteSDK ? ' (lite)' : '';
 
-        logger.info(`Loaded SDK ${AppInfo.sdkVersion}${liteTxt}`);
+        logger.info(`Loaded SDK ${AppInfo.sdkVersion}${liteTxt} isEmbedded=${isEmbedded()}`);
     }
 
     /**
@@ -96,7 +99,7 @@ export class App extends AbstractApp<IProps> {
      * @inheritdoc
      * @returns {ReactElement}
      */
-    render() {
+    override render() {
         return (
             <JitsiThemePaperProvider>
                 { super.render() }
@@ -111,7 +114,7 @@ export class App extends AbstractApp<IProps> {
      */
     async _extraInit() {
         const { dispatch, getState } = this.state.store ?? {};
-        const { flags = {} } = this.props;
+        const { flags = {}, url, userInfo } = this.props;
         let callIntegrationEnabled = flags[CALL_INTEGRATION_ENABLED as keyof typeof flags];
 
         // CallKit does not work on the simulator, make sure we disable it.
@@ -152,28 +155,25 @@ export class App extends AbstractApp<IProps> {
         });
 
         // This hack is needed to allow a conference to start while the app is in background (iOS)
-        const skipAwaitRootNavigationReady = getFeatureFlag(getState(), SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK, false);
+        const skipAwaitRootNavigationReady = getState && getFeatureFlag(getState(), SKIP_ROOT_NAVIGATION_CONTAINER_READY_HACK, false);
 
         if (!skipAwaitRootNavigationReady) {
             await rootNavigationReady;
         }
 
-        // Check if serverURL is configured externally and not allowed to change.
-        const serverURLChangeEnabled = getState && getFeatureFlag(getState(), SERVER_URL_CHANGE_ENABLED, true);
+        // Update specified server URL.
+        if (typeof url !== 'undefined') {
 
-        if (!serverURLChangeEnabled) {
-            // As serverURL is provided externally, so we push it to settings.
-            if (typeof this.props.url !== 'undefined') {
-                // @ts-ignore
-                const { serverURL } = this.props.url;
+            // @ts-ignore
+            const { serverURL } = url;
 
-                if (typeof serverURL !== 'undefined') {
-                    dispatch?.(updateSettings({ serverURL }));
-                }
+            if (typeof serverURL !== 'undefined') {
+                dispatch?.(updateSettings({ serverURL }));
             }
         }
 
-        dispatch?.(updateSettings(this.props.userInfo || {}));
+        // @ts-ignore
+        dispatch?.(updateSettings(userInfo || {}));
 
         // Update settings with feature-flag.
         if (typeof callIntegrationEnabled !== 'undefined') {

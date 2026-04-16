@@ -14,6 +14,12 @@ const recipientContainer = {
     padding: BaseTheme.spacing[2]
 };
 
+const inputBar = {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+};
+
 /**
  * The styles of the feature chat.
  *
@@ -30,6 +36,11 @@ export default {
     backdrop: {
         backgroundColor: BaseTheme.palette.ui10,
         flex: 1
+    },
+
+    chatDisabled: {
+        padding: BaseTheme.spacing[2],
+        textAlign: 'center'
     },
 
     emptyComponentText: {
@@ -109,6 +120,15 @@ export default {
         maxWidth: '80%'
     },
 
+    disabledSendWrapper: {
+        alignSelf: 'center',
+        flex: 0,
+        padding: BoxModel.padding,
+        paddingBottom: '8%',
+        paddingTop: '8%',
+        maxWidth: '80%'
+    },
+
     /**
      * A special padding to avoid issues on some devices (such as Android devices with custom suggestions bar).
      */
@@ -116,12 +136,16 @@ export default {
         paddingBottom: 30
     },
 
-    inputBar: {
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginLeft: BaseTheme.spacing[3],
-        width: '100%'
+    inputBarNarrow: {
+        ...inputBar,
+        height: 112,
+        marginHorizontal: BaseTheme.spacing[3]
+    },
+
+    inputBarWide: {
+        ...inputBar,
+        height: 88,
+        marginHorizontal: BaseTheme.spacing[9]
     },
 
     customInputContainer: {
@@ -155,10 +179,6 @@ export default {
     replyWrapper: {
         alignItems: 'center',
         flexDirection: 'row'
-    },
-
-    sendButton: {
-        marginRight: BaseTheme.spacing[5]
     },
 
     /**

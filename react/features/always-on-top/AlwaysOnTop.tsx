@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 // in this environment (e.g. JitsiMeetJS or interfaceConfig)
 import StatelessAvatar from '../base/avatar/components/web/StatelessAvatar';
 import { getAvatarColor, getInitials } from '../base/avatar/functions';
+import { DEFAULT_ICON } from '../base/icons/svg/constants';
 
 import Toolbar from './Toolbar';
 
@@ -184,6 +185,7 @@ export default class AlwaysOnTop extends Component<any, IState> {
                 <div id = 'avatarContainer'>
                     <StatelessAvatar
                         color = { getAvatarColor(displayName, customAvatarBackgrounds) }
+                        iconUser = { DEFAULT_ICON.IconUser }
                         id = 'avatar'
                         initials = { getInitials(displayName) }
                         url = { avatarURL } />)
@@ -203,7 +205,7 @@ export default class AlwaysOnTop extends Component<any, IState> {
      * @inheritdoc
      * @returns {void}
      */
-    componentDidMount() {
+    override componentDidMount() {
         api.on('avatarChanged', this._avatarChangedListener);
         api.on('displayNameChange', this._displayNameChangedListener);
         api.on('largeVideoChanged', this._videoChangedListener);
@@ -229,7 +231,7 @@ export default class AlwaysOnTop extends Component<any, IState> {
      * @inheritdoc
      * @returns {void}
      */
-    componentDidUpdate(_prevProps: any, prevState: IState) {
+    override componentDidUpdate(_prevProps: any, prevState: IState) {
         if (!prevState.visible && this.state.visible) {
             this._hideToolbarAfterTimeout();
         }
@@ -241,7 +243,7 @@ export default class AlwaysOnTop extends Component<any, IState> {
      * @inheritdoc
      * @returns {void}
      */
-    componentWillUnmount() {
+    override componentWillUnmount() {
         api.removeListener('avatarChanged', this._avatarChangedListener);
         api.removeListener(
             'displayNameChange',
@@ -265,7 +267,7 @@ export default class AlwaysOnTop extends Component<any, IState> {
      * @inheritdoc
      * @returns {ReactElement}
      */
-    render() {
+    override render() {
         return (
             <div id = 'alwaysOnTop'>
                 <Toolbar

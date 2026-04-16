@@ -3,7 +3,6 @@ import { AnyAction } from 'redux';
 import { IStore } from '../app/types';
 import {
     CONFERENCE_JOINED,
-    CONFERENCE_TIMESTAMP_CHANGED,
     E2E_RTT_CHANGED
 } from '../base/conference/actionTypes';
 import { DOMINANT_SPEAKER_CHANGED } from '../base/participants/actionTypes';
@@ -11,12 +10,14 @@ import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
 import { TRACK_ADDED, TRACK_UPDATED } from '../base/tracks/actionTypes';
 import { ADD_FACE_LANDMARKS } from '../face-landmarks/actionTypes';
 import { FaceLandmarks } from '../face-landmarks/types';
+import { sendGetCustomerIdRequest } from '../jaas/functions';
 
 import RTCStats from './RTCStats';
 import {
     canSendFaceLandmarksRTCStatsData,
     isRTCStatsEnabled
 } from './functions';
+import logger from './logger';
 
 /**
  * Middleware which intercepts lib-jitsi-meet initialization and conference join in order init the
@@ -33,6 +34,16 @@ MiddlewareRegistry.register((store: IStore) => (next: Function) => (action: AnyA
     case CONFERENCE_JOINED: {
         if (isRTCStatsEnabled(state)) {
             RTCStats.init();
+
+            sendGetCustomerIdRequest(action?.conference, state)
+                .then(customerData => {
+                    const { customerId } = customerData ?? {};
+
+                    customerId && RTCStats.sendIdentityData({ customerId });
+                })
+                .catch(error => {
+                    logger.error('Error while getting customer id:', error);
+                });
         }
         break;
     }
@@ -109,14 +120,6 @@ MiddlewareRegistry.register((store: IStore) => (next: Function) => (action: AnyA
                 faceLandmarks: faceExpression,
                 timestamp
             });
-        }
-        break;
-    }
-    case CONFERENCE_TIMESTAMP_CHANGED: {
-        if (isRTCStatsEnabled(state)) {
-            const { conferenceTimestamp } = action;
-
-            RTCStats.sendConferenceTimestamp(conferenceTimestamp);
         }
         break;
     }

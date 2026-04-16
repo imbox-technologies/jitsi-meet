@@ -1,11 +1,3 @@
-/* eslint-disable lines-around-comment */
-import {
-    PC_CON_STATE_CHANGE,
-    PC_STATE_CONNECTED,
-    PC_STATE_FAILED
-    // @ts-expect-error
-} from '@jitsi/rtcstats/events';
-
 import JitsiMeetJS, { RTCStatsEvents } from '../base/lib-jitsi-meet';
 
 import logger from './logger';
@@ -15,6 +7,11 @@ import {
     FaceLandmarksData,
     VideoTypeData
 } from './types';
+
+// TODO(saghul): expose these in libn-jitsi-meet?
+const PC_CON_STATE_CHANGE = 'connectionstatechange';
+const PC_STATE_CONNECTED = 'connected';
+const PC_STATE_FAILED = 'failed';
 
 /**
  * Handle lib-jitsi-meet rtcstats events and send jitsi-meet specific statistics.
@@ -67,6 +64,16 @@ class RTCStats {
      */
     sendE2ERTTData(e2eRttData: E2ERTTData) {
         JitsiMeetJS.rtcstats.sendStatsEntry('e2eRtt', e2eRttData);
+    }
+
+    /**
+     * Send identity data, the data will be processed by rtcstats-server and saved in the dump file.
+     *
+     * @param {Object} identityData - The object that holds the identity data.
+     * @returns {void}
+     */
+    sendIdentityData(identityData: Object) {
+        JitsiMeetJS.rtcstats.sendIdentityEntry(identityData);
     }
 
     /**

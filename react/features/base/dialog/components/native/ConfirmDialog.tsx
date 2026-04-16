@@ -17,6 +17,11 @@ import styles from './styles';
 interface IProps extends AbstractProps, WithTranslation {
 
     /**
+     * The i18n key of the text label for the back button.
+     */
+    backLabel?: string;
+
+    /**
      * The i18n key of the text label for the cancel button.
      */
     cancelLabel?: string;
@@ -37,14 +42,34 @@ interface IProps extends AbstractProps, WithTranslation {
     descriptionKey?: string | { key: string; params: string; };
 
     /**
+     * Whether the back button is hidden.
+     */
+    isBackHidden?: Boolean;
+
+    /**
+     * Whether the cancel button is hidden.
+     */
+    isCancelHidden?: Boolean;
+
+    /**
      * Whether or not the nature of the confirm button is destructive.
      */
     isConfirmDestructive?: Boolean;
 
     /**
+     * Whether or not the confirm button is hidden.
+     */
+    isConfirmHidden?: Boolean;
+
+    /**
      * Dialog title.
      */
     title?: string;
+
+    /**
+     * Renders buttons vertically.
+     */
+    verticalButtons?: boolean;
 }
 
 /**
@@ -60,7 +85,8 @@ class ConfirmDialog extends AbstractDialog<IProps> {
      * @static
      */
     static defaultProps = {
-        isConfirmDestructive: false
+        isConfirmDestructive: false,
+        isConfirmHidden: false
     };
 
     /**
@@ -89,14 +115,19 @@ class ConfirmDialog extends AbstractDialog<IProps> {
      *
      * @inheritdoc
      */
-    render() {
+    override render() {
         const {
+            backLabel,
             cancelLabel,
             children,
             confirmLabel,
+            isBackHidden = true,
+            isCancelHidden,
             isConfirmDestructive,
+            isConfirmHidden,
             t,
-            title
+            title,
+            verticalButtons
         } = this.props;
 
         const dialogButtonStyle
@@ -106,6 +137,7 @@ class ConfirmDialog extends AbstractDialog<IProps> {
         return (
             <Dialog.Container
                 coverScreen = { false }
+                verticalButtons = { verticalButtons }
                 visible = { true }>
                 {
                     title && <Dialog.Title>
@@ -114,14 +146,24 @@ class ConfirmDialog extends AbstractDialog<IProps> {
                 }
                 { this._renderDescription() }
                 { children }
-                <Dialog.Button
-                    label = { t(cancelLabel || 'dialog.confirmNo') }
-                    onPress = { this._onCancel }
-                    style = { styles.dialogButton } />
-                <Dialog.Button
-                    label = { t(confirmLabel || 'dialog.confirmYes') }
-                    onPress = { this._onSubmit }
-                    style = { dialogButtonStyle } />
+                {
+                    !isBackHidden && <Dialog.Button
+                        label = { t(backLabel || 'dialog.confirmBack') }
+                        onPress = { this._onBack }
+                        style = { styles.dialogButton } />
+                }
+                {
+                    !isCancelHidden && <Dialog.Button
+                        label = { t(cancelLabel || 'dialog.confirmNo') }
+                        onPress = { this._onCancel }
+                        style = { styles.dialogButton } />
+                }
+                {
+                    !isConfirmHidden && <Dialog.Button
+                        label = { t(confirmLabel || 'dialog.confirmYes') }
+                        onPress = { this._onSubmit }
+                        style = { dialogButtonStyle } />
+                }
             </Dialog.Container>
         );
     }

@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 
 // We need to reference these files directly to avoid loading things that are not available
 // in this environment (e.g. JitsiMeetJS or interfaceConfig)
-import { IconMic, IconMicSlash } from '../base/icons/svg';
+
+import { DEFAULT_ICON } from '../base/icons/svg/constants';
 import { IProps } from '../base/toolbox/components/AbstractButton';
 
 import ToolbarButton from './ToolbarButton';
@@ -31,8 +32,8 @@ type Props = Partial<IProps>;
  * Stateless "mute/unmute audio" button for the Always-on-Top windows.
  */
 export default class AudioMuteButton extends Component<Props, IState> {
-    icon = IconMic;
-    toggledIcon = IconMicSlash;
+    icon = DEFAULT_ICON.IconMic;
+    toggledIcon = DEFAULT_ICON.IconMicSlash;
     accessibilityLabel = 'Audio mute';
 
     /**
@@ -62,7 +63,7 @@ export default class AudioMuteButton extends Component<Props, IState> {
      * @inheritdoc
      * @returns {void}
      */
-    componentDidMount() {
+    override componentDidMount() {
         api.on('audioAvailabilityChanged', this._audioAvailabilityListener);
         api.on('audioMuteStatusChanged', this._audioMutedListener);
 
@@ -85,7 +86,7 @@ export default class AudioMuteButton extends Component<Props, IState> {
      * @inheritdoc
      * @returns {void}
      */
-    componentWillUnmount() {
+    override componentWillUnmount() {
         api.removeListener(
             'audioAvailabilityChanged',
             this._audioAvailabilityListener);
@@ -164,7 +165,7 @@ export default class AudioMuteButton extends Component<Props, IState> {
      * @inheritdoc
      * @returns {ReactElement}
      */
-    render() {
+    override render() {
         const toggled = this._isAudioMuted();
 
         return (
