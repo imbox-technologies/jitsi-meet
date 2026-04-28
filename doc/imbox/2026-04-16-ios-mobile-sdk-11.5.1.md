@@ -1,6 +1,6 @@
 # Upgrade upstream iOS: `imbox-mobile-23.5` → `mobile-sdk-11.5.1`
 
-**Estado**: planificación (pre-merge)
+**Estado**: completado y mergeado a `develop` en iOSClient (2026-04-21)
 **Fecha de creación**: 2026-04-16
 **Rama destino propuesta**: `imbox-ios-mobile-sdk-11.5.1` (desde `imbox-mobile-23.5`)
 **Tag upstream a mergear**: `mobile-sdk-11.5.1` (2025-09-16)
@@ -608,32 +608,34 @@ pods transitivos; CocoaPods toma los options de la primera declaración.
 7. Ejecutar el script de build del SDK.
 8. Verificar `ios/sdk/out/` tiene los 3 frameworks.
 
-### Fase 4 — Integración en `iOSClient`
+### Fase 4 — Integración en `iOSClient` ✅ COMPLETADA (2026-04-16)
 
-9. Bump deployment target en `Podfile` y `SpotBros.xcodeproj/project.pbxproj` a iOS 15.1.
-10. Reemplazar `SpotBros/Vendor/Jitsi/JitsiMeetSDK.xcframework` por el nuevo.
-11. Añadir `hermes.xcframework` a `SpotBros/Vendor/Jitsi/`.
-12. Añadir `hermes.xcframework` como framework embebido (Embed & Sign) en los targets
-    de la app en Xcode.
-13. `pod deintegrate && pod install` en `iOSClient`.
-14. Abrir en Xcode, compilar.
+9. ✅ `JitsiMeetSDK.xcframework` reemplazado en `SpotBros/Vendor/Jitsi/`.
+10. ✅ `hermes.xcframework` añadido a `SpotBros/Vendor/Jitsi/` y embebido (Embed & Sign)
+    en los targets vía `SpotBros.xcodeproj/project.pbxproj`.
+11. ✅ `Podfile.lock` regenerado.
+12. ✅ Build OK en Xcode 26.4.
 
-### Fase 5 — Testing runtime
+Nota: el bump de `IPHONEOS_DEPLOYMENT_TARGET` a 15.1 anticipado en §6.1 finalmente
+**no fue necesario** para que la app compilase y arrancase (los targets actuales
+siguen con la mezcla 10.0/13.0). Limpieza pospuesta — no bloqueante.
 
-15. Smoke test: lanzar la app, entrar a chat, entrar a conferencia.
-    - **Caso crítico #2800**: aceptar llamada entrante desde otro móvil (no PC) — verificar
-      que la pantalla de conferencia aparece correctamente (no negra).
-    - Verificar conferencia con múltiples participantes, tile view, back/foreground
-      transitions.
-    - Verificar CallKit: llamadas entrantes, ID caller, audio routing.
-    - Verificar PiP (con nuestro icono collapsed custom).
-16. Reporte: captura de issues encontradas, fixes aplicados.
+### Fase 5 — Testing runtime ✅ COMPLETADA (2026-04-16)
 
-### Fase 6 — Release
+13. ✅ Smoke test pasado: chat, conferencia, CallKit, PiP, transiciones background.
+14. ✅ Caso crítico #2800 reproducido y verificado: llamada entrante desde móvil →
+    pantalla de conferencia aparece correctamente (no negra). Bloqueador resuelto.
+15. ✅ Crash `objc_retain` por colisión de selector `colorWithHex:alpha:` detectado
+    en runtime y arreglado en el fork (ver §7.6, renombre a `jitsi_colorWithHex:`).
 
-17. Tag del fork Jitsi: `imbox-ios-mobile-sdk-11.5.1`.
-18. Commit en `iOSClient` con referencia al issue #2800.
-19. Push.
+### Fase 6 — Release ✅ COMPLETADA (2026-04-21)
+
+16. ✅ Fork Jitsi: rama `imbox-ios-mobile-sdk-11.5.1` con tip `23627b2bd`
+    (incluye merge `543773ea8` + commit con este doc).
+17. ✅ Commit en `iOSClient`: `5b9a7b863` *"upgrade Jitsi SDK to 11.5.1, #3060"*
+    (2026-04-16). Cierra el bloqueador de #2800.
+18. ✅ Mergeado a `develop` en iOSClient: `7f41286c9` *"Merge branch
+    'jitsi-sdk-11.5.1' into develop"* (2026-04-21).
 
 ---
 
@@ -780,10 +782,10 @@ el `postinstall`:
 - `react-native-webrtc+111.0.3.patch` — nuestro, **a verificar** si sigue aplicando
   sobre el webrtc nuevo (124.x). Si falla, regenerar para el nuevo pathname.
 
-### 11.5. Estado al cierre de esta versión del documento
+### 11.5. Cierre
 
-- Merge **resuelto** pero **aún no commiteado**.
-- Fase 3 (build del XCFramework con Hermes) **pendiente** — el usuario está
-  ejecutando el script.
-- Siguiente actualización de este documento: resultado del build + integración en
-  iOSClient + testing.
+- Fork Jitsi: merge commiteado en `543773ea8`, doc añadido en `23627b2bd`.
+- Build SDK + Hermes: OK con los fixes de §7.
+- Integración iOSClient: commit `5b9a7b863` (#3060, 2026-04-16).
+- Merge a `develop` en iOSClient: `7f41286c9` (2026-04-21).
+- Testing runtime: pasado, incluido el caso crítico #2800.
