@@ -36,12 +36,28 @@ public class JitsiVideoDecoderFactory implements VideoDecoderFactory {
     private final VideoDecoderFactory platformSoftwareVideoDecoderFactory;
 
     /**
-     * Predicate to filter out the AV1 hardware decoder, as we've seen decoding issues with it.
+     * Predicate to filter out hardware decoders known to have surface attachment issues on
+     * reconfiguration (rapid resolution / simulcast layer switches).
+     *
+     * - c2.google.av1: upstream filter, terrible framerates due to constant restarts (commit 8a79d200c).
+     * - MediaTek HW decoders: observed on Xiaomi 2201116TG (Redmi/Mediatek). When the decoder is
+     *   recreated by a simulcast layer change before the first frame is rendered, the
+     *   SurfaceTextureHelper sink attachment is lost permanently and the EglRenderer receives 0
+     *   frames for the rest of the track lifecycle. Falling back to software decoders
+     *   (libvpx / openh264) avoids the issue. Both naming variants must be filtered:
+     *     c2.mtk.*           - newer Codec2 API (e.g. c2.mtk.vpx.decoder, c2.mtk.avc.decoder)
+     *     OMX.MTK.*          - legacy OMX API (e.g. OMX.MTK.VIDEO.DECODER.AVC, .VPX, .HEVC)
+     *   Repro: Android Xiaomi <-> iOS with simulcast on; fails intermittently, more frequent on
+     *   unstable network.
      */
     private static final String GOOGLE_AV1_DECODER = "c2.google.av1";
+    private static final String MEDIATEK_C2_DECODER_PREFIX = "c2.mtk.";
+    private static final String MEDIATEK_OMX_DECODER_PREFIX = "OMX.MTK.";
     private static final Predicate<MediaCodecInfo> hwCodecPredicate = arg -> {
-        // Filter out the Google AV1 codec.
-        return !arg.getName().startsWith(GOOGLE_AV1_DECODER);
+        String name = arg.getName();
+        return !name.startsWith(GOOGLE_AV1_DECODER)
+            && !name.startsWith(MEDIATEK_C2_DECODER_PREFIX)
+            && !name.startsWith(MEDIATEK_OMX_DECODER_PREFIX);
     };
     private static final Predicate<MediaCodecInfo> swCodecPredicate = arg -> {
         // Noop, just making sure we can customize it easily if needed.
