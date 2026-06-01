@@ -173,6 +173,22 @@ allprojects {
 
 // Force the version of the Android build tools we have chosen on all subprojects.
 subprojects { subproject ->
+    plugins.withId('com.android.library') {
+        if (subproject.name.startsWith('react-native-')) {
+            def manifestFile = subproject.file('src/main/AndroidManifest.xml')
+
+            if (manifestFile.exists()) {
+                def matcher = manifestFile.getText('UTF-8') =~ /package\s*=\s*"([^"]+)"/
+
+                if (matcher.find()) {
+                    android {
+                        namespace matcher.group(1)
+                    }
+                }
+            }
+        }
+    }
+
     afterEvaluate{
         if ((subproject.plugins.hasPlugin('android')
                     || subproject.plugins.hasPlugin('android-library'))

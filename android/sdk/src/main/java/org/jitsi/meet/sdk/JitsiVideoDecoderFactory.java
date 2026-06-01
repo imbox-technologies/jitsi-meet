@@ -28,9 +28,13 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 
 /**
- * Custom decoder factory which uses HW decoders and falls back to SW.
+ * Custom decoder factory which uses native SW decoders for VP8 / VP9 and HW decoders with SW fallback
+ * for the rest.
  */
 public class JitsiVideoDecoderFactory implements VideoDecoderFactory {
+    private static final String VP8_CODEC = "VP8";
+    private static final String VP9_CODEC = "VP9";
+
     private final VideoDecoderFactory hardwareVideoDecoderFactory;
     private final VideoDecoderFactory softwareVideoDecoderFactory = new SoftwareVideoDecoderFactoryProxy();
     private final VideoDecoderFactory platformSoftwareVideoDecoderFactory;
@@ -75,6 +79,11 @@ public class JitsiVideoDecoderFactory implements VideoDecoderFactory {
     @Override
     public @Nullable VideoDecoder createDecoder(VideoCodecInfo codecType) {
         VideoDecoder softwareDecoder = softwareVideoDecoderFactory.createDecoder(codecType);
+
+        if (shouldUseNativeSoftwareDecoder(codecType) && softwareDecoder != null) {
+            return softwareDecoder;
+        }
+
         final VideoDecoder hardwareDecoder = hardwareVideoDecoderFactory.createDecoder(codecType);
         if (softwareDecoder == null) {
             softwareDecoder = platformSoftwareVideoDecoderFactory.createDecoder(codecType);
@@ -85,6 +94,11 @@ public class JitsiVideoDecoderFactory implements VideoDecoderFactory {
                 /* fallback= */ softwareDecoder, /* primary= */ hardwareDecoder);
         }
         return hardwareDecoder != null ? hardwareDecoder : softwareDecoder;
+    }
+
+    private static boolean shouldUseNativeSoftwareDecoder(VideoCodecInfo codecType) {
+        return codecType.name.equalsIgnoreCase(VP8_CODEC)
+            || codecType.name.equalsIgnoreCase(VP9_CODEC);
     }
 
     @Override
